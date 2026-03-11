@@ -38,6 +38,11 @@ app.use("/api/report", reportRouter);
 // Serve uploaded files
 app.use("/uploads", express.static(uploadsDir));
 
+// Health check / root route
+app.get("/", (req, res) => {
+  res.json({ success: true, message: "MediConnect API is running 🚀" });
+});
+
 // Serve React build (only if client is built and co-located)
 const clientBuildPath = path.join(__dirname, "../client/build");
 if (fs.existsSync(clientBuildPath)) {
