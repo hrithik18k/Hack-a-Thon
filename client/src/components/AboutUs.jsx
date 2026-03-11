@@ -15,13 +15,12 @@ const AboutUs = () => {
           </div>
           <div className="hero-content">
             <p>
-              This enterprise platform bridges the gap between doctors and patients
-              by providing a unified, seamless appointment ecosystem. Patients can
-              discover specialists by city and specialization, securely schedule visits,
-              and maintain an organized, chronological record of their medical history.
-              Medical professionals can effortlessly manage their schedule, access patient
-              history, and record post-consultation reports all within a clean,
-              modern interface.
+              We believe that everyone deserves easy and transparent access to healthcare. 
+              Our platform bridges the gap between doctors and patients by providing a unified, 
+              stress-free appointment ecosystem. Whether you're looking for a specialist in your city 
+              or simply want to keep an organized history of your medical records securely, 
+              we are here for you. We also empower medical professionals to seamlessly manage 
+              their appointments so they can focus entirely on what they do best: patient care.
             </p>
           </div>
         </div>

@@ -6,13 +6,13 @@ const Hero = () => {
     <section className="hero">
       <div className="hero-content">
         <h1>
-          Modern Enterprise <br />
-          Doctor-Patient Appointment System
+          Your Health, <br />
+          In Your Hands.
         </h1>
         <p>
-          Empowering patients with full control over their medical history and
-          appointments. Delivering seamless digital healthcare and robust
-          administrative tools for medical professionals.
+          Connect with top doctors, manage your appointments seamlessly, and keep all your 
+          medical records secure in one place. Experience healthcare that prioritizes your 
+          well-being.
         </p>
       </div>
       <div className="hero-img">

@@ -7,8 +7,15 @@ const getalldoctors = async (req, res) => {
   try {
     const { city, specialization } = req.query;
     const filter = { status: "Approved" };
-    if (city) filter.city = { $regex: city, $options: "i" };
-    if (specialization) filter.specialization = { $regex: specialization, $options: "i" };
+    if (city && city.trim() !== '') {
+      // Escape regex special chars to prevent regex injection and use 'i' for case-insensitivity
+      const safeCity = city.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      filter.city = { $regex: safeCity, $options: "i" };
+    }
+    if (specialization && specialization.trim() !== '') {
+      const safeSpec = specialization.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      filter.specialization = { $regex: safeSpec, $options: "i" };
+    }
 
     const docs = await Doctor.find(filter).populate("userId", "-password");
     return res.status(200).json({ success: true, data: docs });
