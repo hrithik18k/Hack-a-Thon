@@ -71,6 +71,10 @@ const register = async (req, res) => {
       return res.status(400).json({ success: false, message: "Email already exists" });
     }
 
+    if (role === "Admin") {
+      return res.status(403).json({ success: false, message: "Admin registration is prohibited" });
+    }
+
     const hashedPass = await bcrypt.hash(password, 10);
     
     // Create base user
