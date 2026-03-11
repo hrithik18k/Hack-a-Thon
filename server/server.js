@@ -38,11 +38,14 @@ app.use("/api/report", reportRouter);
 // Serve uploaded files
 app.use("/uploads", express.static(uploadsDir));
 
-// Serve React build
-app.use(express.static(path.join(__dirname, "../client/build")));
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../client/build/index.html"));
-});
+// Serve React build (only if client is built and co-located)
+const clientBuildPath = path.join(__dirname, "../client/build");
+if (fs.existsSync(clientBuildPath)) {
+  app.use(express.static(clientBuildPath));
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(clientBuildPath, "index.html"));
+  });
+}
 
 const server = app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
