@@ -22,7 +22,10 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 app.use(cors({
-  origin: "*",
+  origin: [
+    "https://mediconnect-fqk1.onrender.com",
+    "http://localhost:3000",
+  ],
   credentials: true,
 }));
 
