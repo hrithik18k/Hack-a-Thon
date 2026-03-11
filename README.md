@@ -118,7 +118,6 @@ This application is scalable and designed to be effortlessly deployed.
 - **Backend:** Hosted dynamically on [Render](https://render.com/), equipped with customized conditional logic to prevent crashing whether running side-by-side with React or functioning as a standalone API.
 - **Frontend:** Continually deployed securely as a Static Site relying on environment variables.
 
-> **Important Note regarding Environment Variables:** Since `.env` files are rightfully part of `.gitignore`, production credentials must be manually entered into the Render Environment variable dashboards for both backend services and frontend static deployments to function successfully.
 
 ---
 
