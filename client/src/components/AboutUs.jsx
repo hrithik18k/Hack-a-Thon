@@ -15,12 +15,13 @@ const AboutUs = () => {
           </div>
           <div className="hero-content">
             <p>
-              This project addresses critical healthcare challenges including fragmented patient
-              records, medication errors, and elderly patient medication management through an
-              integrated IoT-enabled platform combining secure data management with intelligent
-              automation. Cross-hospital interoperability enables seamless information exchange,
-              while hardware-controlled medicine dispensers address elderly care challenges,
-              significantly improving medication compliance.
+              This enterprise platform bridges the gap between doctors and patients
+              by providing a unified, seamless appointment ecosystem. Patients can
+              discover specialists by city and specialization, securely schedule visits,
+              and maintain an organized, chronological record of their medical history.
+              Medical professionals can effortlessly manage their schedule, access patient
+              history, and record post-consultation reports all within a clean,
+              modern interface.
             </p>
           </div>
         </div>

@@ -5,49 +5,69 @@ import Navbar from "../components/Navbar";
 import "../styles/doctors.css";
 import fetchData from "../helper/apiCall";
 import Loading from "../components/Loading";
-import { useDispatch, useSelector } from "react-redux";
-import { setLoading } from "../redux/reducers/rootSlice";
 import Empty from "../components/Empty";
 
 const Doctors = () => {
   const [doctors, setDoctors] = useState([]);
-  const dispatch = useDispatch();
-  const { loading } = useSelector((state) => state.root);
+  const [isLoading, setIsLoading] = useState(true);
+  const [filters, setFilters] = useState({ city: "", specialization: "" });
 
   const fetchAllDocs = async () => {
-    dispatch(setLoading(true));
-    const data = await fetchData(`/api/doctor/getalldoctors`);
-    setDoctors(data);
-    dispatch(setLoading(false));
+    try {
+      setIsLoading(true);
+      const query = new URLSearchParams(filters).toString();
+      // Even if public access, depending on apiCall it sends token if exists.
+      // But we should use axios directly if user is not logged in.
+      const url = `/api/doctor/getalldoctors${query ? `?${query}` : ''}`;
+      const data = await fetchData(url);
+      setDoctors(data);
+    } catch (error) {
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
     fetchAllDocs();
-  }, []);
+  }, [filters]);
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({ ...prev, [name]: value }));
+  };
 
   return (
     <>
       <Navbar />
-      {loading && <Loading />}
-      {!loading && (
-        <section className="container doctors">
-          <h2 className="page-heading">Our Doctors</h2>
-          {doctors.length > 0 ? (
+      <section className="doctors-section">
+        <div className="container">
+          <div className="doctors-header">
+            <h2 className="page-title">Find a Doctor</h2>
+            <div className="filters-container">
+              <input 
+                type="text" 
+                name="city" 
+                value={filters.city} 
+                onChange={handleFilterChange} 
+                placeholder="Search by City..." 
+                className="filter-input"
+              />
+            </div>
+          </div>
+          
+          {isLoading ? (
+            <Loading />
+          ) : doctors?.length > 0 ? (
             <div className="doctors-card-container">
-              {doctors.map((ele) => {
-                return (
-                  <DoctorCard
-                    ele={ele}
-                    key={ele._id}
-                  />
-                );
-              })}
+              {doctors.map((ele) => (
+                <DoctorCard ele={ele} key={ele._id} />
+              ))}
             </div>
           ) : (
             <Empty />
           )}
-        </section>
-      )}
+        </div>
+      </section>
       <Footer />
     </>
   );

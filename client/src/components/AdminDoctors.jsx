@@ -2,62 +2,50 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import Loading from "./Loading";
-import { setLoading } from "../redux/reducers/rootSlice";
-import { useDispatch, useSelector } from "react-redux";
-import Empty from "./Empty";
 import fetchData from "../helper/apiCall";
-import "../styles/user.css";
+import Empty from "./Empty";
 
 axios.defaults.baseURL = process.env.REACT_APP_SERVER_DOMAIN;
 
 const AdminDoctors = () => {
   const [doctors, setDoctors] = useState([]);
-  const [filter, setFilter] = useState("all");
-  const [searchTerm, setSearchTerm] = useState("");
-
-  const dispatch = useDispatch();
-  const { loading } = useSelector((state) => state.root);
+  const [loading, setLoading] = useState(true);
 
   const getAllDoctors = async () => {
     try {
-      dispatch(setLoading(true));
-      let url = "/api/doctor/getalldoctors";
-      if (filter !== "all") {
-        url += `?filter=${filter}`;
-      }
-      if (searchTerm.trim() !== "") {
-        url += `${filter !== "all" ? "&" : "?"}search=${searchTerm}`;
-      }
-      const temp = await fetchData(url);
-      setDoctors(temp);
-      dispatch(setLoading(false));
-    } catch (error) {}
+      setLoading(true);
+      const pendingRes = await fetchData(`/api/doctor/getnotdoctors`);
+      const approvedRes = await fetchData(`/api/doctor/getalldoctors`);
+      
+      // Merge all doctors
+      const allDocs = [...(pendingRes || []), ...(approvedRes || [])];
+      setDoctors(allDocs);
+    } catch (error) {
+      toast.error("Unable to load doctors");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const deleteUser = async (userId) => {
+  const handleAction = async (userId, action) => {
     try {
-      const confirm = window.confirm("Are you sure you want to delete?");
-      if (confirm) {
-        await toast.promise(
-          axios.put(
-            "/api/doctor/deletedoctor",
-            { userId },
-            {
-              headers: {
-                authorization: `Bearer ${localStorage.getItem("token")}`,
-              },
-            }
-          ),
-          {
-            success: "Doctor deleted successfully",
-            error: "Unable to delete Doctor",
-            loading: "Deleting Doctor...",
-          }
-        );
-        getAllDoctors();
+      const endpoint = action === "Approve" ? "/api/doctor/acceptdoctor" : "/api/doctor/rejectdoctor";
+      const confirmStr = `Are you sure you want to ${action.toLowerCase()} this doctor?`;
+      
+      if (window.confirm(confirmStr)) {
+        const { data } = await axios.put(endpoint, { userId }, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        
+        if (data.success) {
+          toast.success(data.message || `Doctor ${action.toLowerCase()}ed`);
+          getAllDoctors();
+        }
       }
     } catch (error) {
-      return error;
+      toast.error(`Unable to ${action.toLowerCase()} doctor`);
     }
   };
 
@@ -65,112 +53,73 @@ const AdminDoctors = () => {
     getAllDoctors();
   }, []);
 
-  const filteredDoctors = doctors.filter((doc) => {
-    if (filter === "all") {
-      return true;
-    } else if (filter === "specialization") {
-      return doc.specialization
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
-    } else if (filter === "firstname") {
-      return (
-        doc.userId &&
-        doc.userId.firstname.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    } else {
-      return true;
+  const getStatusBadge = (status) => {
+    switch(status) {
+      case "Approved": return "badge-success";
+      case "Pending": return "badge-warning";
+      case "Rejected": return "badge-danger";
+      default: return "";
     }
-  });
+  };
 
   return (
     <>
+      <div className="admin-header">
+        <h2 className="admin-title">Manage Doctors</h2>
+      </div>
+
       {loading ? (
         <Loading />
+      ) : doctors.length > 0 ? (
+        <div className="admin-table-wrapper">
+          <table className="appointments-table">
+            <thead>
+              <tr>
+                <th>S.No</th>
+                <th>Name</th>
+                <th>Specialization</th>
+                <th>Hospital</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {doctors.map((doc, i) => (
+                <tr key={doc._id}>
+                  <td>{i + 1}</td>
+                  <td>Dr. {doc.userId?.firstname} {doc.userId?.lastname}</td>
+                  <td>{doc.specialization}</td>
+                  <td>{doc.hospitalName}</td>
+                  <td>
+                    <span className={`badge ${getStatusBadge(doc.status)}`}>
+                      {doc.status || "Pending"}
+                    </span>
+                  </td>
+                  <td>
+                    {doc.status === "Pending" && (
+                      <div className="action-buttons">
+                        <button 
+                          className="btn btn-primary-outline btn-sm"
+                          onClick={() => handleAction(doc.userId?._id, "Approve")}
+                        >
+                          Approve
+                        </button>
+                        <button 
+                          className="btn btn-danger-outline btn-sm"
+                          onClick={() => handleAction(doc.userId?._id, "Reject")}
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : (
-        <section className="user-section">
-          <div className="ayx">
-            <div className="filter">
-              <label htmlFor="filter">Filter by:</label>
-              <select
-                id="filter"
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-              >
-                <option value="all">All</option>
-                <option value="firstname">Name</option>
-                <option value="specialization">Specialization</option>
-              </select>
-            </div>
-
-            <div className="search">
-              <label htmlFor="search">Search:</label>
-              <input
-                type="text"
-                className="form-input"
-                id="search"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search"
-              />
-            </div>
-          </div>
-          <h3 className="home-sub-heading">All Doctors</h3>
-          {filteredDoctors.length > 0 ? (
-            <div className="user-container">
-              <table>
-                <thead>
-                  <tr>
-                    <th>S.No</th>
-                    <th>Pic</th>
-                    <th>First Name</th>
-                    <th>Last Name</th>
-                    <th>Email</th>
-                    <th>Mobile No.</th>
-                    <th>Experience</th>
-                    <th>Specialization</th>
-                    <th>Fees</th>
-                    <th>Remove</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredDoctors.map((ele, i) => {
-                    return (
-                      <tr key={ele?._id}>
-                        <td>{i + 1}</td>
-                        <td>
-                          <img
-                            className="user-table-pic"
-                            src={ele?.userId?.pic}
-                            alt={ele?.userId?.firstname}
-                          />
-                        </td>
-                        <td>{ele?.userId?.firstname}</td>
-                        <td>{ele?.userId?.lastname}</td>
-                        <td>{ele?.userId?.email}</td>
-                        <td>{ele?.userId?.mobile}</td>
-                        <td>{ele?.experience}</td>
-                        <td>{ele?.specialization}</td>
-                        <td>{ele?.fees}</td>
-                        <td className="select">
-                          <button
-                            className="btn user-btn"
-                            onClick={() => {
-                              deleteUser(ele?.userId?._id);
-                            }}
-                          >
-                            Remove
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <Empty />
-          )}
-        </section>
+        <Empty />
       )}
     </>
   );

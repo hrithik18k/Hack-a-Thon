@@ -37,12 +37,12 @@ export const DoctorOnly = ({ children }) => {
   return <Navigate to={"/"} replace={true} />;
 };
 
-export const PharmacistOnly = ({ children }) => {
+export const PatientOnly = ({ children }) => {
   const token = localStorage.getItem("token");
   if (!token) return <Navigate to={"/"} replace={true} />;
   try {
     const user = jwtDecode(token);
-    if (user.role === "Pharmacist") return children;
+    if (user.role === "Patient") return children;
   } catch (e) {}
   return <Navigate to={"/"} replace={true} />;
 };

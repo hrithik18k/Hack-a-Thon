@@ -8,7 +8,7 @@ const fetchData = async (url) => {
       Authorization: `Bearer ${localStorage.getItem("token")}`,
     },
   });
-  return data;
+  return data.data; // Return the inner data object since we use { success: true, data: [...] }
 };
 
 export default fetchData;

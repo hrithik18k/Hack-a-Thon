@@ -25,33 +25,29 @@ const schema = mongoose.Schema(
     role: {
       type: String,
       required: true,
-      enum: ["Admin", "Doctor", "Patient", "Pharmacist"],
+      enum: ["Admin", "Doctor", "Patient"],
     },
-    fingerprintId: {
+    phone: {
       type: String,
-      default: "",
+      required: true,
     },
-    hospital: {
+    city: {
       type: String,
-      default: "",
+      required: true,
+    },
+    dateOfBirth: {
+      type: Date,
+      required: false,
     },
     age: {
       type: Number,
-      default: "",
+      required: false,
     },
     gender: {
       type: String,
-      default: "",
-    },
-    mobile: {
-      type: Number,
-      default: "",
+      required: false,
     },
     address: {
-      type: String,
-      default: "",
-    },
-    status: {
       type: String,
       default: "",
     },
@@ -59,10 +55,6 @@ const schema = mongoose.Schema(
       type: String,
       default:
         "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg",
-    },
-    isDoctor: {
-      type: Boolean,
-      default: false,
     },
   },
   {

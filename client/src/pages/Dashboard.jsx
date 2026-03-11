@@ -1,36 +1,26 @@
 import React from "react";
-import AdminApplications from "../components/AdminApplications";
 import AdminAppointments from "../components/AdminAppointments";
 import AdminDoctors from "../components/AdminDoctors";
 import Sidebar from "../components/Sidebar";
 import Users from "../components/Users";
-import Home from "../components/Home";
-import Aprofile from "../components/Aprofile";
+import DashboardHome from "../components/DashboardHome";
+import "../styles/admin.css";
 
-const Dashboard = (props) => {
-  console.log(props);
-  const { type } = props;
+const Dashboard = ({ type }) => {
   return (
     <>
-
       <section className="layout-section">
-        <div className="layout-container">
-          <Sidebar />
-
-          {
-          type === "home" ?(
-            <Home />
-          ):type === "users" ? (
+        <Sidebar />
+        <div className="layout-content">
+          {type === "home" ? (
+            <DashboardHome />
+          ) : type === "users" ? (
             <Users />
           ) : type === "doctors" ? (
             <AdminDoctors />
-          ) : type === "applications" ? (
-            <AdminApplications />
           ) : type === "appointments" ? (
             <AdminAppointments />
-          ) : type === "aprofile" ? (
-            <Aprofile />
-          ): (
+          ) : (
             <></>
           )}
         </div>

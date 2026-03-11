@@ -1,53 +1,62 @@
 import React, { useEffect, useState } from "react";
-import "../styles/profile.css";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { setLoading } from "../redux/reducers/rootSlice";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import Loading from "../components/Loading";
 import fetchData from "../helper/apiCall";
 import jwt_decode from "jwt-decode";
+import "../styles/auth.css";
 
 axios.defaults.baseURL = process.env.REACT_APP_SERVER_DOMAIN;
 
 function Profile() {
-  const { userId } = jwt_decode(localStorage.getItem("token"));
+  const token = localStorage.getItem("token");
+  let userId = null;
+  if (token) {
+    const decoded = jwt_decode(token);
+    userId = decoded.userId;
+  }
+  
   const dispatch = useDispatch();
-  const { loading } = useSelector((state) => state.root);
+  const [loading, setLoading] = useState(true);
   const [file, setFile] = useState("");
   const [formDetails, setFormDetails] = useState({
     firstname: "",
     lastname: "",
     email: "",
-    age: "",
-    mobile: "",
-    gender: "neither",
-    address: "",
-    password: "",
-    confpassword: "",
+    phone: "",
+    city: "",
+    gender: "male",
+    dateOfBirth: "",
   });
 
   const getUser = async () => {
     try {
-      dispatch(setLoading(true));
+      setLoading(true);
       const temp = await fetchData(`/api/user/getuser/${userId}`);
-      setFormDetails({
-        ...temp,
-        password: "",
-        confpassword: "",
-        mobile: temp.mobile === null ? "" : temp.mobile,
-        age: temp.age === null ? "" : temp.age,
-      });
-      setFile(temp.pic);
-      dispatch(setLoading(false));
-    } catch (error) {}
+      if (temp) {
+        setFormDetails({
+          firstname: temp.firstname || "",
+          lastname: temp.lastname || "",
+          email: temp.email || "",
+          phone: temp.phone || "",
+          city: temp.city || "",
+          gender: temp.gender || "male",
+          dateOfBirth: temp.dateOfBirth ? temp.dateOfBirth.split('T')[0] : "",
+        });
+        setFile(temp.pic || "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg");
+      }
+    } catch (error) {
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    getUser();
-  }, [dispatch]);
+    if (userId) getUser();
+  }, [userId]);
 
   const inputChange = (e) => {
     const { name, value } = e.target;
@@ -58,171 +67,149 @@ function Profile() {
   };
 
   const formSubmit = async (e) => {
+    e.preventDefault();
     try {
-      e.preventDefault();
-      const {
-        firstname,
-        lastname,
-        email,
-        age,
-        mobile,
-        address,
-        gender,
-        password,
-        confpassword,
-      } = formDetails;
+      if (!formDetails.email) return toast.error("Email should not be empty");
+      if (formDetails.firstname.length < 2) return toast.error("First name must be at least 2 characters");
 
-      if (!email) {
-        return toast.error("Email should not be empty");
-      } else if (firstname.length < 3) {
-        return toast.error("First name must be at least 3 characters long");
-      } else if (lastname.length < 3) {
-        return toast.error("Last name must be at least 3 characters long");
-      } else if (password.length < 5) {
-        return toast.error("Password must be at least 5 characters long");
-      } else if (password !== confpassword) {
-        return toast.error("Passwords do not match");
-      }
-      await toast.promise(
-        axios.put(
-          "/api/user/updateprofile",
-          {
-            firstname,
-            lastname,
-            age,
-            mobile,
-            address,
-            gender,
-            email,
-            password,
-          },
-          {
-            headers: {
-              authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        ),
+      const { data } = await axios.put(
+        "/api/user/updateprofile",
+        formDetails,
         {
-          pending: "Updating profile...",
-          success: "Profile updated successfully",
-          error: "Unable to update profile",
-          loading: "Updating profile...",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         }
       );
 
-      setFormDetails({ ...formDetails, password: "", confpassword: "" });
+      if (data.success) {
+        toast.success("Profile updated successfully");
+      } else {
+        toast.error(data.message || "Failed to update profile");
+      }
     } catch (error) {
-      return toast.error("Unable to update profile");
+      toast.error(error?.response?.data?.message || "Unable to update profile");
     }
   };
 
   return (
     <>
-    <Navbar />
+      <Navbar />
       {loading ? (
         <Loading />
       ) : (
-        <section className="register-section flex-center">
-          <div className="profile-container flex-center">
-            <h2 className="form-heading">Profile</h2>
-            <img
-              src={file}
-              alt="profile"
-              className="profile-pic"
-            />
-            <form
-              onSubmit={formSubmit}
-              className="register-form"
-            >
-              <div className="form-same-row">
+        <section className="auth-section">
+          <div className="auth-container" style={{ maxWidth: '600px' }}>
+            <div className="auth-header">
+              <h2 className="auth-title">My Profile</h2>
+              <p className="auth-subtitle">Update your personal information</p>
+            </div>
+            
+            <div style={{ textAlign: "center", marginBottom: "2rem" }}>
+              <img
+                src={file}
+                alt="profile"
+                style={{ width: "120px", height: "120px", borderRadius: "50%", objectFit: "cover", border: "4px solid #f1f5f9" }}
+              />
+            </div>
+
+            <form onSubmit={formSubmit} className="auth-form">
+              <div className="form-group-row">
+                <div className="form-group">
+                  <label htmlFor="firstname">First Name</label>
+                  <input
+                    type="text"
+                    id="firstname"
+                    name="firstname"
+                    className="form-input"
+                    value={formDetails.firstname}
+                    onChange={inputChange}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="lastname">Last Name</label>
+                  <input
+                    type="text"
+                    id="lastname"
+                    name="lastname"
+                    className="form-input"
+                    value={formDetails.lastname}
+                    onChange={inputChange}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-group-row">
+                <div className="form-group">
+                  <label htmlFor="email">Email</label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    className="form-input"
+                    value={formDetails.email}
+                    onChange={inputChange}
+                    disabled
+                  />
+                  <small style={{ color: "#64748b" }}>Email cannot be changed</small>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="phone">Phone Number</label>
+                  <input
+                    type="text"
+                    id="phone"
+                    name="phone"
+                    className="form-input"
+                    value={formDetails.phone}
+                    onChange={inputChange}
+                  />
+                </div>
+              </div>
+
+              <div className="form-group-row">
+                <div className="form-group">
+                  <label htmlFor="city">City</label>
+                  <input
+                    type="text"
+                    id="city"
+                    name="city"
+                    className="form-input"
+                    value={formDetails.city}
+                    onChange={inputChange}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="gender">Gender</label>
+                  <select
+                    id="gender"
+                    name="gender"
+                    className="form-input"
+                    value={formDetails.gender}
+                    onChange={inputChange}
+                  >
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="dateOfBirth">Date of Birth</label>
                 <input
-                  type="text"
-                  name="firstname"
+                  type="date"
+                  id="dateOfBirth"
+                  name="dateOfBirth"
                   className="form-input"
-                  placeholder="Enter your first name"
-                  value={formDetails.firstname}
-                  onChange={inputChange}
-                />
-                <input
-                  type="text"
-                  name="lastname"
-                  className="form-input"
-                  placeholder="Enter your last name"
-                  value={formDetails.lastname}
+                  value={formDetails.dateOfBirth}
                   onChange={inputChange}
                 />
               </div>
-              <div className="form-same-row">
-                <input
-                  type="email"
-                  name="email"
-                  className="form-input"
-                  placeholder="Enter your email"
-                  value={formDetails.email}
-                  onChange={inputChange}
-                />
-                <select
-                  name="gender"
-                  value={formDetails.gender}
-                  className="form-input"
-                  id="gender"
-                  onChange={inputChange}
-                >
-                  <option value="neither">Prefer not to say</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                </select>
-              </div>
-              <div className="form-same-row">
-                <input
-                  type="text"
-                  name="age"
-                  className="form-input"
-                  placeholder="Enter your age"
-                  value={formDetails.age}
-                  onChange={inputChange}
-                />
-                <input
-                  type="text"
-                  name="mobile"
-                  className="form-input"
-                  placeholder="Enter your mobile number"
-                  value={formDetails?.mobile}
-                  onChange={inputChange}
-                />
-              </div>
-              <textarea
-                type="text"
-                name="address"
-                className="form-input"
-                placeholder="Enter your address"
-                value={formDetails.address}
-                onChange={inputChange}
-                rows="2"
-              ></textarea>
-              <div className="form-same-row">
-                <input
-                  type="password"
-                  name="password"
-                  className="form-input"
-                  placeholder="Enter your password"
-                  value={formDetails.password}
-                  onChange={inputChange}
-                />
-                <input
-                  type="password"
-                  name="confpassword"
-                  className="form-input"
-                  placeholder="Confirm your password"
-                  value={formDetails.confpassword}
-                  onChange={inputChange}
-                />
-              </div>
-              <button
-                type="submit"
-                className="btn form-btn"
-              >
-                update
+
+              <button type="submit" className="btn btn-primary btn-full" style={{ marginTop: '1rem' }}>
+                Update Profile
               </button>
             </form>
           </div>

@@ -1,95 +1,74 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import "../styles/notification.css";
 import Empty from "../components/Empty";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import fetchData from "../helper/apiCall";
 import { setLoading } from "../redux/reducers/rootSlice";
 import Loading from "../components/Loading";
-import "../styles/user.css";
+import "../styles/appointments.css"; // Reuse table styling
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const notificationsPerPage = 8;
   const dispatch = useDispatch();
   const { loading } = useSelector((state) => state.root);
 
   const getAllNotif = async () => {
     try {
       dispatch(setLoading(true));
-      const temp = await fetchData(`/api/notification/getallnotifs?page=${currentPage - 1}&limit=${notificationsPerPage}`);
+      const temp = await fetchData(`/api/notification/getallnotifs`);
       dispatch(setLoading(false));
-      setNotifications(temp);
+      setNotifications(temp || []);
     } catch (error) {
       console.error("Error fetching notifications:", error);
+      dispatch(setLoading(false));
     }
   };
 
   useEffect(() => {
     getAllNotif();
-  }, [currentPage]);
-
-  const totalPages = Math.ceil(notifications.length / notificationsPerPage);
-
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
-  };
-
-  const renderPagination = () => {
-    const pages = [];
-    for (let i = 1; i <= totalPages; i++) {
-      pages.push(
-        <button key={i} onClick={() => handlePageChange(i)}>{i}</button>
-      );
-    }
-    return pages;
-  };
-
-  const paginatedNotifications = notifications.slice(
-    (currentPage - 1) * notificationsPerPage,
-    currentPage * notificationsPerPage
-  );
+  }, [dispatch]);
 
   return (
     <>
       <Navbar />
-      {loading ? (
-        <Loading />
-      ) : (
-        <section className="container notif-section">
-          <h2 className="page-heading">Your Notifications</h2>
+      <section className="appts-section">
+        <div className="container">
+          <h2 className="page-title">My Notifications</h2>
 
-          {notifications.length > 0 ? (
-            <div className="notifications">
-              <table>
+          {loading ? (
+            <Loading />
+          ) : notifications.length > 0 ? (
+             <div className="table-wrapper">
+              <table className="appointments-table">
                 <thead>
                   <tr>
                     <th>S.No</th>
-                    <th>Content</th>
+                    <th>Message</th>
                     <th>Date</th>
                     <th>Time</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedNotifications.map((ele, i) => (
-                    <tr key={ele?._id}>
-                      <td>{(currentPage - 1) * notificationsPerPage + i + 1}</td>
-                      <td>{ele?.content}</td>
-                      <td>{ele?.updatedAt.split("T")[0]}</td>
-                      <td>{ele?.updatedAt.split("T")[1].split(".")[0]}</td>
-                    </tr>
-                  ))}
+                  {notifications.map((ele, i) => {
+                    const dateObj = new Date(ele?.createdAt);
+                    return (
+                      <tr key={ele?._id}>
+                        <td>{i + 1}</td>
+                        <td>{ele?.content}</td>
+                        <td>{dateObj.toLocaleDateString()}</td>
+                        <td>{dateObj.toLocaleTimeString()}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
-              <div className="pagination">{renderPagination()}</div>
             </div>
           ) : (
             <Empty />
           )}
-        </section>
-      )}
+        </div>
+      </section>
       <Footer />
     </>
   );

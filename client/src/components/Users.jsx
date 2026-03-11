@@ -2,85 +2,46 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import Loading from "./Loading";
-import { setLoading } from "../redux/reducers/rootSlice";
-import { useDispatch, useSelector } from "react-redux";
-import Empty from "./Empty";
 import fetchData from "../helper/apiCall";
+import Empty from "./Empty";
 
 axios.defaults.baseURL = process.env.REACT_APP_SERVER_DOMAIN;
 
 const Users = () => {
   const [users, setUsers] = useState([]);
-  const dispatch = useDispatch();
-  const [filter, setFilter] = useState("all");
-  const [searchTerm, setSearchTerm] = useState("");
-  const { loading } = useSelector((state) => state.root);
+  const [loading, setLoading] = useState(true);
 
   const getAllUsers = async () => {
     try {
-      dispatch(setLoading(true));
-      let url = "/api/user/getallusers";
-      if (filter !== "all") {
-        url += `?filter=${filter}`;
-      }
-      if (searchTerm.trim() !== "") {
-        url += `${filter !== "all" ? "&" : "?"}search=${searchTerm}`;
-      }
-      const temp = await fetchData(url);
-      setUsers(temp);
-      dispatch(setLoading(false));
-    } catch (error) {}
+      setLoading(true);
+      const temp = await fetchData(`/api/user/getallusers`);
+      // Filter out only patients
+      const patients = temp.filter(u => u.role === "Patient");
+      setUsers(patients);
+    } catch (error) {
+      toast.error("Unable to load users");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const deleteUser = async (userId) => {
     try {
-      const confirm = window.confirm("Are you sure you want to delete?");
+      const confirm = window.confirm("Are you sure you want to delete this user?");
       if (confirm) {
-        await toast.promise(
-          axios.delete("/api/user/deleteuser", {
-            headers: {
-              authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-            data: { userId },
-          }),
-          {
-            pending: "Deleting in...",
-            success: "User deleted successfully",
-            error: "Unable to delete user",
-            loading: "Deleting user...",
-          }
-        );
-        getAllUsers();
+        const { data } = await axios.delete("/api/user/deleteuser", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          data: { userId }, // axios delete payload
+        });
+        if (data.success) {
+          toast.success(data.message || "User deleted");
+          getAllUsers();
+        }
       }
     } catch (error) {
-      return error;
-    }
-  };
-
-  const acceptUser = async (userId) => {
-    try {
-      const confirm = window.confirm("Are you sure you want to approve this doctor?");
-      if (confirm) {
-        await toast.promise(
-          axios.put(
-            "/api/doctor/acceptdoctor",
-            { id: userId },
-            {
-              headers: {
-                authorization: `Bearer ${localStorage.getItem("token")}`,
-              },
-            }
-          ),
-          {
-            success: "Doctor approved successfully",
-            error: "Unable to approve doctor",
-            loading: "Approving doctor...",
-          }
-        );
-        getAllUsers();
-      }
-    } catch (error) {
-      return error;
+      toast.error("Unable to delete user");
     }
   };
 
@@ -88,113 +49,52 @@ const Users = () => {
     getAllUsers();
   }, []);
 
-  const filteredUsers = users.filter((doc) => {
-    // Hide approved doctors as they move to the Doctors panel
-    if (doc.isDoctor && doc.role === "Doctor") return false;
-
-    if (filter === "all") {
-      return true;
-    } else if (filter === "firstname") {
-      return doc.firstname.toLowerCase().includes(searchTerm.toLowerCase());
-    } else {
-      return true;
-    }
-  });
-
   return (
     <>
+      <div className="admin-header">
+        <h2 className="admin-title">Manage Patients</h2>
+      </div>
+
       {loading ? (
         <Loading />
+      ) : users.length > 0 ? (
+        <div className="admin-table-wrapper">
+          <table className="appointments-table">
+            <thead>
+              <tr>
+                <th>S.No</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Gender</th>
+                <th>City</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((user, i) => (
+                <tr key={user._id}>
+                  <td>{i + 1}</td>
+                  <td>{user.firstname} {user.lastname}</td>
+                  <td>{user.email}</td>
+                  <td>{user.phone}</td>
+                  <td>{user.gender || "N/A"}</td>
+                  <td>{user.city}</td>
+                  <td>
+                    <button 
+                      className="btn btn-danger-outline btn-sm"
+                      onClick={() => deleteUser(user._id)}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : (
-        <section className="user-section">
-          <div className="ayx">
-            <div className="filter">
-              <label htmlFor="filter">Filter by:</label>
-              <select
-                id="filter"
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-              >
-                <option value="all">All</option>
-                <option value="firstname">Name</option>
-
-              </select>
-            </div>
-
-            <div className="search">
-              <label htmlFor="search">Search:</label>
-              <input
-                type="text"
-                className="form-input"
-                id="search"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search"
-              />
-            </div>
-          </div>
-          <h3 className="home-sub-heading">All Users</h3>
-          {users.length > 0 ? (
-            <div className="user-container">
-              <table>
-                <thead>
-                  <tr>
-                    <th>S.No</th>
-                    <th>Pic</th>
-                    <th>First Name</th>
-                    <th>Last Name</th>
-                    <th>Email</th>
-                    <th>Mobile No.</th>
-                    <th>Age</th>
-                    <th>Gender</th>
-                    <th>Is Doctor</th>
-                    <th>Remove</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredUsers.map((ele, i) => (
-                    <tr key={ele._id}>
-                      <td>{i + 1}</td>
-                      <td>
-                        <img
-                          className="user-table-pic"
-                          src={ele.pic}
-                          alt={ele.firstname}
-                        />
-                      </td>
-                      <td>{ele.firstname}</td>
-                      <td>{ele.lastname}</td>
-                      <td>{ele.email}</td>
-                      <td>{ele.mobile}</td>
-                      <td>{ele.age}</td>
-                      <td>{ele.gender}</td>
-                      <td>{ele.role === "Doctor" ? (ele.isDoctor ? "Yes" : "Pending Approval") : "No"}</td>
-                      <td className="select">
-                        {ele.role === "Doctor" && !ele.isDoctor && (
-                          <button
-                            className="btn user-btn accept-btn"
-                            style={{ backgroundColor: "#28a745", marginRight: "5px" }}
-                            onClick={() => acceptUser(ele._id)}
-                          >
-                            Approve
-                          </button>
-                        )}
-                        <button
-                          className="btn user-btn"
-                          onClick={() => deleteUser(ele._id)}
-                        >
-                          Remove
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <Empty />
-          )}
-        </section>
+        <Empty />
       )}
     </>
   );

@@ -1,54 +1,13 @@
 import React from "react";
-import {
-  FaHome,
-  FaList,
-  FaUser,
-  FaUserMd,
-  FaUsers,
-  FaEnvelope,
-} from "react-icons/fa";
-import "../styles/sidebar.css";
 import { NavLink, useNavigate } from "react-router-dom";
-import { MdLogout } from "react-icons/md";
 import { useDispatch } from "react-redux";
 import { setUserInfo } from "../redux/reducers/rootSlice";
+import { FaHome, FaUsers, FaUserMd, FaCalendarCheck, FaSignOutAlt } from "react-icons/fa";
+import "../styles/admin.css";
 
 const Sidebar = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
-  const sidebar = [
-    {
-      name: "Home",
-      path: "/dashboard/home",
-      icon: <FaHome />,
-    },
-    {
-      name: "Users",
-      path: "/dashboard/users",
-      icon: <FaUsers />,
-    },
-    {
-      name: "Doctors",
-      path: "/dashboard/doctors",
-      icon: <FaUserMd />,
-    },
-    {
-      name: "Appointments",
-      path: "/dashboard/appointments",
-      icon: <FaList />,
-    },
-    {
-      name: "Applications",
-      path: "/dashboard/applications",
-      icon: <FaEnvelope />,
-    },
-    {
-      name: "Profile",
-      path: "/dashboard/aprofile",
-      icon: <FaUser />,
-    },
-  ];
 
   const logoutFunc = () => {
     dispatch(setUserInfo({}));
@@ -57,26 +16,37 @@ const Sidebar = () => {
   };
 
   return (
-    <>
-      <section className="sidebar-section flex-center">
-        <div className="sidebar-container">
-          <ul>
-            {sidebar.map((ele, i) => {
-              return (
-                <li key={i}>
-                  {ele.icon}
-                  <NavLink to={ele.path}>{ele.name}</NavLink>
-                </li>
-              );
-            })}
-          </ul>
-          <div className="logout-container">
-            <MdLogout />
-            <p onClick={logoutFunc}>Logout</p>
-          </div>
-        </div>
-      </section>
-    </>
+    <aside className="sidebar">
+      <div className="sidebar-title">Admin Panel</div>
+      <ul className="sidebar-links">
+        <li>
+          <NavLink to="/dashboard/home" className={({ isActive }) => (isActive ? "active" : "")}>
+            <FaHome /> Dashboard
+          </NavLink>
+        </li>
+        <li>
+          <NavLink to="/dashboard/users" className={({ isActive }) => (isActive ? "active" : "")}>
+            <FaUsers /> Users
+          </NavLink>
+        </li>
+        <li>
+          <NavLink to="/dashboard/doctors" className={({ isActive }) => (isActive ? "active" : "")}>
+            <FaUserMd /> Doctors
+          </NavLink>
+        </li>
+        <li>
+          <NavLink to="/dashboard/appointments" className={({ isActive }) => (isActive ? "active" : "")}>
+            <FaCalendarCheck /> Appointments
+          </NavLink>
+        </li>
+        
+        <li className="logout-li">
+          <a href="#logout" onClick={(e) => { e.preventDefault(); logoutFunc(); }}>
+            <FaSignOutAlt /> Log Out
+          </a>
+        </li>
+      </ul>
+    </aside>
   );
 };
 

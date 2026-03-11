@@ -20,9 +20,9 @@ const HomeCircles = () => {
           )}
         </CountUp>
         <span className="circle-name">
-          Active IoT
+          Patients
           <br />
-          Dispensers
+          Treated
         </span>
       </div>
       <div className="circle">
@@ -60,9 +60,9 @@ const HomeCircles = () => {
           )}
         </CountUp>
         <span className="circle-name">
-          Biometric
+          Expert
           <br />
-          Authentications
+          Doctors
         </span>
       </div>
     </section>

@@ -1,79 +1,106 @@
 const User = require("../models/userModel");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
 const Doctor = require("../models/doctorModel");
 const Appointment = require("../models/appointmentModel");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 require("dotenv").config();
 
 const getuser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select("-password");
-    return res.send(user);
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    return res.status(200).json({ success: true, data: user });
   } catch (error) {
-    res.status(500).send("Unable to get user");
+    res.status(500).json({ success: false, message: "Unable to get user" });
   }
 };
 
 const getallusers = async (req, res) => {
   try {
-    const users = await User.find()
-      .find({ _id: { $ne: req.locals } })
-      .select("-password");
-    return res.send(users);
+    const users = await User.find({ _id: { $ne: req.locals } }).select("-password");
+    return res.status(200).json({ success: true, data: users });
   } catch (error) {
-    res.status(500).send("Unable to get all users");
+    res.status(500).json({ success: false, message: "Unable to get all users" });
   }
 };
 
 const login = async (req, res) => {
   try {
-    const emailPresent = await User.findOne({ email: req.body.email });
-    if (!emailPresent) {
-      return res.status(400).send("Incorrect credentials");
+    const { email, password, role } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ success: false, message: "Incorrect credentials" });
     }
-    if (emailPresent.role != req.body.role) {
-      return res.status(404).send("Role does not exist");
+    if (user.role !== role) {
+      return res.status(404).json({ success: false, message: "Role does not exist" });
     }
-    const verifyPass = await bcrypt.compare(
-      req.body.password,
-      emailPresent.password
-    );
+    const verifyPass = await bcrypt.compare(password, user.password);
     if (!verifyPass) {
-      return res.status(400).send("Incorrect credentials");
+      return res.status(400).json({ success: false, message: "Incorrect credentials" });
     }
+
+    // Check if Doctor is approved
+    if (user.role === "Doctor") {
+      const doctorDetails = await Doctor.findOne({ userId: user._id });
+      if (doctorDetails && doctorDetails.status !== "Approved") {
+         return res.status(403).json({ success: false, message: "Doctor account is pending approval or rejected." });
+      }
+    }
+
     const token = jwt.sign(
       {
-        userId: emailPresent._id,
-        isAdmin: emailPresent.isAdmin,
-        role: emailPresent.role,
+        userId: user._id,
+        role: user.role,
       },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "2 days",
-      }
+      process.env.JWT_SECRET || "secret",
+      { expiresIn: "2 days" }
     );
-    return res.status(201).send({ msg: "User logged in successfully", token });
+    return res.status(200).json({ success: true, data: { token, user } });
   } catch (error) {
-    res.status(500).send("Unable to login user");
+    res.status(500).json({ success: false, message: "Unable to login user" });
   }
 };
 
 const register = async (req, res) => {
   try {
-    const emailPresent = await User.findOne({ email: req.body.email });
+    const { firstname, lastname, email, password, phone, city, dateOfBirth, gender, role, specialization, experience, fees, qualifications, hospitalName, pic } = req.body;
+    
+    const emailPresent = await User.findOne({ email });
     if (emailPresent) {
-      return res.status(400).send("Email already exists");
+      return res.status(400).json({ success: false, message: "Email already exists" });
     }
-    const hashedPass = await bcrypt.hash(req.body.password, 10);
-    const user = await User({ ...req.body, password: hashedPass, isDoctor: false });
-    const result = await user.save();
-    if (!result) {
-      return res.status(500).send("Unable to register user");
+
+    const hashedPass = await bcrypt.hash(password, 10);
+    
+    // Create base user
+    const user = new User({
+      firstname, lastname, email, password: hashedPass, phone, city, role,
+      dateOfBirth: dateOfBirth || null,
+      gender: gender || "",
+      pic: pic || "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg"
+    });
+    
+    await user.save();
+
+    // If doctor, create pending doctor application
+    if (role === "Doctor") {
+      const doctor = new Doctor({
+        userId: user._id,
+        specialization,
+        experience,
+        fees,
+        qualifications,
+        hospitalName,
+        city
+      });
+      await doctor.save();
     }
-    return res.status(201).send("User registered successfully");
+
+    return res.status(201).json({ success: true, message: "User registered successfully" });
   } catch (error) {
-    res.status(500).send("Unable to register user");
+    console.error(error);
+    res.status(500).json({ success: false, message: "Unable to register user" });
   }
 };
 
@@ -85,66 +112,51 @@ const updateprofile = async (req, res) => {
     } else {
       delete updateData.password;
     }
-    const result = await User.findByIdAndUpdate({ _id: req.locals }, updateData);
+    const result = await User.findByIdAndUpdate(req.locals, updateData, { new: true });
     if (!result) {
-      return res.status(500).send("Unable to update user");
+      return res.status(500).json({ success: false, message: "Unable to update user" });
     }
-    return res.status(201).send("User updated successfully");
+    return res.status(200).json({ success: true, message: "User updated successfully", data: result });
   } catch (error) {
-    res.status(500).send("Unable to update user");
+    res.status(500).json({ success: false, message: "Unable to update user" });
   }
 };
+
 const changepassword = async (req, res) => {
   try {
-    console.log(req.body);
-    const { userId, currentPassword, newPassword, confirmNewPassword } =
-      req.body;
-    // console.log("Received newPassword:", newPassword);
+    const { userId, currentPassword, newPassword, confirmNewPassword } = req.body;
     if (newPassword !== confirmNewPassword) {
-      return res.status(400).send("Passwords do not match");
+      return res.status(400).json({ success: false, message: "Passwords do not match" });
     }
 
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).send("User not found");
+      return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    const isPasswordMatch = await bcrypt.compare(
-      currentPassword,
-      user.password
-    );
+    const isPasswordMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isPasswordMatch) {
-      return res.status(400).send("Incorrect current password");
+      return res.status(400).json({ success: false, message: "Incorrect current password" });
     }
 
-    const saltRounds = 10;
-    // console.log("Using saltRounds:", saltRounds);
-
-    const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
-    // console.log("Hashed new password:", hashedNewPassword);
-
-    user.password = hashedNewPassword;
+    user.password = await bcrypt.hash(newPassword, 10);
     await user.save();
 
-    return res.status(200).send("Password changed successfully");
+    return res.status(200).json({ success: true, message: "Password changed successfully" });
   } catch (error) {
-    console.error(error);
-    return res.status(500).send("Internal Server Error");
+    return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
 
 const deleteuser = async (req, res) => {
   try {
-    const result = await User.findByIdAndDelete(req.body.userId);
-    const removeDoc = await Doctor.findOneAndDelete({
-      userId: req.body.userId,
-    });
-    const removeAppoint = await Appointment.findOneAndDelete({
-      userId: req.body.userId,
-    });
-    return res.send("User deleted successfully");
+    const { userId } = req.body;
+    await User.findByIdAndDelete(userId);
+    await Doctor.findOneAndDelete({ userId });
+    await Appointment.deleteMany({ userId });
+    return res.status(200).json({ success: true, message: "User deleted successfully" });
   } catch (error) {
-    res.status(500).send("Unable to delete user");
+    res.status(500).json({ success: false, message: "Unable to delete user" });
   }
 };
 
@@ -152,15 +164,12 @@ const forgotpassword = async (req, res) => {
   try {
     const { email } = req.body;
     const user = await User.findOne({ email });
-    // console.log(user,email);
     if (!user) {
-      return res.status(404).send({ status: "User not found" });
+      return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1m",
-    });
-    // console.log(token)
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || "secret", { expiresIn: "10m" });
+
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -168,27 +177,23 @@ const forgotpassword = async (req, res) => {
         pass: process.env.EMAIL_PASS,
       },
     });
-    console.log(transporter);
 
     const mailOptions = {
       from: process.env.EMAIL_FROM,
       to: email,
-      subject: process.env.EMAIL_SUB,
-      text: `${process.env.EMAIL_TEXT}${user._id}/${token}`,
+      subject: process.env.EMAIL_SUB || "Password Reset",
+      text: `${process.env.EMAIL_TEXT || "Your reset link: "}${user._id}/${token}`,
     };
-    console.log(mailOptions);
 
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
-        console.log(error);
-        return res.status(500).send({ status: "Error sending email" });
+        return res.status(500).json({ success: false, message: "Error sending email" });
       } else {
-        return res.status(200).send({ status: "Email sent successfully" });
+        return res.status(200).json({ success: true, message: "Email sent successfully" });
       }
     });
   } catch (error) {
-    console.error(error);
-    return res.status(500).send({ status: "Internal Server Error" });
+    return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
 
@@ -196,26 +201,20 @@ const resetpassword = async (req, res) => {
   try {
     const { id, token } = req.params;
     const { password } = req.body;
-    // console.log(token)
-    // console.log(password);
-    jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
+    jwt.verify(token, process.env.JWT_SECRET || "secret", async (err, decoded) => {
       if (err) {
-        console.log(err);
-        return res.status(400).send({ error: "Invalid or expired token" });
+        return res.status(400).json({ success: false, message: "Invalid or expired token" });
       }
-
       try {
         const hashedPassword = await bcrypt.hash(password, 10);
         await User.findByIdAndUpdate(id, { password: hashedPassword });
-        return res.status(200).send({ success: "Password reset successfully" });
+        return res.status(200).json({ success: true, message: "Password reset successfully" });
       } catch (updateError) {
-        console.error("Error updating password:", updateError);
-        return res.status(500).send({ error: "Failed to update password" });
+        return res.status(500).json({ success: false, message: "Failed to update password" });
       }
     });
   } catch (error) {
-    console.error(error);
-    return res.status(500).send({ error: "Internal Server Error" });
+    return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
 

@@ -19,9 +19,22 @@ const schema = mongoose.Schema(
       type: Number,
       required: true,
     },
-    isDoctor: {
-      type: Boolean,
-      default: false,
+    qualifications: {
+      type: String,
+      required: true,
+    },
+    hospitalName: {
+      type: String,
+      required: true,
+    },
+    city: {
+      type: String,
+      required: true,
+    },
+    status: {
+      type: String,
+      enum: ["Pending", "Approved", "Rejected"],
+      default: "Pending",
     },
   },
   {

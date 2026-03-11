@@ -1,35 +1,80 @@
-@import url(app.css);
-
+/* doctorcard.css */
 .card {
+  background-color: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  border-radius: 10px;
-  padding: 1.5rem 2rem;
-  box-shadow: 0 0 10px 0 rgb(188, 188, 188);
 }
 
-.card-img {
-  margin: 0 auto;
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
-.card-img img {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
+.card-img-container {
+  height: 220px;
+  width: 100%;
+  overflow: hidden;
+  background-color: #f1f5f9;
+}
+
+.card-img-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.card:hover .card-img-container img {
+  transform: scale(1.05);
+}
+
+.card-details {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .card-name {
-  margin: 0 auto;
-  font-size: 1.2rem;
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.8rem;
+}
+
+.card-details p {
+  font-family: 'Inter', sans-serif;
+  margin-bottom: 0.4rem;
+  font-size: 0.9rem;
+  color: #475569;
+}
+
+.card-details strong {
+  color: #334155;
+  font-weight: 600;
 }
 
 .appointment-btn {
-  font-size: 0.8rem;
-  padding: 1rem;
-  margin: 1rem auto;
+  margin-top: auto;
+  align-self: flex-start;
+  background-color: #4361ee;
+  color: white;
+  padding: 0.7rem 1.2rem;
+  border: none;
+  border-radius: 6px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.3s ease;
+  margin-top: 1rem;
 }
 
-.card p {
-  width: 100%;
+.appointment-btn:hover {
+  background-color: #3f37c9;
 }

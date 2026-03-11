@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import "../styles/register.css";
+import "../styles/auth.css";
 import Navbar from "../components/Navbar";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -18,82 +18,33 @@ function Login() {
   const [formDetails, setFormDetails] = useState({
     email: "",
     password: "",
-    role: "",
+    role: "Patient", // Default to Patient
   });
-
-  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-
-  // 🔹 Validate each input field
-  const validateField = (name, value) => {
-    let error = "";
-
-    switch (name) {
-      case "email":
-        if (!value.trim()) error = "Email is required";
-        else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(value))
-          error = "Invalid email format";
-        break;
-      case "password":
-        if (!value.trim()) error = "Password is required";
-        else if (value.length < 5)
-          error = "Password must be at least 5 characters long";
-        break;
-      case "role":
-        if (!value.trim()) error = "Please select a role";
-        break;
-      default:
-        break;
-    }
-
-    setErrors((prev) => ({ ...prev, [name]: error }));
-  };
 
   const inputChange = (e) => {
     const { name, value } = e.target;
-    setFormDetails((prev) => ({ ...prev, [name]: value }));
-    validateField(name, value);
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-
-    Object.entries(formDetails).forEach(([key, value]) => {
-      validateField(key, value);
-      if (!value.trim()) newErrors[key] = `${key} is required`;
-    });
-
-    setErrors((prev) => ({ ...prev, ...newErrors }));
-    return Object.values(newErrors).every((e) => e === "");
+    setFormDetails({ ...formDetails, [name]: value });
   };
 
   const formSubmit = async (e) => {
     e.preventDefault();
     if (loading) return;
 
-    const isValid = validateForm();
-    if (!isValid) {
-      toast.error("Please fix the form errors before submitting");
-      return;
-    }
-
     try {
       setLoading(true);
       const { email, password, role } = formDetails;
 
-      const { data } = await toast.promise(
-        axios.post("/api/user/login", { email, password, role }),
-        {
-          loading: "Logging in...",
-          success: "Login successful!",
-          error: "Unable to login user",
-        }
-      );
-
-      localStorage.setItem("token", data.token);
-      const decoded = jwt_decode(data.token);
-      dispatch(setUserInfo(decoded.userId));
-      getUser(decoded.userId, role);
+      const response = await axios.post("/api/user/login", { email, password, role });
+      
+      if (response.data.success) {
+        toast.success("Login successful!");
+        const { token } = response.data.data;
+        localStorage.setItem("token", token);
+        const decoded = jwt_decode(token);
+        dispatch(setUserInfo(decoded.userId));
+        await getUser(decoded.userId, role);
+      }
     } catch (error) {
       toast.error(error?.response?.data?.message || "Login failed");
     } finally {
@@ -106,7 +57,6 @@ function Login() {
       const temp = await fetchData(`/api/user/getuser/${id}`);
       dispatch(setUserInfo(temp));
       if (role === "Admin") return navigate("/dashboard/home");
-      if (role === "Doctor") return navigate("/");
       return navigate("/");
     } catch (error) {
       toast.error("Failed to fetch user details");
@@ -116,78 +66,69 @@ function Login() {
   return (
     <>
       <Navbar />
-      <section className="register-section flex-center">
-        <div className="register-container flex-center">
-          <h2 className="form-heading">Sign In</h2>
-          <form onSubmit={formSubmit} className="register-form">
-            {/* Email */}
+      <section className="auth-section">
+        <div className="auth-container">
+          <h2 className="auth-heading">Welcome Back</h2>
+          
+          <div className="role-selector">
+            <button 
+              type="button"
+              className={`role-btn ${formDetails.role === "Patient" ? "active" : ""}`}
+              onClick={() => setFormDetails({...formDetails, role: "Patient"})}
+            >
+              Patient
+            </button>
+            <button 
+              type="button"
+              className={`role-btn ${formDetails.role === "Doctor" ? "active" : ""}`}
+              onClick={() => setFormDetails({...formDetails, role: "Doctor"})}
+            >
+              Doctor
+            </button>
+            <button 
+              type="button"
+              className={`role-btn ${formDetails.role === "Admin" ? "active" : ""}`}
+              onClick={() => setFormDetails({...formDetails, role: "Admin"})}
+            >
+              Admin
+            </button>
+          </div>
+
+          <form onSubmit={formSubmit} className="auth-form">
             <input
               type="email"
               name="email"
-              className={`form-input ${errors.email ? "error-input" : ""}`}
-              placeholder="Enter your email"
+              className="form-input"
+              placeholder="Email Address"
               value={formDetails.email}
               onChange={inputChange}
-              onBlur={(e) => validateField(e.target.name, e.target.value)}
+              required
             />
-            {errors.email && <p className="error-text">{errors.email}</p>}
 
-            {/* Password */}
             <input
               type="password"
               name="password"
-              className={`form-input ${errors.password ? "error-input" : ""}`}
-              placeholder="Enter your password"
+              className="form-input"
+              placeholder="Password"
               value={formDetails.password}
               onChange={inputChange}
-              onBlur={(e) => validateField(e.target.name, e.target.value)}
+              required
             />
-            {errors.password && <p className="error-text">{errors.password}</p>}
 
-            {/* Role */}
-            <select
-              name="role"
-              className={`form-input ${errors.role ? "error-input" : ""}`}
-              value={formDetails.role}
-              onChange={inputChange}
-              onBlur={(e) => validateField(e.target.name, e.target.value)}
-            >
-              <option value="">Select Role</option>
-              <option value="Admin">Admin</option>
-              <option value="Doctor">Doctor</option>
-              <option value="Pharmacist">Pharmacist</option>
-              <option value="Patient">Patient</option>
-            </select>
-            {errors.role && <p className="error-text">{errors.role}</p>}
-
-            <button
-              type="button"
-              className="btn form-btn"
-              style={{ backgroundColor: "#17a2b8", marginBottom: "10px" }}
-              onClick={() => toast.success("Biometric scan initiated (Arduino R305)")}
-            >
-              Scan Fingerprint & Request OTP
-            </button>
-
-            {/* Submit Button */}
             <button
               type="submit"
-              className="btn form-btn"
+              className="btn btn-primary btn-full"
               disabled={loading}
             >
               {loading ? "Signing in..." : "Sign In"}
             </button>
           </form>
 
-          <NavLink className="login-link" to={"/forgotpassword"}>
-            Forgot Password
-          </NavLink>
-
-          <p>
-            Not a user?{" "}
-            <NavLink className="login-link" to={"/register"}>
-              Register
+          <p className="auth-footer">
+            <NavLink className="auth-link" to="/forgotpassword" style={{ display: "block", marginBottom: "0.5rem" }}>
+              Forgot Password?
             </NavLink>
+            Not a user? <NavLink className="auth-link" to="/register">Register</NavLink>
           </p>
         </div>
       </section>

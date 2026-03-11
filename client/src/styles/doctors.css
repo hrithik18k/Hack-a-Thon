@@ -1,13 +1,61 @@
-@import url(app.css);
+/* doctors.css */
+.doctors-section {
+  padding: 4rem 1rem;
+  background-color: #f8fafc;
+  min-height: 80vh;
+}
 
-.doctors {
-  margin-bottom: 5rem;
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.doctors-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.page-title {
+  font-family: 'Poppins', sans-serif;
+  color: #1e293b;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.filters-container {
+  display: flex;
+  gap: 1rem;
+}
+
+.filter-input {
+  padding: 0.8rem 1.2rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: white;
+  min-width: 200px;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.3s ease;
+}
+
+.filter-input:focus {
+  outline: none;
+  border-color: #4361ee;
+  box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
 }
 
 .doctors-card-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2rem;
+}
+
+/* Pagination container if added later */
+.pagination {
+  margin-top: 3rem;
   display: flex;
-  flex-wrap: wrap;
-  justify-content: space-evenly;
-  gap: 3rem;
-  width: 100%;
+  justify-content: center;
 }

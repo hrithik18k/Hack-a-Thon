@@ -1,0 +1,116 @@
+/* patienthistory.css */
+.history-modal {
+  max-width: 800px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.history-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  overflow-y: auto;
+  padding-right: 1rem;
+}
+
+.history-timeline::-webkit-scrollbar {
+  width: 6px;
+}
+.history-timeline::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+.history-timeline::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.history-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.history-header {
+  background: #f8fafc;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.history-date {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  color: #4361ee;
+}
+
+.history-doctor {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.history-doctor strong {
+  color: #334155;
+}
+
+.history-body {
+  padding: 1.5rem;
+  font-family: 'Inter', sans-serif;
+  color: #334155;
+  font-size: 0.95rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.meds-list {
+  background: #f1f5f9;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-top: 0.5rem;
+}
+
+.meds-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0 0;
+}
+
+.meds-list li {
+  margin-bottom: 0.4rem;
+  padding-left: 1.2rem;
+  position: relative;
+}
+
+.meds-list li::before {
+  content: '•';
+  color: #4361ee;
+  position: absolute;
+  left: 0;
+  font-weight: bold;
+}
+
+.med-name {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.follow-up {
+  margin-top: 0.5rem;
+  padding-top: 0.8rem;
+  border-top: 1px dashed #cbd5e1;
+  color: #d97706;
+}
+
+.empty-history {
+  padding: 3rem;
+  text-align: center;
+  color: #64748b;
+  font-family: 'Inter', sans-serif;
+}

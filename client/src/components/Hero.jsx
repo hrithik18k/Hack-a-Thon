@@ -7,13 +7,13 @@ const Hero = () => {
     <section className="hero">
       <div className="hero-content">
         <h1>
-          Secure IoT Health <br />
-          Records & Smart Medical Dispensing
+          Modern Enterprise <br />
+          Doctor-Patient Appointment System
         </h1>
         <p>
-          Empowering patients with full data control through R305 Biometric
-          fingerprint authentication and OTP. Enjoy cross-hospital interoperability
-          and automated pharmacy smart dispensing for elderly care.
+          Empowering patients with full control over their medical history and
+          appointments. Delivering seamless digital healthcare and robust
+          administrative tools for medical professionals.
         </p>
       </div>
       <div className="hero-img">

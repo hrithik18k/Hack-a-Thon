@@ -10,10 +10,7 @@ const userRouter = require("./routes/userRoutes");
 const doctorRouter = require("./routes/doctorRoutes");
 const appointRouter = require("./routes/appointRoutes");
 const notificationRouter = require("./routes/notificationRouter");
-const medicalRecordRouter = require("./routes/medicalRecordRoutes");
-const prescriptionRouter = require("./routes/prescriptionRoutes");
-const accessLogRouter = require("./routes/accessLogRoutes");
-const dispenserRouter = require("./routes/dispenserRoutes");
+const reportRouter = require("./routes/reportRoutes");
 
 const app = express();
 const port = process.env.PORT || 5015;
@@ -36,10 +33,7 @@ app.use("/api/user", userRouter);
 app.use("/api/doctor", doctorRouter);
 app.use("/api/appointment", appointRouter);
 app.use("/api/notification", notificationRouter);
-app.use("/api/medicalrecord", medicalRecordRouter);
-app.use("/api/prescription", prescriptionRouter);
-app.use("/api/accesslog", accessLogRouter);
-app.use("/api/dispenser", dispenserRouter);
+app.use("/api/report", reportRouter);
 
 // Serve uploaded files
 app.use("/uploads", express.static(uploadsDir));

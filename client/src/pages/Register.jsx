@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import "../styles/register.css";
+import "../styles/auth.css";
 import Navbar from "../components/Navbar";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -9,9 +9,8 @@ axios.defaults.baseURL = process.env.REACT_APP_SERVER_DOMAIN;
 
 function Register() {
   const [file, setFile] = useState("");
-  const [selectedRole, setSelectedRole] = useState("");
+  const [selectedRole, setSelectedRole] = useState("Patient");
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
   const navigate = useNavigate();
 
   const [formDetails, setFormDetails] = useState({
@@ -20,63 +19,26 @@ function Register() {
     email: "",
     password: "",
     confpassword: "",
+    phone: "",
+    city: "",
+    dateOfBirth: "",
+    gender: "",
+    // Doctor specific fields:
+    specialization: "",
+    experience: "",
+    fees: "",
+    qualifications: "",
+    hospitalName: "",
   });
-
-  // 🔹 Validate individual fields
-  const validateField = (name, value) => {
-    let error = "";
-
-    switch (name) {
-      case "firstname":
-        if (!value.trim()) error = "First name is required";
-        else if (value.length < 3)
-          error = "First name must be at least 3 characters";
-        break;
-
-      case "lastname":
-        if (!value.trim()) error = "Last name is required";
-        else if (value.length < 3)
-          error = "Last name must be at least 3 characters";
-        break;
-
-      case "email":
-        if (!value.trim()) error = "Email is required";
-        else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(value))
-          error = "Invalid email format";
-        break;
-
-      case "password":
-        if (!value.trim()) error = "Password is required";
-        else if (value.length < 5)
-          error = "Password must be at least 5 characters";
-        break;
-
-      case "confpassword":
-        if (!value.trim()) error = "Confirm password is required";
-        else if (value !== formDetails.password)
-          error = "Passwords do not match";
-        break;
-
-      default:
-        break;
-    }
-
-    setErrors((prev) => ({ ...prev, [name]: error }));
-  };
 
   const inputChange = (e) => {
     const { name, value } = e.target;
-    setFormDetails((prev) => ({ ...prev, [name]: value }));
-    validateField(name, value);
+    setFormDetails({ ...formDetails, [name]: value });
   };
 
   const onUpload = async (element) => {
     setLoading(true);
-    if (
-      element.type === "image/jpeg" ||
-      element.type === "image/png" ||
-      element.type === "image/jpg"
-    ) {
+    if (element.type === "image/jpeg" || element.type === "image/png" || element.type === "image/jpg") {
       const data = new FormData();
       data.append("file", element);
       data.append("upload_preset", process.env.REACT_APP_CLOUDINARY_PRESET);
@@ -101,49 +63,25 @@ function Register() {
     }
   };
 
-  const validateForm = () => {
-    const newErrors = {};
-    Object.entries(formDetails).forEach(([key, value]) =>
-      validateField(key, value)
-    );
-
-    if (!selectedRole) newErrors.role = "Please select a role";
-    if (!file) newErrors.file = "Please upload a profile picture";
-
-    setErrors((prev) => ({ ...prev, ...newErrors }));
-
-    return Object.values(newErrors).every((error) => error === "");
-  };
-
   const formSubmit = async (e) => {
     e.preventDefault();
 
-    if (loading) return;
-    const isValid = validateForm();
-    if (!isValid) {
-      toast.error("Please fix form errors before submitting");
+    if (formDetails.password !== formDetails.confpassword) {
+      toast.error("Passwords do not match");
       return;
     }
 
-    const { firstname, lastname, email, password } = formDetails;
-
     try {
-      await toast.promise(
-        axios.post("/api/user/register", {
-          firstname,
-          lastname,
-          email,
-          password,
-          pic: file,
-          role: selectedRole,
-        }),
-        {
-          loading: "Registering user...",
-          success: "User registered successfully!",
-          error: "Unable to register user",
-        }
-      );
-      navigate("/login");
+      const payload = { ...formDetails, pic: file, role: selectedRole };
+      
+      const response = await axios.post("/api/user/register", payload);
+      
+      if (response.data.success) {
+        toast.success(response.data.message || "User registered successfully!");
+        navigate("/login");
+      } else {
+        toast.error(response.data.message || "Registration failed");
+      }
     } catch (error) {
       toast.error(error?.response?.data?.message || "Server error");
     }
@@ -152,121 +90,83 @@ function Register() {
   return (
     <>
       <Navbar />
-      <section className="register-section flex-center">
-        <div className="register-container flex-center">
-          <h2 className="form-heading">Sign Up</h2>
-          <form onSubmit={formSubmit} className="register-form">
-            {/* First Name */}
-            <input
-              type="text"
-              name="firstname"
-              className={`form-input ${errors.firstname ? "error-input" : ""}`}
-              placeholder="Enter your first name"
-              value={formDetails.firstname}
-              onChange={inputChange}
-              onBlur={(e) => validateField(e.target.name, e.target.value)}
-            />
-            {errors.firstname && <p className="error-text">{errors.firstname}</p>}
+      <section className="auth-section">
+        <div className="auth-container register-container">
+          <h2 className="auth-heading">Create an Account</h2>
+          
+          <div className="role-selector">
+            <button 
+              className={`role-btn ${selectedRole === "Patient" ? "active" : ""}`}
+              onClick={() => setSelectedRole("Patient")}
+            >
+              Patient
+            </button>
+            <button 
+              className={`role-btn ${selectedRole === "Doctor" ? "active" : ""}`}
+              onClick={() => setSelectedRole("Doctor")}
+            >
+              Doctor
+            </button>
+          </div>
 
-            {/* Last Name */}
-            <input
-              type="text"
-              name="lastname"
-              className={`form-input ${errors.lastname ? "error-input" : ""}`}
-              placeholder="Enter your last name"
-              value={formDetails.lastname}
-              onChange={inputChange}
-              onBlur={(e) => validateField(e.target.name, e.target.value)}
-            />
-            {errors.lastname && <p className="error-text">{errors.lastname}</p>}
+          <form onSubmit={formSubmit} className="auth-form">
+            <div className="form-row">
+              <input type="text" name="firstname" className="form-input" placeholder="First Name" value={formDetails.firstname} onChange={inputChange} required />
+              <input type="text" name="lastname" className="form-input" placeholder="Last Name" value={formDetails.lastname} onChange={inputChange} required />
+            </div>
 
-            {/* Email */}
-            <input
-              type="email"
-              name="email"
-              className={`form-input ${errors.email ? "error-input" : ""}`}
-              placeholder="Enter your email"
-              value={formDetails.email}
-              onChange={inputChange}
-              onBlur={(e) => validateField(e.target.name, e.target.value)}
-            />
-            {errors.email && <p className="error-text">{errors.email}</p>}
+            <div className="form-row">
+              <input type="email" name="email" className="form-input" placeholder="Email Address" value={formDetails.email} onChange={inputChange} required />
+              <input type="tel" name="phone" className="form-input" placeholder="Phone Number" value={formDetails.phone} onChange={inputChange} required />
+            </div>
 
-            {/* Profile Picture */}
-            <input
-              type="file"
-              onChange={(e) => onUpload(e.target.files[0])}
-              name="profile-pic"
-              id="profile-pic"
-              className={`form-input ${errors.file ? "error-input" : ""}`}
-            />
-            {errors.file && <p className="error-text">{errors.file}</p>}
+            <div className="form-row">
+              <input type="password" name="password" className="form-input" placeholder="Password" value={formDetails.password} onChange={inputChange} required />
+              <input type="password" name="confpassword" className="form-input" placeholder="Confirm Password" value={formDetails.confpassword} onChange={inputChange} required />
+            </div>
 
-            {/* Password */}
-            <input
-              type="password"
-              name="password"
-              className={`form-input ${errors.password ? "error-input" : ""}`}
-              placeholder="Enter your password"
-              value={formDetails.password}
-              onChange={inputChange}
-              onBlur={(e) => validateField(e.target.name, e.target.value)}
-            />
-            {errors.password && <p className="error-text">{errors.password}</p>}
+            <div className="form-row">
+              <input type="text" name="city" className="form-input" placeholder="City" value={formDetails.city} onChange={inputChange} required />
+              <div className="file-input-wrapper">
+                <input type="file" onChange={(e) => onUpload(e.target.files[0])} name="profile-pic" className="form-input file-input" />
+              </div>
+            </div>
 
-            {/* Confirm Password */}
-            <input
-              type="password"
-              name="confpassword"
-              className={`form-input ${errors.confpassword ? "error-input" : ""}`}
-              placeholder="Confirm your password"
-              value={formDetails.confpassword}
-              onChange={inputChange}
-              onBlur={(e) => validateField(e.target.name, e.target.value)}
-            />
-            {errors.confpassword && (
-              <p className="error-text">{errors.confpassword}</p>
+            {selectedRole === "Patient" && (
+              <div className="form-row">
+                <input type="date" name="dateOfBirth" className="form-input" value={formDetails.dateOfBirth} onChange={inputChange} required />
+                <select name="gender" className="form-input" value={formDetails.gender} onChange={inputChange} required>
+                  <option value="">Select Gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
             )}
 
-            {/* Role */}
-            <select
-              name="role"
-              value={selectedRole}
-              onChange={(e) => setSelectedRole(e.target.value)}
-              className={`form-input ${errors.role ? "error-input" : ""}`}
-            >
-              <option value="">Select Role</option>
-              <option value="Admin">Admin</option>
-              <option value="Doctor">Doctor</option>
-              <option value="Pharmacist">Pharmacist</option>
-              <option value="Patient">Patient</option>
-            </select>
-            {errors.role && <p className="error-text">{errors.role}</p>}
+            {selectedRole === "Doctor" && (
+              <>
+                <div className="form-row">
+                  <input type="text" name="specialization" className="form-input" placeholder="Specialization" value={formDetails.specialization} onChange={inputChange} required />
+                  <input type="number" name="experience" className="form-input" placeholder="Experience (years)" value={formDetails.experience} onChange={inputChange} required />
+                </div>
+                <div className="form-row">
+                  <input type="number" name="fees" className="form-input" placeholder="Consultation Fees" value={formDetails.fees} onChange={inputChange} required />
+                  <input type="text" name="qualifications" className="form-input" placeholder="Qualifications/Degree" value={formDetails.qualifications} onChange={inputChange} required />
+                </div>
+                <div className="form-row">
+                  <input type="text" name="hospitalName" className="form-input" placeholder="Hospital/Clinic Name" value={formDetails.hospitalName} onChange={inputChange} required />
+                </div>
+              </>
+            )}
 
-            <button
-              type="button"
-              className="btn form-btn"
-              style={{ backgroundColor: "#17a2b8", marginBottom: "10px" }}
-              onClick={() => toast.success("Biometric scan initiated (Arduino R305)")}
-            >
-              Register Fingerprint
-            </button>
-
-            {/* Submit */}
-            <button
-              type="submit"
-              className="btn form-btn"
-              disabled={loading}
-            >
-              {loading ? "Uploading..." : "Sign Up"}
+            <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
+              {loading ? "Processing..." : selectedRole === "Doctor" ? "Apply as Doctor" : "Register"}
             </button>
           </form>
 
-          <p>
-            Already a user?{" "}
-            <NavLink className="login-link" to={"/login"}>
-              Log in
-            </NavLink>
+          <p className="auth-footer">
+            Already have an account? <NavLink className="auth-link" to="/login">Log in</NavLink>
           </p>
         </div>
       </section>
