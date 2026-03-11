@@ -210,6 +210,15 @@ function Profile() {
               <button type="submit" className="btn btn-primary btn-full" style={{ marginTop: '1rem' }}>
                 Update Profile
               </button>
+              
+              <button 
+                type="button" 
+                className="btn btn-secondary-outline btn-full" 
+                style={{ marginTop: '1rem', borderStyle: 'dashed' }}
+                onClick={() => toast("Feature coming soon 🚀", { icon: "👆" })}
+              >
+                Update your fingerprints
+              </button>
             </form>
           </div>
         </section>

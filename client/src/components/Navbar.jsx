@@ -68,6 +68,7 @@ const Navbar = () => {
           {user && user.role === "Doctor" && (
             <>
               <li><NavLink to={"/appointments"}>Appointments</NavLink></li>
+              <li><NavLink to={"/emergency"}>Emergency</NavLink></li>
               <li><NavLink to={"/notifications"}>Notifications</NavLink></li>
               <li><NavLink to={"/profile"}>Profile</NavLink></li>
             </>

@@ -20,6 +20,7 @@ const ChangePassword = lazy(() => import("./pages/ChangePassword"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const MedicalHistory = lazy(() => import("./pages/MedicalHistory"));
+const Emergency = lazy(() => import("./pages/Emergency"));
 
 function App() {
   return (
@@ -42,6 +43,7 @@ function App() {
           <Route path="/changepassword" element={<Protected><ChangePassword /></Protected>} />
           <Route path="/medical-history" element={<Protected><MedicalHistory /></Protected>} />
           <Route path="/doctor/write-report" element={<Protected><WriteReportPage /></Protected>} />
+          <Route path="/emergency" element={<Protected><Emergency /></Protected>} />
 
           {/* Admin routes */}
           <Route path="/dashboard/home" element={<Admin><Dashboard type={"home"} /></Admin>} />
