@@ -5,7 +5,6 @@ import Footer from "../components/Footer";
 import fetchData from "../helper/apiCall";
 import toast from "react-hot-toast";
 import Loading from "../components/Loading";
-import "../styles/patienthistory.css";
 import Empty from "../components/Empty";
 
 const MedicalHistory = () => {
@@ -40,7 +39,7 @@ const MedicalHistory = () => {
           {loading ? (
             <Loading />
           ) : reports.length > 0 ? (
-            <div className="history-timeline" style={{ marginTop: '2rem' }}>
+            <div className="history-timeline">
               {reports.map((report) => (
                 <div key={report._id} className="history-card">
                   <div className="history-header">

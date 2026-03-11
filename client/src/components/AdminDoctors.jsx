@@ -16,8 +16,6 @@ const AdminDoctors = () => {
       setLoading(true);
       const pendingRes = await fetchData(`/api/doctor/getnotdoctors`);
       const approvedRes = await fetchData(`/api/doctor/getalldoctors`);
-      
-      // Merge all doctors
       const allDocs = [...(pendingRes || []), ...(approvedRes || [])];
       setDoctors(allDocs);
     } catch (error) {
@@ -49,6 +47,24 @@ const AdminDoctors = () => {
     }
   };
 
+  const deleteDoctor = async (userId) => {
+    try {
+      if (window.confirm("Are you sure you want to delete this doctor?")) {
+        const { data } = await axios.put("/api/doctor/deletedoctor", { userId }, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        if (data.success) {
+          toast.success(data.message || "Doctor removed");
+          getAllDoctors();
+        }
+      }
+    } catch (error) {
+      toast.error("Unable to delete doctor");
+    }
+  };
+
   useEffect(() => {
     getAllDoctors();
   }, []);
@@ -77,8 +93,10 @@ const AdminDoctors = () => {
               <tr>
                 <th>S.No</th>
                 <th>Name</th>
+                <th>Email</th>
                 <th>Specialization</th>
                 <th>Hospital</th>
+                <th>City</th>
                 <th>Status</th>
                 <th>Action</th>
               </tr>
@@ -88,30 +106,40 @@ const AdminDoctors = () => {
                 <tr key={doc._id}>
                   <td>{i + 1}</td>
                   <td>Dr. {doc.userId?.firstname} {doc.userId?.lastname}</td>
+                  <td>{doc.userId?.email}</td>
                   <td>{doc.specialization}</td>
                   <td>{doc.hospitalName}</td>
+                  <td>{doc.city}</td>
                   <td>
                     <span className={`badge ${getStatusBadge(doc.status)}`}>
                       {doc.status || "Pending"}
                     </span>
                   </td>
                   <td>
-                    {doc.status === "Pending" && (
-                      <div className="action-buttons">
-                        <button 
-                          className="btn btn-primary-outline btn-sm"
-                          onClick={() => handleAction(doc.userId?._id, "Approve")}
-                        >
-                          Approve
-                        </button>
-                        <button 
-                          className="btn btn-danger-outline btn-sm"
-                          onClick={() => handleAction(doc.userId?._id, "Reject")}
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    )}
+                    <div className="action-buttons">
+                      {doc.status === "Pending" && (
+                        <>
+                          <button 
+                            className="btn btn-primary-outline btn-sm"
+                            onClick={() => handleAction(doc.userId?._id, "Approve")}
+                          >
+                            Approve
+                          </button>
+                          <button 
+                            className="btn btn-danger-outline btn-sm"
+                            onClick={() => handleAction(doc.userId?._id, "Reject")}
+                          >
+                            Reject
+                          </button>
+                        </>
+                      )}
+                      <button 
+                        className="btn btn-danger-outline btn-sm"
+                        onClick={() => deleteDoctor(doc.userId?._id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

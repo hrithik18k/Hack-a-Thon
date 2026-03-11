@@ -7,7 +7,6 @@ import { useDispatch } from "react-redux";
 import Loading from "../components/Loading";
 import fetchData from "../helper/apiCall";
 import jwt_decode from "jwt-decode";
-import "../styles/auth.css";
 
 axios.defaults.baseURL = process.env.REACT_APP_SERVER_DOMAIN;
 
@@ -105,11 +104,11 @@ function Profile() {
               <p className="auth-subtitle">Update your personal information</p>
             </div>
             
-            <div style={{ textAlign: "center", marginBottom: "2rem" }}>
+            <div className="flex-center" style={{ marginBottom: '2rem' }}>
               <img
                 src={file}
                 alt="profile"
-                style={{ width: "120px", height: "120px", borderRadius: "50%", objectFit: "cover", border: "4px solid #f1f5f9" }}
+                className="profile-pic"
               />
             </div>
 
@@ -153,7 +152,7 @@ function Profile() {
                     onChange={inputChange}
                     disabled
                   />
-                  <small style={{ color: "#64748b" }}>Email cannot be changed</small>
+                  <small>Email cannot be changed</small>
                 </div>
                 <div className="form-group">
                   <label htmlFor="phone">Phone Number</label>

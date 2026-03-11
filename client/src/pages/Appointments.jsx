@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import "../styles/appointments.css";
 import fetchData from "../helper/apiCall";
 import Empty from "../components/Empty";
 import jwtDecode from "jwt-decode";

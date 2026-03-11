@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import "../styles/auth.css";
 import Navbar from "../components/Navbar";
 import axios from "axios";
 import toast from "react-hot-toast";

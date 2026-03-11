@@ -3,7 +3,6 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setUserInfo } from "../redux/reducers/rootSlice";
 import { FaHome, FaUsers, FaUserMd, FaCalendarCheck, FaSignOutAlt } from "react-icons/fa";
-import "../styles/admin.css";
 
 const Sidebar = () => {
   const dispatch = useDispatch();

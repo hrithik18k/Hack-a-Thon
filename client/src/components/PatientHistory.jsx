@@ -4,7 +4,6 @@ import { IoMdClose } from "react-icons/io";
 import fetchData from "../helper/apiCall";
 import toast from "react-hot-toast";
 import Loading from "./Loading";
-import "../styles/patienthistory.css";
 
 const PatientHistory = ({ patientId, setModalOpen }) => {
   const [reports, setReports] = useState([]);

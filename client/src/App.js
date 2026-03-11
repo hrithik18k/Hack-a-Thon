@@ -5,7 +5,7 @@ import { Protected, Public, Admin } from "./middleware/route";
 import Loading from "./components/Loading";
 import Error from "./pages/Error";
 
-import "./styles/app.css";
+import "./styles/global.css";
 
 const Home = lazy(() => import("./pages/Home"));
 const WriteReportPage = lazy(() => import("./pages/WriteReportPage"));

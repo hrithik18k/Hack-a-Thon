@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import "../styles/doctorcard.css";
 import BookAppointment from "../components/BookAppointment";
 import toast from "react-hot-toast";
 

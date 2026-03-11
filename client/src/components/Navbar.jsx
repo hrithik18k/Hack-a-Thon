@@ -1,9 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import "../styles/navbar.css";
 import { useDispatch } from "react-redux";
 import { setUserInfo } from "../redux/reducers/rootSlice";
-import { FiMenu } from "react-icons/fi";
+import { FiMenu, FiSun, FiMoon } from "react-icons/fi";
 import { RxCross1 } from "react-icons/rx";
 import jwtDecode from "jwt-decode";
 import axios from "axios";
@@ -19,6 +18,18 @@ const Navbar = () => {
   try {
     if (token) user = jwtDecode(token);
   } catch(e) {}
+
+  // Theme toggle
+  const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === "light" ? "dark" : "light");
+  };
 
   const logoutFunc = () => {
     dispatch(setUserInfo({}));
@@ -75,9 +86,15 @@ const Navbar = () => {
             </div>
           ) : (
             <li>
-              <button className="btn-danger-outline nav-logout-btn" onClick={logoutFunc}>Logout</button>
+              <button className="btn btn-danger-outline btn-sm nav-logout-btn" onClick={logoutFunc}>Logout</button>
             </li>
           )}
+
+          <li>
+            <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme">
+              {theme === "light" ? <FiMoon /> : <FiSun />}
+            </button>
+          </li>
         </ul>
       </nav>
     </header>

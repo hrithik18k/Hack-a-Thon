@@ -4,7 +4,6 @@ import AdminDoctors from "../components/AdminDoctors";
 import Sidebar from "../components/Sidebar";
 import Users from "../components/Users";
 import DashboardHome from "../components/DashboardHome";
-import "../styles/admin.css";
 
 const Dashboard = ({ type }) => {
   return (

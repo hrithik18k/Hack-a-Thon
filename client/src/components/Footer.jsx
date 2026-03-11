@@ -1,5 +1,4 @@
 import React from "react";
-import "../styles/footer.css";
 import { FaFacebookF, FaYoutube, FaInstagram } from "react-icons/fa";
 import { HashLink } from "react-router-hash-link";
 import { NavLink } from "react-router-dom";

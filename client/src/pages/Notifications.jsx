@@ -6,7 +6,6 @@ import Navbar from "../components/Navbar";
 import fetchData from "../helper/apiCall";
 import { setLoading } from "../redux/reducers/rootSlice";
 import Loading from "../components/Loading";
-import "../styles/appointments.css"; // Reuse table styling
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
