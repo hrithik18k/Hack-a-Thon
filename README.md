@@ -1,4 +1,4 @@
-# 🏥 [Medi track](https://mediconnect-fqk1.onrender.com) - Healthcare Appointment & Medical History Ecosystem
+# 🏥 [Medi Track](https://mediconnect-fqk1.onrender.com) - Healthcare Appointment & Medical History Ecosystem
 
 ![Medi Track Banner](https://img.shields.io/badge/Medi_Track-Healthcare_Platform-040d21?style=for-the-badge&logo=react)
 
