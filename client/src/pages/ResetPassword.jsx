@@ -24,15 +24,17 @@ function ResetPassword() {
     try {
       const response = await axios.post(`/api/user/resetpassword/${id}/${token}`, { password });
 
-      if (response.status === 200) {
-        toast.success("Password reset successfully");
+      if (response.data.success) {
+        toast.success(response.data.message || "Password reset successfully");
         navigate('/login');
-      } else {
-        toast.error("Failed to reset password. Please try again.");
       }
     } catch (error) {
       console.error("Error resetting password:", error);
-      toast.error("Failed to reset password. Please try again.");
+      if (error.response && error.response.data && error.response.data.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Failed to reset password. Please try again.");
+      }
     }
   };
 
