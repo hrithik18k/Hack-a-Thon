@@ -1,8 +1,7 @@
-# 🏥 MediConnect - Healthcare Appointment & Medical History Ecosystem
+# 🏥 [MediConnect](https://mediconnect-fqk1.onrender.com) - Healthcare Appointment & Medical History Ecosystem
 
 ![MediConnect Banner](https://img.shields.io/badge/MediConnect-Healthcare_Platform-040d21?style=for-the-badge&logo=react)
 
-**Live Demo:** [https://mediconnect-fqk1.onrender.com/](https://mediconnect-fqk1.onrender.com/)
 
 **MediConnect** is an advanced, enterprise-grade, yet empathy-focused platform that bridges the gap between doctors and patients. Built with a stunning **Premium Glassmorphism** design, it provides a unified, stress-free appointment ecosystem. 
 
@@ -119,7 +118,6 @@ This application is scalable and designed to be effortlessly deployed.
 - **Backend:** Hosted dynamically on [Render](https://render.com/), equipped with customized conditional logic to prevent crashing whether running side-by-side with React or functioning as a standalone API.
 - **Frontend:** Continually deployed securely as a Static Site relying on environment variables.
 
-> **Important Note regarding Environment Variables:** Since `.env` files are rightfully part of `.gitignore`, production credentials must be manually entered into the Render Environment variable dashboards for both backend services and frontend static deployments to function successfully.
 
 ---
 
