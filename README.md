@@ -1,9 +1,9 @@
-# 🏥 [MediConnect](https://mediconnect-fqk1.onrender.com) - Healthcare Appointment & Medical History Ecosystem
+# 🏥 [Medi track](https://Medi track-fqk1.onrender.com) - Healthcare Appointment & Medical History Ecosystem
 
-![MediConnect Banner](https://img.shields.io/badge/MediConnect-Healthcare_Platform-040d21?style=for-the-badge&logo=react)
+![Medi track Banner](https://img.shields.io/badge/Medi track-Healthcare_Platform-040d21?style=for-the-badge&logo=react)
 
 
-**MediConnect** is an advanced, enterprise-grade, yet empathy-focused platform that bridges the gap between doctors and patients. Built with a stunning **Premium Glassmorphism** design, it provides a unified, stress-free appointment ecosystem. 
+**Medi track** is an advanced, enterprise-grade, yet empathy-focused platform that bridges the gap between doctors and patients. Built with a stunning **Premium Glassmorphism** design, it provides a unified, stress-free appointment ecosystem. 
 
 Patients can seamlessly search for specialized doctors (with robust case-insensitive filtering by city), securely schedule visits, and maintain an organized, chronological record of their medical history. Doctors can efficiently manage their appointments, draft complete patient reports, and utilize modern tools so they can focus entirely on what matters most: patient care. 🚀
 
@@ -81,7 +81,7 @@ CLIENT_URL=http://localhost:3000
 
 EMAIL_USER=your_gmail_address
 EMAIL_PASS=your_gmail_app_password
-EMAIL_FROM="MediConnect Support"
+EMAIL_FROM="Medi track Support"
 EMAIL_SUB="Password Reset Request"
 EMAIL_TEXT="Click here to reset your password: http://localhost:3000/resetpassword/"
 ```

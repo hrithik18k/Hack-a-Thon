@@ -17,7 +17,7 @@ const Navbar = () => {
   let user = null;
   try {
     if (token) user = jwtDecode(token);
-  } catch(e) {}
+  } catch (e) { }
 
   // Theme toggle
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
@@ -41,9 +41,9 @@ const Navbar = () => {
     <header className="navbar-container">
       <nav className={`nav ${iconActive ? "nav-active" : ""}`}>
         <h2 className="nav-logo">
-          <NavLink to={"/"}>MediConnect</NavLink>
+          <NavLink to={"/"}>Medi track</NavLink>
         </h2>
-        
+
         <div className="menu-icons">
           {!iconActive ? (
             <FiMenu className="menu-open" onClick={() => setIconActive(true)} />
