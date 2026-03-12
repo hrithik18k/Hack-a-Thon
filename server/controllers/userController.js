@@ -182,8 +182,11 @@ const forgotpassword = async (req, res) => {
       },
     });
 
+    const fromName = process.env.EMAIL_FROM || "Doctor Appointment Support";
+    const fromEmail = process.env.EMAIL_USER;
+
     const mailOptions = {
-      from: process.env.EMAIL_FROM,
+      from: `"${fromName}" <${fromEmail}>`,
       to: email,
       subject: process.env.EMAIL_SUB || "Password Reset",
       text: `${process.env.EMAIL_TEXT || "Your reset link: "}${user._id}/${token}`,
@@ -191,12 +194,14 @@ const forgotpassword = async (req, res) => {
 
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
+        console.error("Nodemailer error:", error);
         return res.status(500).json({ success: false, message: "Error sending email" });
       } else {
         return res.status(200).json({ success: true, message: "Email sent successfully" });
       }
     });
   } catch (error) {
+    console.error("Forgot password error:", error);
     return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
