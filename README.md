@@ -1,4 +1,4 @@
-# 🏥 [Medi track](https://Medi track-fqk1.onrender.com) - Healthcare Appointment & Medical History Ecosystem
+# 🏥 [Medi track](https://mediconnect-fqk1.onrender.com) - Healthcare Appointment & Medical History Ecosystem
 
 ![Medi track Banner](https://img.shields.io/badge/Medi track-Healthcare_Platform-040d21?style=for-the-badge&logo=react)
 
@@ -81,7 +81,7 @@ CLIENT_URL=http://localhost:3000
 
 EMAIL_USER=your_gmail_address
 EMAIL_PASS=your_gmail_app_password
-EMAIL_FROM="Medi track Support"
+EMAIL_FROM="MediConnect Support"
 EMAIL_SUB="Password Reset Request"
 EMAIL_TEXT="Click here to reset your password: http://localhost:3000/resetpassword/"
 ```
