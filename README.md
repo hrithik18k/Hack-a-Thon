@@ -1,6 +1,6 @@
-# 🏥 [Medi track](https://mediconnect-fqk1.onrender.com) - Healthcare Appointment & Medical History Ecosystem
+# 🏥 [Medi Track](https://mediconnect-fqk1.onrender.com) - Healthcare Appointment & Medical History Ecosystem
 
-![MediConnect Banner](https://img.shields.io/badge/MediConnect-Healthcare_Platform-040d21?style=for-the-badge&logo=react)
+![Medi Track Banner](https://img.shields.io/badge/Medi_Track-Healthcare_Platform-040d21?style=for-the-badge&logo=react)
 
 
 **MediConnect** is an advanced, enterprise-grade, yet empathy-focused platform that bridges the gap between doctors and patients. Built with a stunning **Premium Glassmorphism** design, it provides a unified, stress-free appointment ecosystem. 
