@@ -11,6 +11,8 @@ const doctorRouter = require("./routes/doctorRoutes");
 const appointRouter = require("./routes/appointRoutes");
 const notificationRouter = require("./routes/notificationRouter");
 const reportRouter = require("./routes/reportRoutes");
+const deviceRouter = require("./routes/deviceRoutes");  
+ // ← ADDED
 
 const app = express();
 const port = process.env.PORT || 5015;
@@ -37,6 +39,7 @@ app.use("/api/doctor", doctorRouter);
 app.use("/api/appointment", appointRouter);
 app.use("/api/notification", notificationRouter);
 app.use("/api/report", reportRouter);
+app.use("/api/device", deviceRouter);   // ← ADDED
 
 // Serve uploaded files
 app.use("/uploads", express.static(uploadsDir));

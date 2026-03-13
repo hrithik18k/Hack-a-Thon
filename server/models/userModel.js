@@ -51,6 +51,11 @@ const schema = mongoose.Schema(
       type: String,
       default: "",
     },
+    fingerprintTemplateId: {
+      type: Number,
+      default: null,
+    },
+    
     pic: {
       type: String,
       default:

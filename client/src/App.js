@@ -7,6 +7,7 @@ import Error from "./pages/Error";
 
 import "./styles/global.css";
 
+
 const Home = lazy(() => import("./pages/Home"));
 const WriteReportPage = lazy(() => import("./pages/WriteReportPage"));
 const Login = lazy(() => import("./pages/Login"));

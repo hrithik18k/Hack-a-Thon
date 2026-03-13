@@ -1797,3 +1797,200 @@ footer {
   color: var(--text-secondary);
   font-size: 1.2rem;
 }
+/* ── Fingerprint & Emergency UI ── */
+:root {
+  --fp-success: #10b981;
+  --fp-danger: #ef4444;
+  --fp-warning: #f59e0b;
+  --fp-primary: #3b82f6;
+}
+
+@keyframes fp-pulse {
+  0%   { transform: scale(1);    opacity: 1; }
+  50%  { transform: scale(1.18); opacity: 0.6; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+
+@keyframes fp-ring {
+  0%   { transform: scale(0.8); opacity: 0.7; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+@keyframes fp-slide-in {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fp-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+.fp-pulse      { animation: fp-pulse 1.6s ease-in-out infinite; }
+.fp-ring-1     { animation: fp-ring 1.6s ease-out infinite; }
+.fp-ring-2     { animation: fp-ring 1.6s ease-out infinite 0.5s; }
+.fp-ring-3     { animation: fp-ring 1.6s ease-out infinite 1s; }
+.fp-blink      { animation: fp-blink 1s ease-in-out infinite; }
+.fp-card-in    { animation: fp-slide-in 0.4s ease-out both; }
+
+.emergency-page {
+  min-height: 85vh;
+  padding: 3rem 1.5rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.emergency-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.emergency-badge {
+  display: inline-block;
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--fp-danger);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 50px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  padding: 0.4rem 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.emergency-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  padding: 2.5rem;
+  min-height: 350px;
+}
+
+[data-theme='dark'] .emergency-card {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+.fp-state-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 1.5rem;
+  padding: 2rem 0;
+}
+
+.fp-icon-container {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fp-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid var(--fp-primary);
+  opacity: 0;
+}
+
+.fp-status-text {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+[data-theme='dark'] .fp-status-text {
+  color: #f9fafb;
+}
+
+.patient-identity-strip {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 16px;
+  margin-bottom: 2rem;
+}
+
+[data-theme='dark'] .patient-identity-strip {
+  background: rgba(16, 185, 129, 0.05);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.patient-avatar-large {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 3px solid #10b981;
+  object-fit: cover;
+}
+
+.reports-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  border-left: 2px solid #e5e7eb;
+  padding-left: 2rem;
+  margin-left: 1rem;
+}
+
+.report-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.25rem;
+  position: relative;
+}
+
+[data-theme='dark'] .report-card {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+.report-card::before {
+  content: '';
+  position: absolute;
+  left: -2.35rem;
+  top: 1.25rem;
+  width: 14px;
+  height: 14px;
+  background: var(--fp-primary);
+  border-radius: 50%;
+  border: 3px solid white;
+}
+
+.fp-settings-box {
+  background: #f9fafb;
+  border: 1px dashed #d1d5db;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+[data-theme='dark'] .fp-settings-box {
+  background: #111827;
+  border-color: #374151;
+}
+
+.enrolled-tag {
+  background: #d1fae5;
+  color: #065f46;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
