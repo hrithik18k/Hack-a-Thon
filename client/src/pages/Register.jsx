@@ -102,20 +102,38 @@ function Register() {
     }
 
     try {
-      const { emergencyName, emergencyRelation, emergencyPhone1, emergencyPhone2, ...rest } = formDetails;
-      
-      const payload = { 
-        ...rest, 
-        pic: file, 
+      const payload = {
+        firstname: formDetails.firstname,
+        lastname: formDetails.lastname,
+        email: formDetails.email,
+        password: formDetails.password,
+        phone: formDetails.phone,
+        city: formDetails.city,
+        pic: file,
         role: selectedRole,
-        emergencyContact: selectedRole === "Patient" ? {
-          name: emergencyName,
-          relation: emergencyRelation,
-          phone1: emergencyPhone1,
-          phone2: emergencyPhone2
-        } : undefined,
-        certificate: selectedRole === "Doctor" ? certFile : undefined
       };
+
+      if (selectedRole === "Patient") {
+        payload.dateOfBirth = formDetails.dateOfBirth;
+        payload.gender = formDetails.gender;
+        payload.permanentAddress = formDetails.permanentAddress;
+        payload.temporaryAddress = formDetails.temporaryAddress;
+        payload.emergencyContact = {
+          name: formDetails.emergencyName,
+          relation: formDetails.emergencyRelation,
+          phone1: formDetails.emergencyPhone1,
+          phone2: formDetails.emergencyPhone2,
+        };
+      }
+
+      if (selectedRole === "Doctor") {
+        payload.specialization = formDetails.specialization;
+        payload.experience = formDetails.experience;
+        payload.fees = formDetails.fees;
+        payload.qualifications = formDetails.qualifications;
+        payload.hospitalName = formDetails.hospitalName;
+        payload.certificate = certFile;
+      }
       
       const response = await axios.post("/api/user/register", payload);
       
