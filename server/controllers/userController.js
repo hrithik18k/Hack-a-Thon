@@ -64,7 +64,11 @@ const login = async (req, res) => {
 
 const register = async (req, res) => {
   try {
-    const { firstname, lastname, email, password, phone, city, dateOfBirth, gender, role, specialization, experience, fees, qualifications, hospitalName, pic } = req.body;
+    const { 
+      firstname, lastname, email, password, phone, city, dateOfBirth, gender, role, 
+      specialization, experience, fees, qualifications, hospitalName, pic,
+      permanentAddress, temporaryAddress, emergencyContact
+    } = req.body;
     
     const emailPresent = await User.findOne({ email });
     if (emailPresent) {
@@ -82,13 +86,17 @@ const register = async (req, res) => {
       firstname, lastname, email, password: hashedPass, phone, city, role,
       dateOfBirth: dateOfBirth || null,
       gender: gender || "",
-      pic: pic || "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg"
+      pic: pic || "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg",
+      permanentAddress: permanentAddress || "",
+      temporaryAddress: temporaryAddress || "",
+      emergencyContact: emergencyContact || { name: "", relation: "", phone1: "", phone2: "" }
     });
     
     await user.save();
 
     // If doctor, create pending doctor application
     if (role === "Doctor") {
+      const { specialization, experience, fees, qualifications, hospitalName, certificate } = req.body;
       const doctor = new Doctor({
         userId: user._id,
         specialization,
@@ -96,7 +104,8 @@ const register = async (req, res) => {
         fees,
         qualifications,
         hospitalName,
-        city
+        city,
+        certificate: certificate || ""
       });
       await doctor.save();
     }

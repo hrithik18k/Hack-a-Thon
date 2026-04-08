@@ -98,6 +98,7 @@ const AdminDoctors = () => {
                 <th>Hospital</th>
                 <th>City</th>
                 <th>Status</th>
+                <th>Certificate</th>
                 <th>Action</th>
               </tr>
             </thead>
@@ -114,6 +115,15 @@ const AdminDoctors = () => {
                     <span className={`badge ${getStatusBadge(doc.status)}`}>
                       {doc.status || "Pending"}
                     </span>
+                  </td>
+                  <td>
+                    {doc.certificate ? (
+                      <a href={doc.certificate} target="_blank" rel="noopener noreferrer" className="btn btn-secondary-outline btn-sm">
+                        View Doc
+                      </a>
+                    ) : (
+                      <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>No Doc</span>
+                    )}
                   </td>
                   <td>
                     <div className="action-buttons">

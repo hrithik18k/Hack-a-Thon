@@ -36,6 +36,10 @@ const schema = mongoose.Schema(
       enum: ["Pending", "Approved", "Rejected"],
       default: "Pending",
     },
+    certificate: {
+      type: String,
+      default: "",
+    },
   },
   {
     timestamps: true,

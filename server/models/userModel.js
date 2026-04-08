@@ -51,6 +51,20 @@ const schema = mongoose.Schema(
       type: String,
       default: "",
     },
+    permanentAddress: {
+      type: String,
+      default: "",
+    },
+    temporaryAddress: {
+      type: String,
+      default: "",
+    },
+    emergencyContact: {
+      name: { type: String, default: "" },
+      relation: { type: String, default: "" },
+      phone1: { type: String, default: "" },
+      phone2: { type: String, default: "" },
+    },
     fingerprintTemplateId: {
       type: Number,
       default: null,

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import { MdAdminPanelSettings, MdArrowBack } from "react-icons/md";
 import Navbar from "../components/Navbar";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -66,32 +67,41 @@ function Login() {
     <>
       <Navbar />
       <section className="auth-section">
+        <button 
+          type="button" 
+          className="admin-login-corner-btn"
+          onClick={() => setFormDetails({...formDetails, role: formDetails.role === "Admin" ? "Patient" : "Admin"})}
+        >
+          {formDetails.role === "Admin" ? (
+            <><MdArrowBack /> Back to Login</>
+          ) : (
+            <><MdAdminPanelSettings /> Admin Login</>
+          )}
+        </button>
+
         <div className="auth-container">
-          <h2 className="auth-heading">Welcome Back</h2>
+          <h2 className="auth-heading">
+            {formDetails.role === "Admin" ? "Admin Login" : "Welcome Back"}
+          </h2>
           
-          <div className="role-selector">
-            <button 
-              type="button"
-              className={`role-btn ${formDetails.role === "Patient" ? "active" : ""}`}
-              onClick={() => setFormDetails({...formDetails, role: "Patient"})}
-            >
-              Patient
-            </button>
-            <button 
-              type="button"
-              className={`role-btn ${formDetails.role === "Doctor" ? "active" : ""}`}
-              onClick={() => setFormDetails({...formDetails, role: "Doctor"})}
-            >
-              Doctor
-            </button>
-            <button 
-              type="button"
-              className={`role-btn ${formDetails.role === "Admin" ? "active" : ""}`}
-              onClick={() => setFormDetails({...formDetails, role: "Admin"})}
-            >
-              Admin
-            </button>
-          </div>
+          {formDetails.role !== "Admin" && (
+            <div className="role-selector">
+              <button 
+                type="button"
+                className={`role-btn ${formDetails.role === "Patient" ? "active" : ""}`}
+                onClick={() => setFormDetails({...formDetails, role: "Patient"})}
+              >
+                Patient
+              </button>
+              <button 
+                type="button"
+                className={`role-btn ${formDetails.role === "Doctor" ? "active" : ""}`}
+                onClick={() => setFormDetails({...formDetails, role: "Doctor"})}
+              >
+                Doctor
+              </button>
+            </div>
+          )}
 
           <form onSubmit={formSubmit} className="auth-form">
             <input

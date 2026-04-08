@@ -170,7 +170,12 @@ function Profile() {
 
   const inputChange = (e) => {
     const { name, value } = e.target;
-    setFormDetails({ ...formDetails, [name]: value });
+    if (name === "phone") {
+      const numericValue = value.replace(/[^0-9]/g, "").slice(0, 10);
+      setFormDetails({ ...formDetails, [name]: numericValue });
+    } else {
+      setFormDetails({ ...formDetails, [name]: value });
+    }
   };
 
   const formSubmit = async (e) => {
@@ -224,7 +229,7 @@ function Profile() {
                 </div>
                 <div className="form-group">
                   <label>Phone</label>
-                  <input type="text" name="phone" className="form-input" value={formDetails.phone} onChange={inputChange} />
+                  <input type="text" name="phone" className="form-input" value={formDetails.phone} onChange={inputChange} maxLength="10" inputMode="numeric" />
                 </div>
               </div>
               <div className="form-group-row">

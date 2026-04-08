@@ -957,6 +957,7 @@ footer {
   align-items: center;
   justify-content: center;
   padding: 4rem 1rem;
+  position: relative;
 }
 
 .auth-container {
@@ -1047,6 +1048,48 @@ footer {
 .auth-section small {
   color: var(--text-muted);
   font-size: 0.8rem;
+}
+
+.admin-login-corner-btn {
+  position: absolute;
+  top: 2rem;
+  left: 2rem;
+  background: var(--bg-layer);
+  border: 1.5px solid var(--border-color);
+  color: var(--text-secondary);
+  padding: 0.6rem 1.2rem;
+  border-radius: 10px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: var(--shadow-sm);
+  z-index: 10;
+}
+
+.admin-login-corner-btn:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  background: var(--sidebar-active);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.admin-login-corner-btn svg {
+  font-size: 1.1rem;
+}
+
+@media (max-width: 600px) {
+  .admin-login-corner-btn {
+    top: 1rem;
+    left: 1rem;
+    padding: 0.5rem 0.8rem;
+    font-size: 0.75rem;
+  }
 }
 
 /* Profile */
