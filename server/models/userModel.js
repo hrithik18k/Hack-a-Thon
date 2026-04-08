@@ -47,6 +47,10 @@ const schema = mongoose.Schema(
       type: String,
       required: false,
     },
+    bloodGroup: {
+      type: String,
+      required: false,
+    },
     address: {
       type: String,
       default: "",

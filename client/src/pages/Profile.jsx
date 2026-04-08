@@ -137,9 +137,10 @@ function Profile() {
   const [file, setFile]                     = useState("");
   const [showFpModal, setShowFpModal]       = useState(false);
   const [hasFingerprint, setHasFingerprint] = useState(false);
+  const [picLoading, setPicLoading]         = useState(false);
 
   const [formDetails, setFormDetails] = useState({
-    firstname: "", lastname: "", email: "", phone: "", city: "", gender: "male", dateOfBirth: "",
+    firstname: "", lastname: "", email: "", phone: "", city: "", gender: "male", dateOfBirth: "", bloodGroup: "",
   });
 
   const getUser = async () => {
@@ -154,6 +155,7 @@ function Profile() {
           phone: temp.phone || "",
           city: temp.city || "",
           gender: temp.gender || "male",
+          bloodGroup: temp.bloodGroup || "",
           dateOfBirth: temp.dateOfBirth ? temp.dateOfBirth.split("T")[0] : "",
         });
         setFile(temp.pic || "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg");
@@ -166,6 +168,7 @@ function Profile() {
 
   useEffect(() => {
     if (userId) getUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   const inputChange = (e) => {
@@ -178,11 +181,38 @@ function Profile() {
     }
   };
 
+  const onUpload = async (element) => {
+    setPicLoading(true);
+    if (element.type === "image/jpeg" || element.type === "image/png" || element.type === "image/jpg") {
+      const data = new FormData();
+      data.append("file", element);
+      data.append("upload_preset", process.env.REACT_APP_CLOUDINARY_PRESET);
+      data.append("cloud_name", process.env.REACT_APP_CLOUDINARY_CLOUD_NAME);
+
+      try {
+        const res = await fetch(process.env.REACT_APP_CLOUDINARY_BASE_URL, {
+          method: "POST",
+          body: data,
+        });
+        const uploadData = await res.json();
+        setFile(uploadData.url.toString());
+        toast.success("Image uploaded! Don't forget to 'Update Profile'");
+      } catch (err) {
+        toast.error("Failed to upload image");
+      } finally {
+        setPicLoading(false);
+      }
+    } else {
+      setPicLoading(false);
+      toast.error("Please select an image (jpeg/png/jpg)");
+    }
+  };
+
   const formSubmit = async (e) => {
     e.preventDefault();
     try {
       if (!formDetails.email) return toast.error("Email should not be empty");
-      const { data } = await axios.put("/api/user/updateprofile", formDetails, {
+      const { data } = await axios.put("/api/user/updateprofile", { ...formDetails, pic: file }, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (data.success) toast.success("Profile updated successfully");
@@ -207,8 +237,23 @@ function Profile() {
               <p className="auth-subtitle">Update your personal information</p>
             </div>
 
-            <div className="flex-center" style={{ marginBottom: "2rem" }}>
-              <img src={file} alt="profile" className="profile-pic" />
+            <div className="flex-center" style={{ marginBottom: "2rem", position: "relative" }}>
+              <label htmlFor="profile-upload" style={{ cursor: "pointer", position: "relative" }}>
+                <img src={file} alt="profile" className="profile-pic" style={{ opacity: picLoading ? 0.5 : 1 }} />
+                {picLoading && (
+                  <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", fontSize: "0.8rem", fontWeight: "bold" }}>
+                    Uploading...
+                  </span>
+                )}
+                <div style={{ textAlign: "center", marginTop: "0.5rem", fontSize: "0.8rem", color: "var(--accent-primary)", fontWeight: "500" }}>Change Picture</div>
+              </label>
+              <input 
+                id="profile-upload" 
+                type="file" 
+                style={{ display: "none" }} 
+                onChange={(e) => onUpload(e.target.files[0])} 
+                accept="image/jpeg, image/png, image/jpg"
+              />
             </div>
 
             <form onSubmit={formSubmit} className="auth-form">
@@ -246,9 +291,25 @@ function Profile() {
                   </select>
                 </div>
               </div>
-              <div className="form-group">
-                <label>Date of Birth</label>
-                <input type="date" name="dateOfBirth" className="form-input" value={formDetails.dateOfBirth} onChange={inputChange} />
+              <div className="form-group-row">
+                <div className="form-group">
+                  <label>Date of Birth</label>
+                  <input type="date" name="dateOfBirth" className="form-input" value={formDetails.dateOfBirth} onChange={inputChange} />
+                </div>
+                <div className="form-group">
+                  <label>Blood Group</label>
+                  <select name="bloodGroup" className="form-input" value={formDetails.bloodGroup} onChange={inputChange}>
+                    <option value="">Select</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                  </select>
+                </div>
               </div>
               <button type="submit" className="btn btn-primary btn-full" style={{ marginTop: "1rem" }}>Update Profile</button>
             </form>

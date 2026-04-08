@@ -18,4 +18,10 @@ appointRouter.post(
 
 appointRouter.put("/completed", auth, appointmentController.completed);
 
+appointRouter.get(
+  "/getavailableslots",
+  auth,
+  appointmentController.getavailableslots
+);
+
 module.exports = appointRouter;

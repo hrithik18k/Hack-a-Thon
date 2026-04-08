@@ -40,6 +40,11 @@ const schema = mongoose.Schema(
       type: String,
       default: "",
     },
+    slotConfig: {
+      startTime: { type: String, default: "09:00" },
+      endTime: { type: String, default: "17:00" },
+      duration: { type: Number, default: 30 }
+    },
   },
   {
     timestamps: true,

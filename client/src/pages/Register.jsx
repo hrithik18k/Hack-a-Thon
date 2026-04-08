@@ -23,6 +23,7 @@ function Register() {
     city: "",
     dateOfBirth: "",
     gender: "",
+    bloodGroup: "",
     permanentAddress: "",
     temporaryAddress: "",
     emergencyName: "",
@@ -36,6 +37,50 @@ function Register() {
     qualifications: "",
     hospitalName: "",
   });
+
+  // Track which fields have been touched (blurred)
+  const [touched, setTouched] = useState({});
+
+  const handleBlur = (e) => {
+    const { name } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+  };
+
+  // Validation logic — returns error string or empty
+  const getFieldError = (name, value) => {
+    switch (name) {
+      case "firstname":
+      case "lastname":
+        if (value.length > 0 && value.length < 3) return "Must be at least 3 characters";
+        return "";
+      case "email": {
+        if (!value) return "";
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(value)) return "Enter a valid email address";
+        return "";
+      }
+      case "password":
+        if (!value) return "";
+        if (value.length < 8) return "Must be at least 8 characters";
+        if (!/\d/.test(value)) return "Must contain at least one number";
+        return "";
+      case "confpassword":
+        if (!value) return "";
+        if (value !== formDetails.password) return "Passwords do not match";
+        return "";
+      case "phone":
+        if (value.length > 0 && value.length < 10) return "Phone number must be exactly 10 digits";
+        return "";
+      case "emergencyPhone1":
+        if (value.length > 0 && value.length < 10) return "Must be exactly 10 digits";
+        return "";
+      case "emergencyPhone2":
+        if (value.length > 0 && value.length < 10) return "Must be exactly 10 digits";
+        return "";
+      default:
+        return "";
+    }
+  };
 
   const inputChange = (e) => {
     const { name, value } = e.target;
@@ -82,6 +127,21 @@ function Register() {
   const formSubmit = async (e) => {
     e.preventDefault();
 
+    // Mark all fields as touched on submit
+    const allTouched = {};
+    Object.keys(formDetails).forEach(k => allTouched[k] = true);
+    setTouched(allTouched);
+
+    // Check for any validation errors
+    const fieldsToCheck = ["firstname", "lastname", "email", "password", "confpassword", "phone"];
+    for (const field of fieldsToCheck) {
+      const err = getFieldError(field, formDetails[field]);
+      if (err) {
+        toast.error(err);
+        return;
+      }
+    }
+
     if (formDetails.password !== formDetails.confpassword) {
       toast.error("Passwords do not match");
       return;
@@ -116,6 +176,7 @@ function Register() {
       if (selectedRole === "Patient") {
         payload.dateOfBirth = formDetails.dateOfBirth;
         payload.gender = formDetails.gender;
+        payload.bloodGroup = formDetails.bloodGroup;
         payload.permanentAddress = formDetails.permanentAddress;
         payload.temporaryAddress = formDetails.temporaryAddress;
         payload.emergencyContact = {
@@ -148,6 +209,14 @@ function Register() {
     }
   };
 
+  // Helper to render inline error
+  const renderError = (fieldName) => {
+    if (!touched[fieldName]) return null;
+    const error = getFieldError(fieldName, formDetails[fieldName]);
+    if (!error) return null;
+    return <span className="field-error">{error}</span>;
+  };
+
   return (
     <>
       <Navbar />
@@ -172,18 +241,36 @@ function Register() {
 
           <form onSubmit={formSubmit} className="auth-form">
             <div className="form-row">
-              <input type="text" name="firstname" className="form-input" placeholder="First Name" value={formDetails.firstname} onChange={inputChange} required />
-              <input type="text" name="lastname" className="form-input" placeholder="Last Name" value={formDetails.lastname} onChange={inputChange} required />
+              <div className="form-field">
+                <input type="text" name="firstname" className="form-input" placeholder="First Name" value={formDetails.firstname} onChange={inputChange} onBlur={handleBlur} required />
+                {renderError("firstname")}
+              </div>
+              <div className="form-field">
+                <input type="text" name="lastname" className="form-input" placeholder="Last Name" value={formDetails.lastname} onChange={inputChange} onBlur={handleBlur} required />
+                {renderError("lastname")}
+              </div>
             </div>
 
             <div className="form-row">
-              <input type="email" name="email" className="form-input" placeholder="Email Address" value={formDetails.email} onChange={inputChange} required />
-              <input type="tel" name="phone" className="form-input" placeholder="Phone Number" value={formDetails.phone} onChange={inputChange} required maxLength="10" inputMode="numeric" />
+              <div className="form-field">
+                <input type="email" name="email" className="form-input" placeholder="Email Address" value={formDetails.email} onChange={inputChange} onBlur={handleBlur} required />
+                {renderError("email")}
+              </div>
+              <div className="form-field">
+                <input type="tel" name="phone" className="form-input" placeholder="Phone Number" value={formDetails.phone} onChange={inputChange} onBlur={handleBlur} required maxLength="10" inputMode="numeric" />
+                {renderError("phone")}
+              </div>
             </div>
 
             <div className="form-row">
-              <input type="password" name="password" className="form-input" placeholder="Password" value={formDetails.password} onChange={inputChange} required />
-              <input type="password" name="confpassword" className="form-input" placeholder="Confirm Password" value={formDetails.confpassword} onChange={inputChange} required />
+              <div className="form-field">
+                <input type="password" name="password" className="form-input" placeholder="Password" value={formDetails.password} onChange={inputChange} onBlur={handleBlur} required />
+                {renderError("password")}
+              </div>
+              <div className="form-field">
+                <input type="password" name="confpassword" className="form-input" placeholder="Confirm Password" value={formDetails.confpassword} onChange={inputChange} onBlur={handleBlur} required />
+                {renderError("confpassword")}
+              </div>
             </div>
 
             <div className="form-row">
@@ -197,13 +284,37 @@ function Register() {
             {selectedRole === "Patient" && (
               <>
                 <div className="form-row">
-                  <input type="date" name="dateOfBirth" className="form-input" value={formDetails.dateOfBirth} onChange={inputChange} required />
-                  <select name="gender" className="form-input" value={formDetails.gender} onChange={inputChange} required>
-                    <option value="">Select Gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
-                  </select>
+                  <div className="form-field" style={{ position: "relative" }}>
+                    <small style={{ position: "absolute", top: "-18px", left: "4px", color: "var(--text-secondary)", fontSize: "0.75rem" }}>Date of Birth</small>
+                    <input type="date" name="dateOfBirth" className="form-input" value={formDetails.dateOfBirth} onChange={inputChange} required title="Date of Birth" />
+                  </div>
+                  <div className="form-field">
+                    <select name="gender" className="form-input" value={formDetails.gender} onChange={inputChange} required>
+                      <option value="">Select Gender</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-field">
+                    <select name="bloodGroup" className="form-input" value={formDetails.bloodGroup} onChange={inputChange} required>
+                      <option value="">Select Blood Group</option>
+                      <option value="A+">A+</option>
+                      <option value="A-">A-</option>
+                      <option value="B+">B+</option>
+                      <option value="B-">B-</option>
+                      <option value="AB+">AB+</option>
+                      <option value="AB-">AB-</option>
+                      <option value="O+">O+</option>
+                      <option value="O-">O-</option>
+                    </select>
+                  </div>
+                  <div className="form-field">
+                    {/* Placeholder div if needed to keep flex balance, or we can just let blood group occupy half */}
+                  </div>
                 </div>
 
                 <div className="form-row">
@@ -217,8 +328,14 @@ function Register() {
                   <input type="text" name="emergencyRelation" className="form-input" placeholder="Relation" value={formDetails.emergencyRelation} onChange={inputChange} required />
                 </div>
                 <div className="form-row">
-                  <input type="tel" name="emergencyPhone1" className="form-input" placeholder="Emergency Phone 1" value={formDetails.emergencyPhone1} onChange={inputChange} required maxLength="10" inputMode="numeric" />
-                  <input type="tel" name="emergencyPhone2" className="form-input" placeholder="Emergency Phone 2 (Optional)" value={formDetails.emergencyPhone2} onChange={inputChange} maxLength="10" inputMode="numeric" />
+                  <div className="form-field">
+                    <input type="tel" name="emergencyPhone1" className="form-input" placeholder="Emergency Phone 1" value={formDetails.emergencyPhone1} onChange={inputChange} onBlur={handleBlur} required maxLength="10" inputMode="numeric" />
+                    {renderError("emergencyPhone1")}
+                  </div>
+                  <div className="form-field">
+                    <input type="tel" name="emergencyPhone2" className="form-input" placeholder="Emergency Phone 2 (Optional)" value={formDetails.emergencyPhone2} onChange={inputChange} onBlur={handleBlur} maxLength="10" inputMode="numeric" />
+                    {renderError("emergencyPhone2")}
+                  </div>
                 </div>
               </>
             )}

@@ -18,6 +18,17 @@ const Notifications = () => {
       const temp = await fetchData(`/api/notification/getallnotifs`);
       dispatch(setLoading(false));
       setNotifications(temp || []);
+      
+      // Mark all as read 
+      const token = localStorage.getItem("token");
+      if (token) {
+        await fetch(process.env.REACT_APP_SERVER_DOMAIN + "/api/notification/markallread", {
+          method: "PUT",
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        // Let Navbar know to clear badge
+        window.dispatchEvent(new Event("notifications_read"));
+      }
     } catch (error) {
       console.error("Error fetching notifications:", error);
       dispatch(setLoading(false));
@@ -51,10 +62,13 @@ const Notifications = () => {
                 <tbody>
                   {notifications.map((ele, i) => {
                     const dateObj = new Date(ele?.createdAt);
+                    const isUnread = ele?.isRead === false;
                     return (
-                      <tr key={ele?._id}>
+                      <tr key={ele?._id} style={isUnread ? { borderLeft: '4px solid var(--accent-primary)', background: 'var(--table-header-bg)' } : {}}>
                         <td>{i + 1}</td>
-                        <td>{ele?.content}</td>
+                        <td style={{ fontWeight: isUnread ? '600' : 'normal', color: isUnread ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+                          {ele?.content}
+                        </td>
                         <td>{dateObj.toLocaleDateString()}</td>
                         <td>{dateObj.toLocaleTimeString()}</td>
                       </tr>

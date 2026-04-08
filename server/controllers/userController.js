@@ -65,7 +65,7 @@ const login = async (req, res) => {
 const register = async (req, res) => {
   try {
     const { 
-      firstname, lastname, email, password, phone, city, dateOfBirth, gender, role, 
+      firstname, lastname, email, password, phone, city, dateOfBirth, gender, bloodGroup, role, 
       specialization, experience, fees, qualifications, hospitalName, pic,
       permanentAddress, temporaryAddress, emergencyContact
     } = req.body;
@@ -86,6 +86,7 @@ const register = async (req, res) => {
       firstname, lastname, email, password: hashedPass, phone, city, role,
       dateOfBirth: dateOfBirth || null,
       gender: gender || "",
+      bloodGroup: bloodGroup || "",
       pic: pic || "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg",
       permanentAddress: permanentAddress || "",
       temporaryAddress: temporaryAddress || "",

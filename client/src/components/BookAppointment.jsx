@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { IoMdClose } from "react-icons/io";
@@ -8,11 +8,37 @@ const BookAppointment = ({ setModalOpen, ele }) => {
     date: "",
     time: "",
     reason: "",
-    age: "",
-    gender: "",
-    bloodGroup: "",
   });
   const [loading, setLoading] = useState(false);
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+
+  const fetchSlots = async (selectedDate) => {
+    if (!selectedDate || !ele?.userId?._id) return;
+    setSlotsLoading(true);
+    try {
+      const response = await axios.get(
+        `/api/appointment/getavailableslots?doctorId=${ele.userId._id}&date=${selectedDate}`,
+        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+      );
+      if (response.data.success) {
+        setAvailableSlots(response.data.data);
+      }
+    } catch (err) {
+      toast.error("Could not fetch available slots");
+      setAvailableSlots([]);
+    } finally {
+      setSlotsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (formDetails.date) {
+      fetchSlots(formDetails.date);
+      setFormDetails((prev) => ({ ...prev, time: "" })); // clear time on date change
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formDetails.date]);
 
   const inputChange = (e) => {
     const { name, value } = e.target;
@@ -82,15 +108,40 @@ const BookAppointment = ({ setModalOpen, ele }) => {
             />
           </div>
           <div className="form-group">
-            <label>Time *</label>
-            <input
-              type="time"
-              name="time"
-              className="form-input"
-              value={formDetails.time}
-              onChange={inputChange}
-              required
-            />
+            <label>Time Slot *</label>
+            {slotsLoading ? (
+              <p style={{ fontSize: "0.9rem", color: "var(--text-muted)" }}>Loading slots...</p>
+            ) : !formDetails.date ? (
+              <p style={{ fontSize: "0.9rem", color: "var(--text-muted)" }}>Please select a date first</p>
+            ) : availableSlots.length === 0 ? (
+              <p style={{ fontSize: "0.9rem", color: "var(--text-danger)" }}>No slots available</p>
+            ) : (
+              <div className="slots-grid" style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+                {availableSlots.map((slot) => {
+                  const isPast = new Date(`${formDetails.date}T${slot.time}`) < new Date();
+                  const disabled = slot.isBooked || isPast;
+                  return (
+                    <button
+                      key={slot.time}
+                      type="button"
+                      disabled={disabled}
+                      onClick={() => setFormDetails({ ...formDetails, time: slot.time })}
+                      style={{
+                        padding: "0.5rem",
+                        borderRadius: "8px",
+                        border: formDetails.time === slot.time ? "2px solid var(--accent-primary)" : "1px solid var(--border-color)",
+                        background: disabled ? "var(--bg-layer)" : formDetails.time === slot.time ? "var(--accent-primary-light)" : "var(--bg-surface)",
+                        color: disabled ? "var(--text-muted)" : "var(--text-primary)",
+                        cursor: disabled ? "not-allowed" : "pointer",
+                        textDecoration: slot.isBooked ? "line-through" : "none"
+                      }}
+                    >
+                      {slot.time}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
           <div className="form-group">
             <label>Reason for Visit *</label>
@@ -103,46 +154,6 @@ const BookAppointment = ({ setModalOpen, ele }) => {
               placeholder="E.g., Checkup, Fever..."
               required
             />
-          </div>
-          
-          <div className="form-row">
-            <div className="form-group">
-              <label>Age *</label>
-              <input
-                type="number"
-                name="age"
-                className="form-input"
-                value={formDetails.age}
-                onChange={inputChange}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Gender *</label>
-              <select
-                name="gender"
-                className="form-input"
-                value={formDetails.gender}
-                onChange={inputChange}
-                required
-              >
-                <option value="">Select</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Blood Group</label>
-              <input
-                type="text"
-                name="bloodGroup"
-                className="form-input"
-                value={formDetails.bloodGroup}
-                onChange={inputChange}
-                placeholder="Optional"
-              />
-            </div>
           </div>
 
           <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
