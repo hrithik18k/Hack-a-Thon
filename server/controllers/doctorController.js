@@ -101,6 +101,21 @@ const deletedoctor = async (req, res) => {
   }
 };
 
+const updateslots = async (req, res) => {
+  try {
+    const { startTime, endTime, duration } = req.body;
+    const doctor = await Doctor.findOneAndUpdate(
+      { userId: req.locals },
+      { slotConfig: { startTime, endTime, duration } },
+      { new: true }
+    );
+    if (!doctor) return res.status(404).json({ success: false, message: "Doctor profile not found" });
+    return res.status(200).json({ success: true, message: "Slots updated successfully", data: doctor.slotConfig });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Unable to update slots" });
+  }
+};
+
 module.exports = {
   getalldoctors,
   getnotdoctors,
@@ -108,4 +123,5 @@ module.exports = {
   applyfordoctor,
   acceptdoctor,
   rejectdoctor,
+  updateslots,
 };

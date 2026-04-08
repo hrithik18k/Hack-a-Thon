@@ -16,4 +16,6 @@ doctorRouter.put("/acceptdoctor", auth, doctorController.acceptdoctor);
 
 doctorRouter.put("/rejectdoctor", auth, doctorController.rejectdoctor);
 
+doctorRouter.put("/updateslots", auth, doctorController.updateslots);
+
 module.exports = doctorRouter;

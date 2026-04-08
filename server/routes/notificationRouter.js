@@ -10,4 +10,16 @@ notificationRouter.get(
   notificationController.getallnotifs
 );
 
+notificationRouter.get(
+  "/unreadcount",
+  auth,
+  notificationController.getUnreadCount
+);
+
+notificationRouter.put(
+  "/markallread",
+  auth,
+  notificationController.markAllRead
+);
+
 module.exports = notificationRouter;

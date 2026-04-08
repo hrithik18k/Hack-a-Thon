@@ -51,6 +51,14 @@ const Doctors = () => {
                 placeholder="Search by City..." 
                 className="filter-input"
               />
+              <input 
+                type="text" 
+                name="specialization" 
+                value={filters.specialization} 
+                onChange={handleFilterChange} 
+                placeholder="Specialization..." 
+                className="filter-input"
+              />
             </div>
           </div>
           

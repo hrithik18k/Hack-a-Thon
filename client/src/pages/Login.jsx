@@ -21,6 +21,35 @@ function Login() {
     role: "Patient", // Default to Patient
   });
   const [loading, setLoading] = useState(false);
+  const [touched, setTouched] = useState({});
+
+  const handleBlur = (e) => {
+    const { name } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+  };
+
+  const getFieldError = (name, value) => {
+    switch (name) {
+      case "email": {
+        if (!value) return "Email is required";
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(value)) return "Enter a valid email address";
+        return "";
+      }
+      case "password":
+        if (!value) return "Password is required";
+        return "";
+      default:
+        return "";
+    }
+  };
+
+  const renderError = (fieldName) => {
+    if (!touched[fieldName]) return null;
+    const error = getFieldError(fieldName, formDetails[fieldName]);
+    if (!error) return null;
+    return <span className="field-error">{error}</span>;
+  };
 
   const inputChange = (e) => {
     const { name, value } = e.target;
@@ -30,6 +59,18 @@ function Login() {
   const formSubmit = async (e) => {
     e.preventDefault();
     if (loading) return;
+
+    // Mark all fields as touched
+    setTouched({ email: true, password: true });
+
+    // Check for errors
+    const emailErr = getFieldError("email", formDetails.email);
+    const passErr = getFieldError("password", formDetails.password);
+    if (emailErr || passErr) {
+      if (emailErr) toast.error(emailErr);
+      else if (passErr) toast.error(passErr);
+      return;
+    }
 
     try {
       setLoading(true);
@@ -104,25 +145,33 @@ function Login() {
           )}
 
           <form onSubmit={formSubmit} className="auth-form">
-            <input
-              type="email"
-              name="email"
-              className="form-input"
-              placeholder="Email Address"
-              value={formDetails.email}
-              onChange={inputChange}
-              required
-            />
+            <div className="form-field">
+              <input
+                type="email"
+                name="email"
+                className="form-input"
+                placeholder="Email Address"
+                value={formDetails.email}
+                onChange={inputChange}
+                onBlur={handleBlur}
+                required
+              />
+              {renderError("email")}
+            </div>
 
-            <input
-              type="password"
-              name="password"
-              className="form-input"
-              placeholder="Password"
-              value={formDetails.password}
-              onChange={inputChange}
-              required
-            />
+            <div className="form-field">
+              <input
+                type="password"
+                name="password"
+                className="form-input"
+                placeholder="Password"
+                value={formDetails.password}
+                onChange={inputChange}
+                onBlur={handleBlur}
+                required
+              />
+              {renderError("password")}
+            </div>
 
             <button
               type="submit"
