@@ -152,6 +152,21 @@ const WriteReportPage = () => {
   const [hasFingerprint, setHasFingerprint] = useState(!!appt?.userId?.fingerprintTemplateId);
   const [showFpModal, setShowFpModal] = useState(false);
 
+  const handleEnrollClick = async () => {
+    try {
+      const { data } = await axios.get("/api/device/doctor/my-device", {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
+      if (!data.data || !data.data.isActive) {
+        toast.error("No scanner registered. Go to Device Setup to register your ESP32.");
+      } else {
+        setShowFpModal(true);
+      }
+    } catch(err) {
+      toast.error("Could not verify device status.");
+    }
+  };
+
   // If directly navigated without state, redirect back
   if (!appt) {
     navigate("/appointments");
@@ -229,7 +244,7 @@ const WriteReportPage = () => {
                 </p>
               </div>
               {!hasFingerprint && (
-                <button type="button" className="btn btn-secondary-outline" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }} onClick={() => setShowFpModal(true)}>
+                <button type="button" className="btn btn-secondary-outline" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }} onClick={handleEnrollClick}>
                   <FingerprintIcon size={18} /> Enroll Fingerprint
                 </button>
               )}

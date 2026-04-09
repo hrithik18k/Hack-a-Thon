@@ -116,6 +116,7 @@ const Navbar = () => {
                   {unreadCount > 0 && <span className="nav-badge">{unreadCount}</span>}
                 </NavLink>
               </li>
+              <li><NavLink to={"/device-setup"} onClick={closeNav}>Device Setup</NavLink></li>
               <li><NavLink to={"/profile"} onClick={closeNav}>Profile</NavLink></li>
             </>
           )}
