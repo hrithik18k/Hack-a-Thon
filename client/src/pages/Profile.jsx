@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import axios from "axios";
@@ -8,122 +8,6 @@ import fetchData from "../helper/apiCall";
 import jwt_decode from "jwt-decode";
 
 axios.defaults.baseURL = process.env.REACT_APP_SERVER_DOMAIN;
-
-const FingerprintModal = ({ onClose, userId }) => {
-  const [status, setStatus]   = useState("activating");
-  const [message, setMessage] = useState("");
-  const pollRef = useRef(null);
-  const token   = localStorage.getItem("token");
-
-  const stopPolling = () => {
-    if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
-  };
-
-  useEffect(() => {
-    triggerEnroll();
-    return () => {
-      stopPolling();
-      axios.post("/api/device/setmode", { mode: "idle" }, {
-        headers: { Authorization: `Bearer ${token}` },
-      }).catch(() => {});
-    };
-  }, []);
-
-  const triggerEnroll = async () => {
-    setStatus("activating");
-    try {
-      await axios.post(
-        "/api/device/setmode",
-        { mode: "enroll", userId },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setStatus("scanning");
-      startPolling();
-    } catch (err) {
-      setStatus("error");
-      setMessage(err?.response?.data?.message || "Could not reach server");
-    }
-  };
-
-  const startPolling = () => {
-    stopPolling();
-    pollRef.current = setInterval(async () => {
-      try {
-        const { data } = await axios.get("/api/device/result", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (data.success && data.data?.status === "enrolled") {
-          setStatus("success");
-          stopPolling();
-        } else if (data.data?.status === "error") {
-          setStatus("error");
-          setMessage(data.data.message);
-          stopPolling();
-        }
-      } catch (err) {}
-    }, 2000);
-
-    setTimeout(() => {
-      if (pollRef.current) {
-        stopPolling();
-        setStatus("error");
-        setMessage("Timeout: No finger detected in 60 seconds.");
-      }
-    }, 60000);
-  };
-
-  return (
-    <div className="modal flex-center">
-      <div className="modal-content" style={{ maxWidth: 420, textAlign: "center", padding: "2.5rem" }}>
-        {status === "activating" && (
-          <div className="fp-state-content">
-            <FingerprintIcon color="var(--fp-warning)" size={72} />
-            <h3 className="modal-title">Activating Device</h3>
-            <p>Waking up the fingerprint scanner...</p>
-          </div>
-        )}
-
-        {status === "scanning" && (
-          <div className="fp-state-content">
-             <div className="fp-icon-container">
-                <div className="fp-ring fp-ring-1" />
-                <div className="fp-ring fp-ring-2" />
-                <div className="fp-ring fp-ring-3" />
-                <span className="fp-pulse">
-                  <FingerprintIcon color="var(--fp-primary)" size={72} />
-                </span>
-              </div>
-            <h3 className="modal-title">Place Your Finger</h3>
-            <p className="fp-blink">Put your finger on the scanner now...</p>
-            <small>You will need to scan <strong>twice</strong> for accuracy.</small>
-            <button className="btn btn-secondary-outline btn-sm" onClick={onClose}>Cancel</button>
-          </div>
-        )}
-
-        {status === "success" && (
-          <div className="fp-state-content">
-            <FingerprintIcon color="var(--fp-success)" size={72} />
-            <h3 className="modal-title" style={{ color: "var(--fp-success)" }}>Fingerprint Saved!</h3>
-            <p>Your fingerprint has been enrolled successfully. Doctors can now identify you in an emergency.</p>
-            <button className="btn btn-primary btn-full" onClick={onClose}>Done</button>
-          </div>
-        )}
-
-        {status === "error" && (
-          <div className="fp-state-content">
-            <FingerprintIcon color="var(--fp-danger)" size={72} />
-            <h3 className="modal-title" style={{ color: "var(--fp-danger)" }}>Enrollment Failed</h3>
-            <p>{message}</p>
-            <div style={{ display: "flex", gap: "1rem", width: "100%" }}>
-              <button className="btn btn-primary" style={{ flex: 1 }} onClick={triggerEnroll}>Retry</button>
-              <button className="btn btn-secondary-outline" style={{ flex: 1 }} onClick={onClose}>Cancel</button>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
 
 function Profile() {
   const token = localStorage.getItem("token");
@@ -135,12 +19,11 @@ function Profile() {
 
   const [loading, setLoading]               = useState(true);
   const [file, setFile]                     = useState("");
-  const [showFpModal, setShowFpModal]       = useState(false);
-  const [hasFingerprint, setHasFingerprint] = useState(false);
   const [picLoading, setPicLoading]         = useState(false);
 
   const [formDetails, setFormDetails] = useState({
     firstname: "", lastname: "", email: "", phone: "", city: "", gender: "male", dateOfBirth: "", bloodGroup: "",
+    emergencyContact: { name: "", relation: "", phone1: "", phone2: "" },
   });
 
   const getUser = async () => {
@@ -157,9 +40,9 @@ function Profile() {
           gender: temp.gender || "male",
           bloodGroup: temp.bloodGroup || "",
           dateOfBirth: temp.dateOfBirth ? temp.dateOfBirth.split("T")[0] : "",
+          emergencyContact: temp.emergencyContact || { name: "", relation: "", phone1: "", phone2: "" },
         });
         setFile(temp.pic || "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg");
-        setHasFingerprint(!!temp.fingerprintTemplateId);
       }
     } catch (error) {} finally {
       setLoading(false);
@@ -173,7 +56,17 @@ function Profile() {
 
   const inputChange = (e) => {
     const { name, value } = e.target;
-    if (name === "phone") {
+    if (name.startsWith("em_")) {
+      const field = name.split("_")[1];
+      let formattedValue = value;
+      if (field === "phone1" || field === "phone2") {
+        formattedValue = value.replace(/[^0-9]/g, "").slice(0, 10);
+      }
+      setFormDetails({
+        ...formDetails,
+        emergencyContact: { ...formDetails.emergencyContact, [field]: formattedValue }
+      });
+    } else if (name === "phone") {
       const numericValue = value.replace(/[^0-9]/g, "").slice(0, 10);
       setFormDetails({ ...formDetails, [name]: numericValue });
     } else {
@@ -219,11 +112,6 @@ function Profile() {
     } catch (error) {
       toast.error("Unable to update profile");
     }
-  };
-
-  const handleFpModalClose = () => {
-    setShowFpModal(false);
-    getUser();
   };
 
   return (
@@ -311,37 +199,45 @@ function Profile() {
                   </select>
                 </div>
               </div>
+
+              <div className="auth-header" style={{ marginTop: "1.5rem", marginBottom: "1rem" }}>
+                <h3 className="auth-title" style={{ fontSize: "1.2rem" }}>Emergency Contact (Optional)</h3>
+              </div>
+              
+              <div className="form-group-row">
+                <div className="form-group">
+                  <label>Contact Name</label>
+                  <input type="text" name="em_name" className="form-input" value={formDetails.emergencyContact.name} onChange={inputChange} />
+                </div>
+                <div className="form-group">
+                  <label>Relation</label>
+                  <input type="text" name="em_relation" className="form-input" value={formDetails.emergencyContact.relation} onChange={inputChange} />
+                </div>
+              </div>
+              <div className="form-group-row">
+                <div className="form-group">
+                  <label>Primary Phone</label>
+                  <input type="text" name="em_phone1" className="form-input" value={formDetails.emergencyContact.phone1} onChange={inputChange} maxLength="10" inputMode="numeric" />
+                </div>
+                <div className="form-group">
+                  <label>Secondary Phone</label>
+                  <input type="text" name="em_phone2" className="form-input" value={formDetails.emergencyContact.phone2} onChange={inputChange} maxLength="10" inputMode="numeric" />
+                </div>
+              </div>
+
               <button type="submit" className="btn btn-primary btn-full" style={{ marginTop: "1rem" }}>Update Profile</button>
             </form>
 
-            <div className="fp-settings-box">
-              <div style={{ flex: 1 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
-                  <FingerprintIcon color={hasFingerprint ? "var(--fp-success)" : "var(--fp-primary)"} size={20} />
-                  <strong style={{ fontSize: "0.95rem" }}>Fingerprint Security</strong>
-                  {hasFingerprint && <span className="enrolled-tag">✓ Enrolled</span>}
-                </div>
-                <p style={{ fontSize: "0.85rem", opacity: 0.7, margin: 0 }}>
-                  {hasFingerprint ? "Identity registered for emergencies." : "Register finger for emergency lookup."}
-                </p>
-              </div>
-              <button type="button" className="btn btn-secondary-outline btn-sm" onClick={() => setShowFpModal(true)}>
-                {hasFingerprint ? "Re-enroll" : "Enroll Now"}
-              </button>
-            </div>
+
           </div>
         </section>
       )}
       <Footer />
-      {showFpModal && <FingerprintModal userId={userId} onClose={handleFpModalClose} />}
+
     </>
   );
 }
 
-const FingerprintIcon = ({ color = "currentColor", size = 20 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4" /><path d="M14 13.12c0 2.38 0 6.38-1 8.88" /><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02" /><path d="M2 12a10 10 0 0 1 18-6" /><path d="M2 17.5a14.5 14.5 0 0 0 4.24 5.5" /><path d="M6 10a8 8 0 0 1 14.7-2.4" /><path d="M6 14a6 6 0 0 1 11.94-1.5" /><path d="M6.18 17A14 14 0 0 0 7 22" />
-  </svg>
-);
+
 
 export default Profile;
