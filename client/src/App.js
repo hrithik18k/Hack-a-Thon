@@ -1,7 +1,7 @@
 import React, { lazy, Suspense } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-import { Protected, Public, Admin } from "./middleware/route";
+import { Protected, Public, Admin, DoctorOnly } from "./middleware/route";
 import Loading from "./components/Loading";
 import Error from "./pages/Error";
 
@@ -22,6 +22,7 @@ const Notifications = lazy(() => import("./pages/Notifications"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const MedicalHistory = lazy(() => import("./pages/MedicalHistory"));
 const Emergency = lazy(() => import("./pages/Emergency"));
+const DeviceSetup = lazy(() => import("./pages/DeviceSetup"));
 
 function App() {
   return (
@@ -43,8 +44,9 @@ function App() {
           <Route path="/profile" element={<Protected><Profile /></Protected>} />
           <Route path="/changepassword" element={<Protected><ChangePassword /></Protected>} />
           <Route path="/medical-history" element={<Protected><MedicalHistory /></Protected>} />
-          <Route path="/doctor/write-report" element={<Protected><WriteReportPage /></Protected>} />
+          <Route path="/doctor/write-report" element={<DoctorOnly><WriteReportPage /></DoctorOnly>} />
           <Route path="/emergency" element={<Protected><Emergency /></Protected>} />
+          <Route path="/device-setup" element={<DoctorOnly><DeviceSetup /></DoctorOnly>} />
 
           {/* Admin routes */}
           <Route path="/dashboard/home" element={<Admin><Dashboard type={"home"} /></Admin>} />

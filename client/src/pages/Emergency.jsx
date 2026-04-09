@@ -23,6 +23,23 @@ const Emergency = () => {
     }
   };
 
+  const handleScanClick = async () => {
+    try {
+      const { data } = await axios.get("/api/device/doctor/my-device", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!data.data || !data.data.isActive) {
+        setStatus("error");
+        setErrorMsg("No scanner registered. Go to Device Setup to register your ESP32.");
+      } else {
+        triggerScan();
+      }
+    } catch(err) {
+      setStatus("error");
+      setErrorMsg("Could not verify device status.");
+    }
+  };
+
   const triggerScan = async () => {
     setStatus("scanning");
     setPatient(null);
@@ -105,7 +122,7 @@ const Emergency = () => {
                 <FingerprintIcon size={80} color="var(--fp-primary)" />
               </div>
               <p className="fp-status-text">Device is standing by</p>
-              <button className="btn btn-primary" onClick={triggerScan}>
+              <button className="btn btn-primary" onClick={handleScanClick}>
                 Get Patient Fingerprint
               </button>
             </div>
