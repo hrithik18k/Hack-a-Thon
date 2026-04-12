@@ -5,7 +5,15 @@ const User = require("../models/userModel");
 
 const createReport = async (req, res) => {
   try {
-    const { appointmentId, diagnosis, notes, medications, followUpDate } = req.body;
+    const { appointmentId, diagnosis, notes, medications, followUpDate, importance, images } = req.body;
+    
+    // ===== DEBUG LOGGING =====
+    console.log("===== CREATE REPORT DEBUG =====");
+    console.log("Raw req.body keys:", Object.keys(req.body));
+    console.log("importance from body:", importance, "| type:", typeof importance);
+    console.log("images from body:", images);
+    console.log("Full req.body:", JSON.stringify(req.body, null, 2));
+    console.log("===============================");
     
     // Find the appointment
     const appointment = await Appointment.findById(appointmentId);
@@ -19,6 +27,9 @@ const createReport = async (req, res) => {
 
     const doctorUser = await User.findById(req.locals);
 
+    const importanceValue = (importance && (importance === "Important" || importance === "General")) ? importance : "General";
+    console.log("Final importance value being saved:", importanceValue);
+
     // Create Report
     const report = new MedicalReport({
       patientId: appointment.userId,
@@ -29,17 +40,27 @@ const createReport = async (req, res) => {
       appointmentDate: new Date(`${appointment.date} ${appointment.time}`),
       diagnosis,
       notes,
+      importance: importanceValue,
+      images: images || [],
       medications: medications || [],
       followUpDate: followUpDate ? new Date(followUpDate) : null,
     });
 
+    console.log("Report object before save:", JSON.stringify(report.toObject(), null, 2));
+
     await report.save();
+
+    console.log("Report saved. Verifying from DB...");
+    const savedReport = await MedicalReport.findById(report._id);
+    console.log("Saved report importance:", savedReport.importance);
+    console.log("Saved report images:", savedReport.images);
+    console.log("Saved report has importance field:", 'importance' in savedReport.toObject());
 
     // Mark appointment as 'Completed' if not already
     appointment.status = "Completed";
     await appointment.save();
 
-    return res.status(201).json({ success: true, message: "Report created successfully", data: report });
+    return res.status(201).json({ success: true, message: "Report created successfully", data: savedReport });
   } catch (error) {
     console.log("Error creating report:", error);
     res.status(500).json({ success: false, message: "Failed to create report" });

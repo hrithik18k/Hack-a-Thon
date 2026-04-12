@@ -43,6 +43,16 @@ const reportSchema = new mongoose.Schema({
   notes: {
     type: String,
   },
+  importance: {
+    type: String,
+    enum: ["Important", "General"],
+    default: "General",
+  },
+  images: [
+    {
+      type: String,
+    },
+  ],
   medications: [medicationSchema],
   followUpDate: {
     type: Date,

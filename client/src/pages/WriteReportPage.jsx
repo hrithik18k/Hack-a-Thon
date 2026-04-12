@@ -143,7 +143,10 @@ const WriteReportPage = () => {
     diagnosis: "",
     notes: "",
     followUpDate: "",
+    importance: "General",
   });
+
+  const [images, setImages] = useState([]);
 
   const [medications, setMedications] = useState([
     { name: "", dosage: "", frequency: "", duration: "", notes: "" }
@@ -194,6 +197,47 @@ const WriteReportPage = () => {
     setMedications(newMedications);
   };
 
+  const handleImageUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    setLoading(true);
+    const toastId = toast.loading("Uploading images...");
+    try {
+      const uploadedUrls = [];
+      for (const file of files) {
+        if (file.size > 5 * 1024 * 1024) {
+          toast.error(`${file.name} is too large (>5MB)`);
+          continue;
+        }
+
+        const data = new FormData();
+        data.append("file", file);
+        data.append("upload_preset", process.env.REACT_APP_CLOUDINARY_PRESET);
+        data.append("cloud_name", process.env.REACT_APP_CLOUDINARY_CLOUD_NAME);
+
+        const res = await fetch(process.env.REACT_APP_CLOUDINARY_BASE_URL, {
+          method: "POST",
+          body: data,
+        });
+        const uploadData = await res.json();
+        if (uploadData.url) {
+          uploadedUrls.push(uploadData.url.toString());
+        }
+      }
+      setImages((prev) => [...prev, ...uploadedUrls]);
+      toast.success(`${uploadedUrls.length} images uploaded successfully`, { id: toastId });
+    } catch (err) {
+      toast.error("Failed to upload images", { id: toastId });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const removeImage = (index) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const submitReport = async (e) => {
     e.preventDefault();
     if (loading) return;
@@ -206,8 +250,12 @@ const WriteReportPage = () => {
         diagnosis: formDetails.diagnosis,
         notes: formDetails.notes,
         followUpDate: formDetails.followUpDate,
+        importance: formDetails.importance,
+        images: images,
         medications: medications.filter(m => m.name.trim() !== ""), 
       };
+
+      console.log("Saving report with importance:", payload.importance);
 
       const { data } = await axios.post("/api/report/create", payload, {
         headers: {
@@ -280,6 +328,42 @@ const WriteReportPage = () => {
                   value={formDetails.notes}
                   onChange={handleInputChange}
                 />
+              </div>
+
+              <div className="form-group">
+                <label>Report Importance</label>
+                <select 
+                  name="importance" 
+                  className="form-input" 
+                  value={formDetails.importance} 
+                  onChange={handleInputChange}
+                >
+                  <option value="General">General (Normal)</option>
+                  <option value="Important">Important (Critical History)</option>
+                </select>
+                <small style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>Important reports are shown by default to doctors in future visits.</small>
+              </div>
+
+              <div className="form-group">
+                <label>Medical Images / Reports (Optional)</label>
+                <div className="image-upload-wrapper">
+                   <input type="file" multiple accept="image/*" onChange={handleImageUpload} id="report-images" hidden />
+                   <label htmlFor="report-images" className="btn btn-secondary-outline btn-full" style={{ borderStyle: "dashed" }}>
+                      <IoMdAdd /> Add Images
+                   </label>
+                </div>
+                {images.length > 0 && (
+                  <div className="image-preview-grid">
+                    {images.map((img, idx) => (
+                      <div key={idx} className="img-preview-item">
+                        <img src={img} alt={`report-${idx}`} />
+                        <button type="button" className="remove-img-btn" onClick={() => removeImage(idx)}>
+                          <IoMdTrash />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="form-group">
