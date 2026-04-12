@@ -5,6 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "dev": "nodemon server.js",
     "vercel-build": "echo 'No build needed'"
   },
   "author": "Tarun Kumar",

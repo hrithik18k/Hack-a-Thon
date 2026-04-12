@@ -50,13 +50,13 @@ app.get("/", (req, res) => {
 });
 
 // Serve React build (only if client is built and co-located)
-const clientBuildPath = path.join(__dirname, "../client/build");
-if (fs.existsSync(clientBuildPath)) {
-  app.use(express.static(clientBuildPath));
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(clientBuildPath, "index.html"));
-  });
-}
+// const clientBuildPath = path.join(__dirname, "../client/build");
+// if (fs.existsSync(clientBuildPath)) {
+//   app.use(express.static(clientBuildPath));
+//   app.get("*", (req, res) => {
+//     res.sendFile(path.join(clientBuildPath, "index.html"));
+//   });
+// }
 
 const server = app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
