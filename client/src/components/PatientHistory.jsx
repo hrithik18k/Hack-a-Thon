@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { IoMdClose } from "react-icons/io";
+import { IoMdClose, IoMdArrowDropdown, IoMdArrowDropright } from "react-icons/io";
 import fetchData from "../helper/apiCall";
 import toast from "react-hot-toast";
 import Loading from "./Loading";
@@ -9,6 +9,8 @@ const PatientHistory = ({ patientId, setModalOpen }) => {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("Important");
+  const [expandedId, setExpandedId] = useState(null);
+  const [lightboxImg, setLightboxImg] = useState(null);
 
   const fetchReports = async () => {
     try {
@@ -34,6 +36,18 @@ const PatientHistory = ({ patientId, setModalOpen }) => {
     if (f === "all") return true;
     return imp === f;
   });
+
+  const toggleExpand = (id) => {
+    setExpandedId(prev => prev === id ? null : id);
+  };
+
+  // Fix http -> https for cloudinary images
+  const secureUrl = (url) => {
+    if (url && url.startsWith("http://res.cloudinary.com")) {
+      return url.replace("http://", "https://");
+    }
+    return url;
+  };
 
   return (
     <div className="modal flex-center report-modal-overlay">
@@ -62,59 +76,83 @@ const PatientHistory = ({ patientId, setModalOpen }) => {
         {loading ? (
           <Loading />
         ) : filteredReports.length > 0 ? (
-          <div className="history-timeline">
-            {filteredReports.map((report) => (
-              <div key={report._id} className="history-card" style={{ borderLeft: (report.importance === "Important") ? '4px solid var(--accent-warning)' : '4px solid var(--accent-success)' }}>
-                <div className="history-header">
-                  <div className="history-date">
-                    {new Date(report.appointmentDate).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' })}
-                  </div>
-                  <div className="history-doctor" style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                    <strong>{report.doctorName}</strong> | {report.hospitalName}
-                    <span className={`badge ${(report.importance === "Important") ? "badge-warning" : "badge-success"}`} style={{ marginLeft: 'auto' }}>
-                        {(report.importance || "General").toUpperCase()}
+          <div className="history-timeline" style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: '0.5rem' }}>
+            {filteredReports.map((report) => {
+              const isExpanded = expandedId === report._id;
+              return (
+                <div key={report._id} className="history-strip-wrapper">
+                  {/* Collapsed Strip */}
+                  <div
+                    className={`history-strip ${isExpanded ? "expanded" : ""}`}
+                    style={{ borderLeftColor: (report.importance === "Important") ? 'var(--accent-warning)' : 'var(--accent-success)' }}
+                    onClick={() => toggleExpand(report._id)}
+                  >
+                    <span className="strip-toggle-icon">
+                      {isExpanded ? <IoMdArrowDropdown /> : <IoMdArrowDropright />}
+                    </span>
+                    <span className="strip-date">
+                      {new Date(report.appointmentDate).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' })}
+                    </span>
+                    <span className="strip-doctor">{report.doctorName}</span>
+                    <span className="strip-diagnosis">{report.diagnosis}</span>
+                    <span className={`badge ${(report.importance === "Important") ? "badge-warning" : "badge-success"}`} style={{ fontSize: '0.7rem', marginLeft: 'auto', flexShrink: 0 }}>
+                      {(report.importance || "General").toUpperCase()}
                     </span>
                   </div>
-                </div>
-                
-                <div className="history-body">
-                  <p><strong>Diagnosis:</strong> {report.diagnosis}</p>
-                  {report.notes && <p><strong>Notes:</strong> {report.notes}</p>}
-                  
-                  {report.medications && report.medications.length > 0 && (
-                    <div className="meds-list">
-                      <strong>Prescribed Medications:</strong>
-                      <ul>
-                        {report.medications.map((med, i) => (
-                          <li key={i}>
-                            <span className="med-name">{med.name}</span> - {med.dosage}, {med.frequency} for {med.duration}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
 
-                  {report.images && report.images.length > 0 && (
-                    <div className="report-images-view">
-                      <strong>Attached Analysis/Images:</strong>
-                      <div className="images-grid">
-                        {report.images.map((img, i) => (
-                          <a key={i} href={img} target="_blank" rel="noopener noreferrer" className="report-img-thumb">
-                            <img src={img} alt="Medical record" />
-                          </a>
-                        ))}
+                  {/* Expanded Details */}
+                  {isExpanded && (
+                    <div className="history-details" style={{ borderLeftColor: (report.importance === "Important") ? 'var(--accent-warning)' : 'var(--accent-success)' }}>
+                      <div className="history-detail-row">
+                        <strong>Hospital:</strong> {report.hospitalName}
                       </div>
+                      {report.notes && (
+                        <div className="history-detail-row">
+                          <strong>Notes:</strong> {report.notes}
+                        </div>
+                      )}
+                      
+                      {report.medications && report.medications.length > 0 && (
+                        <div className="history-detail-row">
+                          <strong>Prescribed Medications:</strong>
+                          <ul className="meds-list-inline">
+                            {report.medications.map((med, i) => (
+                              <li key={i}>
+                                <span className="med-name">{med.name}</span> — {med.dosage}, {med.frequency} for {med.duration}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {report.images && report.images.length > 0 && (
+                        <div className="history-detail-row">
+                          <strong>Attached Images:</strong>
+                          <div className="images-grid" style={{ marginTop: '0.5rem' }}>
+                            {report.images.map((img, i) => (
+                              <div
+                                key={i}
+                                className="report-img-thumb"
+                                onClick={(e) => { e.stopPropagation(); setLightboxImg(secureUrl(img)); }}
+                                style={{ cursor: 'pointer' }}
+                              >
+                                <img src={secureUrl(img)} alt="Medical record" />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {report.followUpDate && (
+                        <div className="history-detail-row follow-up">
+                          <strong>Follow-up:</strong> {new Date(report.followUpDate).toLocaleDateString()}
+                        </div>
+                      )}
                     </div>
                   )}
-
-                  {report.followUpDate && (
-                    <p className="follow-up">
-                      <strong>Follow-up:</strong> {new Date(report.followUpDate).toLocaleDateString()}
-                    </p>
-                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="empty-history" style={{ textAlign: 'center', padding: '3rem 1rem' }}>
@@ -126,6 +164,16 @@ const PatientHistory = ({ patientId, setModalOpen }) => {
           </div>
         )}
       </div>
+
+      {/* Lightbox Modal for Enlarged Image */}
+      {lightboxImg && (
+        <div className="lightbox-overlay" onClick={() => setLightboxImg(null)}>
+          <button className="lightbox-close" onClick={() => setLightboxImg(null)}>
+            <IoMdClose />
+          </button>
+          <img src={lightboxImg} alt="Enlarged medical record" className="lightbox-image" onClick={(e) => e.stopPropagation()} />
+        </div>
+      )}
     </div>
   );
 };
