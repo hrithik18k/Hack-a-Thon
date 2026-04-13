@@ -170,7 +170,7 @@ const Appointments = () => {
                                   className="btn btn-primary btn-sm"
                                   onClick={() => navigate("/doctor/write-report", { state: { appt: ele } })}
                                 >
-                                  Write Report
+                                  + Report
                                 </button>
                               )}
                             </div>

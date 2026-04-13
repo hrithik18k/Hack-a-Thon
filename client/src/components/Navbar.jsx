@@ -72,7 +72,7 @@ const Navbar = () => {
     <header className="navbar-container">
       <nav className={`nav ${iconActive ? "nav-active" : ""}`}>
         <h2 className="nav-logo">
-          <NavLink to={"/"}>Medi track</NavLink>
+          <NavLink to={"/"}>MEDI TRACK</NavLink>
         </h2>
 
         <div className="menu-icons">
