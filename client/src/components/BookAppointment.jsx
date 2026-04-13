@@ -81,7 +81,7 @@ const BookAppointment = ({ setModalOpen, ele }) => {
   };
 
   return (
-    <div className="modal flex-center">
+    <div className="modal drawer-modal">
       <div className="modal-content">
         <button
           type="button"
@@ -97,7 +97,7 @@ const BookAppointment = ({ setModalOpen, ele }) => {
 
         <form onSubmit={bookAppointment} className="modal-form">
           <div className="form-group">
-            <label>Date *</label>
+            <label>Date</label>
             <input
               type="date"
               name="date"
@@ -108,15 +108,15 @@ const BookAppointment = ({ setModalOpen, ele }) => {
             />
           </div>
           <div className="form-group">
-            <label>Time Slot *</label>
+            <label>Time Slot</label>
             {slotsLoading ? (
-              <p style={{ fontSize: "0.9rem", color: "var(--text-muted)" }}>Loading slots...</p>
+              <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>Loading slots...</p>
             ) : !formDetails.date ? (
-              <p style={{ fontSize: "0.9rem", color: "var(--text-muted)" }}>Please select a date first</p>
+              <p style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>Please select a date first</p>
             ) : availableSlots.length === 0 ? (
-              <p style={{ fontSize: "0.9rem", color: "var(--text-danger)" }}>No slots available</p>
+              <p style={{ fontSize: "0.85rem", color: "var(--text-danger)" }}>No slots available</p>
             ) : (
-              <div className="slots-grid" style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+              <div className="slots-grid" style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
                 {availableSlots.map((slot) => {
                   const isPast = new Date(`${formDetails.date}T${slot.time}`) < new Date();
                   const disabled = slot.isBooked || isPast;
@@ -127,13 +127,17 @@ const BookAppointment = ({ setModalOpen, ele }) => {
                       disabled={disabled}
                       onClick={() => setFormDetails({ ...formDetails, time: slot.time })}
                       style={{
-                        padding: "0.5rem",
-                        borderRadius: "8px",
-                        border: formDetails.time === slot.time ? "2px solid var(--accent-primary)" : "1px solid var(--border-color)",
-                        background: disabled ? "var(--bg-layer)" : formDetails.time === slot.time ? "var(--accent-primary-light)" : "var(--bg-surface)",
+                        padding: "0.45rem 0.7rem",
+                        borderRadius: "2px",
+                        border: formDetails.time === slot.time ? "1.5px solid var(--accent-primary)" : "1px solid var(--border-color)",
+                        background: disabled ? "var(--bg-surface)" : formDetails.time === slot.time ? "var(--accent-primary-light)" : "transparent",
                         color: disabled ? "var(--text-muted)" : "var(--text-primary)",
                         cursor: disabled ? "not-allowed" : "pointer",
-                        textDecoration: slot.isBooked ? "line-through" : "none"
+                        textDecoration: slot.isBooked ? "line-through" : "none",
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "0.82rem",
+                        fontWeight: 500,
+                        transition: "all 0.15s ease"
                       }}
                     >
                       {slot.time}
@@ -144,7 +148,7 @@ const BookAppointment = ({ setModalOpen, ele }) => {
             )}
           </div>
           <div className="form-group">
-            <label>Reason for Visit *</label>
+            <label>Reason for Visit</label>
             <input
               type="text"
               name="reason"

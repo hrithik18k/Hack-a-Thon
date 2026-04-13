@@ -38,7 +38,7 @@ const DoctorCard = ({ ele }) => {
           {ele?.experience}yrs
         </p>
         <p className="fees">
-          <strong>Fees per consultation: </strong>$ {ele?.fees}
+          <strong>Fees: </strong>$ {ele?.fees}
         </p>
         <p className="phone">
           <strong>Phone: </strong>{ele?.userId?.phone}
