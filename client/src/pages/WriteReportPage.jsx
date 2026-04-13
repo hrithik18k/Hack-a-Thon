@@ -221,8 +221,10 @@ const WriteReportPage = () => {
           body: data,
         });
         const uploadData = await res.json();
-        if (uploadData.url) {
-          uploadedUrls.push(uploadData.url.toString());
+        if (uploadData.secure_url) {
+          uploadedUrls.push(uploadData.secure_url.toString());
+        } else if (uploadData.url) {
+          uploadedUrls.push(uploadData.url.toString().replace("http://", "https://"));
         }
       }
       setImages((prev) => [...prev, ...uploadedUrls]);
