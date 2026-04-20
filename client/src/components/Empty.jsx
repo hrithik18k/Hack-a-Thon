@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React from "react";
 
 const Empty = ({ title = "Nothing to show", message = "There is no data to display at this moment." }) => {
@@ -11,3 +12,8 @@ const Empty = ({ title = "Nothing to show", message = "There is no data to displ
 };
 
 export default Empty;
+
+Empty.propTypes = {
+  title: PropTypes.any,
+  message: PropTypes.any
+};

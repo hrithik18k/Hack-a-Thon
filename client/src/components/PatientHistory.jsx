@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { IoMdClose, IoMdArrowDropdown, IoMdArrowDropright } from "react-icons/io";
@@ -179,3 +180,8 @@ const PatientHistory = ({ patientId, setModalOpen }) => {
 };
 
 export default PatientHistory;
+
+PatientHistory.propTypes = {
+  patientId: PropTypes.any,
+  setModalOpen: PropTypes.any
+};

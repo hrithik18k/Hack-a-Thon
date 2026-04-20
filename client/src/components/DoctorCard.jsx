@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { useState } from "react";
 import BookAppointment from "../components/BookAppointment";
 import toast from "react-hot-toast";
@@ -60,3 +61,7 @@ const DoctorCard = ({ ele }) => {
 };
 
 export default DoctorCard;
+
+DoctorCard.propTypes = {
+  ele: PropTypes.any
+};
