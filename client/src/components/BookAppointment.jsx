@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -170,3 +171,8 @@ const BookAppointment = ({ setModalOpen, ele }) => {
 };
 
 export default BookAppointment;
+
+BookAppointment.propTypes = {
+  setModalOpen: PropTypes.any,
+  ele: PropTypes.any
+};

@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
@@ -58,3 +59,8 @@ const Sidebar = ({ isOpen, onClose }) => {
 };
 
 export default Sidebar;
+
+Sidebar.propTypes = {
+  isOpen: PropTypes.any,
+  onClose: PropTypes.any
+};

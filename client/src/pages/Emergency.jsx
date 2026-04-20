@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { useState, useEffect, useRef } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -217,3 +218,7 @@ const FingerprintIcon = ({ color = "currentColor", size = 24 }) => (
 );
 
 export default Emergency;
+FingerprintIcon.propTypes = {
+  color: PropTypes.any,
+  size: PropTypes.any
+};

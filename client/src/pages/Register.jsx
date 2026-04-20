@@ -85,7 +85,7 @@ function Register() {
   const inputChange = (e) => {
     const { name, value } = e.target;
     if (name === "phone" || name === "emergencyPhone1" || name === "emergencyPhone2") {
-      const numericValue = value.replace(/[^0-9]/g, "").slice(0, 10);
+      const numericValue = value.replace(/\D/g, "").slice(0, 10);
       setFormDetails({ ...formDetails, [name]: numericValue });
     } else {
       setFormDetails({ ...formDetails, [name]: value });

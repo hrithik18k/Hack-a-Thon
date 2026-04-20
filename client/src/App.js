@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { Protected, Public, Admin, DoctorOnly } from "./middleware/route";
 import Loading from "./components/Loading";
-import Error from "./pages/Error";
+import ErrorPage from "./pages/Error";
 
 import "./styles/global.css";
 
@@ -54,7 +54,7 @@ function App() {
           <Route path="/dashboard/doctors" element={<Admin><Dashboard type={"doctors"} /></Admin>} />
           <Route path="/dashboard/appointments" element={<Admin><Dashboard type={"appointments"} /></Admin>} />
 
-          <Route path="*" element={<Error />} />
+          <Route path="*" element={<ErrorPage />} />
         </Routes>
       </Suspense>
     </Router>

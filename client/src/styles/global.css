@@ -84,6 +84,11 @@
 
   --prescription-bg: #FFFEF5;
   --prescription-dot: rgba(27, 67, 50, 0.08);
+
+  --fp-success: #059669;
+  --fp-danger: #DC2626;
+  --fp-warning: #D97706;
+  --fp-primary: #1B4332;
 }
 
 /* ───────────────────── DARK MODE ───────────────────── */
@@ -136,6 +141,11 @@
 
   --prescription-bg: #0F1A2E;
   --prescription-dot: rgba(45, 212, 191, 0.06);
+
+  --fp-success: #10B981;
+  --fp-danger: #F43F5E;
+  --fp-warning: #F59E0B;
+  --fp-primary: #2DD4BF;
 }
 
 /* ═══════════════════════ RESET & BASE ═══════════════════════ */
@@ -1970,20 +1980,6 @@ footer {
 }
 
 /* ── Fingerprint & Emergency UI ── */
-:root {
-  --fp-success: #059669;
-  --fp-danger: #DC2626;
-  --fp-warning: #D97706;
-  --fp-primary: #1B4332;
-}
-
-[data-theme="dark"] {
-  --fp-success: #10B981;
-  --fp-danger: #F43F5E;
-  --fp-warning: #F59E0B;
-  --fp-primary: #2DD4BF;
-}
-
 @keyframes fp-pulse {
   0%   { box-shadow: 0 0 0 0 rgba(45, 212, 191, 0.3); }
   70%  { box-shadow: 0 0 0 12px rgba(45, 212, 191, 0); }
@@ -2169,20 +2165,6 @@ footer {
   padding-left: 0.1rem;
 }
 
-.form-row {
-  display: flex;
-  gap: 1rem;
-}
-
-.form-row .form-field {
-  flex: 1;
-}
-
-@media (max-width: 600px) {
-  .form-row {
-    flex-direction: column;
-  }
-}
 
 /* ════════════════════════ SIDEBAR MOBILE ════════════════════════ */
 .sidebar-hamburger {
@@ -2444,19 +2426,6 @@ footer {
   object-fit: cover;
 }
 
-.history-card {
-  position: relative;
-  overflow: hidden;
-}
-
-.history-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 0;
-}
 
 /* ════════════════════════ HISTORY STRIP (Collapsible) ════════════════════════ */
 .history-strip-wrapper {

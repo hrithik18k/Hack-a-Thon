@@ -66,8 +66,7 @@ const register = async (req, res) => {
   try {
     const { 
       firstname, lastname, email, password, phone, city, dateOfBirth, gender, bloodGroup, role, 
-      specialization, experience, fees, qualifications, hospitalName, pic,
-      permanentAddress, temporaryAddress, emergencyContact
+      pic, permanentAddress, temporaryAddress, emergencyContact
     } = req.body;
     
     const emailPresent = await User.findOne({ email });

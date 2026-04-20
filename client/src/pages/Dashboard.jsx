@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { useState } from "react";
 import AdminAppointments from "../components/AdminAppointments";
 import AdminDoctors from "../components/AdminDoctors";
@@ -44,3 +45,7 @@ const Dashboard = ({ type }) => {
 };
 
 export default Dashboard;
+
+Dashboard.propTypes = {
+  type: PropTypes.any
+};

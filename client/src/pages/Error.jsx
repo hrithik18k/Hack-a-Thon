@@ -1,7 +1,7 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
 
-const Error = () => {
+const ErrorPage = () => {
   return (
     <div className="error container">
       <h2>Error! Page Not Found</h2>
@@ -15,4 +15,4 @@ const Error = () => {
   );
 };
 
-export default Error;
+export default ErrorPage;

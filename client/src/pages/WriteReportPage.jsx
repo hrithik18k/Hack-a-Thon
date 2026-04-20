@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -445,3 +446,8 @@ const WriteReportPage = () => {
 };
 
 export default WriteReportPage;
+
+FingerprintIcon.propTypes = {
+  color: PropTypes.any,
+  size: PropTypes.any
+};

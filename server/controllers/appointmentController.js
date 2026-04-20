@@ -73,7 +73,7 @@ const bookappointment = async (req, res) => {
 
 const completed = async (req, res) => {
   try {
-    const { appointid, doctorId, doctorname } = req.body;
+    const { appointid, doctorname } = req.body;
 
     await Appointment.findByIdAndUpdate(appointid, { status: "Completed" });
 

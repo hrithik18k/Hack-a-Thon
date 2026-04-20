@@ -44,7 +44,9 @@ function Profile() {
         });
         setFile(temp.pic || "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg");
       }
-    } catch (error) {} finally {
+    } catch (error) {
+      console.error(error);
+    } finally {
       setLoading(false);
     }
   };
@@ -60,14 +62,14 @@ function Profile() {
       const field = name.split("_")[1];
       let formattedValue = value;
       if (field === "phone1" || field === "phone2") {
-        formattedValue = value.replace(/[^0-9]/g, "").slice(0, 10);
+        formattedValue = value.replace(/\D/g, "").slice(0, 10);
       }
       setFormDetails({
         ...formDetails,
         emergencyContact: { ...formDetails.emergencyContact, [field]: formattedValue }
       });
     } else if (name === "phone") {
-      const numericValue = value.replace(/[^0-9]/g, "").slice(0, 10);
+      const numericValue = value.replace(/\D/g, "").slice(0, 10);
       setFormDetails({ ...formDetails, [name]: numericValue });
     } else {
       setFormDetails({ ...formDetails, [name]: value });
