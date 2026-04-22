@@ -16,15 +16,12 @@ const DashboardHome = () => {
       setLoading(true);
       // Let's create a combined request or separate based on what controllers we have.
       // We have getallusers, getalldoctors, getallappointments
-      const [uRes, dRes, aRes] = await Promise.all([
+      const [uRes, dRes, aRes, appDocs] = await Promise.all([
         fetchData("/api/user/getallusers"),
-        fetchData("/api/doctor/getnotdoctors"), // we can get pending and approved doctors 
-        // to get all, we can also modify backend or fetch. getalldoctors only gives approved. 
-        // Let's just fetch approved for simplicity.
-        fetchData("/api/appointment/getallappointments")
+        fetchData("/api/doctor/getnotdoctors"), // pending/approved/rejected
+        fetchData("/api/appointment/getallappointments"),
+        fetchData("/api/doctor/getalldoctors") // only approved
       ]);
-      
-      const appDocs = await fetchData("/api/doctor/getalldoctors");
 
       setStats({
         users: uRes?.length || 0,

@@ -9,7 +9,7 @@ import Loading from "./Loading";
 const PatientHistory = ({ patientId, setModalOpen }) => {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("Important");
+  const [filter, setFilter] = useState("All");
   const [expandedId, setExpandedId] = useState(null);
   const [lightboxImg, setLightboxImg] = useState(null);
 
