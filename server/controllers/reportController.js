@@ -22,7 +22,6 @@ const createReport = async (req, res) => {
     const doctorUser = await User.findById(req.locals);
 
     const importanceValue = (importance && (importance === "Important" || importance === "General")) ? importance : "General";
-    console.log("Final importance value being saved:", importanceValue);
 
     // Create Report
     const report = new MedicalReport({
@@ -40,21 +39,13 @@ const createReport = async (req, res) => {
       followUpDate: followUpDate ? new Date(followUpDate) : null,
     });
 
-    console.log("Report object before save:", JSON.stringify(report.toObject(), null, 2));
-
     await report.save();
-
-    console.log("Report saved. Verifying from DB...");
-    const savedReport = await MedicalReport.findById(report._id);
-    console.log("Saved report importance:", savedReport.importance);
-    console.log("Saved report images:", savedReport.images);
-    console.log("Saved report has importance field:", 'importance' in savedReport.toObject());
 
     // Mark appointment as 'Completed' if not already
     appointment.status = "Completed";
     await appointment.save();
 
-    return res.status(201).json({ success: true, message: "Report created successfully", data: savedReport });
+    return res.status(201).json({ success: true, message: "Report created successfully", data: report });
   } catch (error) {
     console.log("Error creating report:", error);
     res.status(500).json({ success: false, message: "Failed to create report" });

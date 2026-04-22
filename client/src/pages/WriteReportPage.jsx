@@ -258,7 +258,6 @@ const WriteReportPage = () => {
         medications: medications.filter(m => m.name.trim() !== ""), 
       };
 
-      console.log("Saving report with importance:", payload.importance);
 
       const { data } = await axios.post("/api/report/create", payload, {
         headers: {

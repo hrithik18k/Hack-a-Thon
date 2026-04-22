@@ -52,6 +52,7 @@ const Appointments = () => {
         }
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const saveSlots = async (e) => {
