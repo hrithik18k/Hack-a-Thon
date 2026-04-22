@@ -30,8 +30,8 @@ const schema = mongoose.Schema(
     },
     gender: {
       type: String,
-      required: true,
-      enum: ["male", "female", "other"],
+      required: false,
+      enum: ["male", "female", "other", ""],
     },
     bloodGroup: {
       type: String,

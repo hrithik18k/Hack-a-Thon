@@ -75,7 +75,7 @@ function ChangePassword() {
       );
       // console.log(response.data);
 
-      if (response.data === "Password changed successfully") {
+      if (response.data.success || response.data === "Password changed successfully") {
         toast.success("Password updated successfully");
         setFormDetails({
           ...formDetails,

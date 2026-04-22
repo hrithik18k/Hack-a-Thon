@@ -1,6 +1,6 @@
 const express = require("express");
 const doctorController = require("../controllers/doctorController");
-const { auth } = require("../middleware/auth");
+const { auth, requireRole } = require("../middleware/auth");
 
 const doctorRouter = express.Router();
 
@@ -10,11 +10,11 @@ doctorRouter.get("/getnotdoctors", auth, doctorController.getnotdoctors);
 
 doctorRouter.post("/applyfordoctor", auth, doctorController.applyfordoctor);
 
-doctorRouter.put("/deletedoctor", auth, doctorController.deletedoctor);
+doctorRouter.put("/deletedoctor", auth, requireRole("Admin"), doctorController.deletedoctor);
 
-doctorRouter.put("/acceptdoctor", auth, doctorController.acceptdoctor);
+doctorRouter.put("/acceptdoctor", auth, requireRole("Admin"), doctorController.acceptdoctor);
 
-doctorRouter.put("/rejectdoctor", auth, doctorController.rejectdoctor);
+doctorRouter.put("/rejectdoctor", auth, requireRole("Admin"), doctorController.rejectdoctor);
 
 doctorRouter.put("/updateslots", auth, doctorController.updateslots);
 
