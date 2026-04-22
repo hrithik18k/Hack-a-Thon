@@ -7,13 +7,7 @@ const createReport = async (req, res) => {
   try {
     const { appointmentId, diagnosis, notes, medications, followUpDate, importance, images } = req.body;
     
-    // ===== DEBUG LOGGING =====
-    console.log("===== CREATE REPORT DEBUG =====");
-    console.log("Raw req.body keys:", Object.keys(req.body));
-    console.log("importance from body:", importance, "| type:", typeof importance);
-    console.log("images from body:", images);
-    console.log("Full req.body:", JSON.stringify(req.body, null, 2));
-    console.log("===============================");
+    // Removed debug logging
     
     // Find the appointment
     const appointment = await Appointment.findById(appointmentId);

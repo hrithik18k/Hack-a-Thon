@@ -183,16 +183,26 @@ const postResultESP = async (req, res) => {
       const user = await User.findOne({ fingerprintTemplateId: templateId }).select("-password");
       if (!user) {
         device.result = { status: "not_found", timestamp: new Date() };
-      } else {
-        const reports = await MedicalReport.find({ patientId: user._id }).sort({ createdAt: -1 });
-        device.result = {
-          status:    "found",
-          templateId,
-          user:      user.toObject(),
-          reports:   reports.map(r => r.toObject()),
-          timestamp: new Date(),
-        };
+        device.currentMode = "idle";
+        await device.save();
+        return res.status(200).json({ 
+          success: true, 
+          data: { 
+            patient: { firstname: "Unknown", lastname: "" },
+            reportCount: 0
+          } 
+        });
       }
+
+      const reports = await MedicalReport.find({ patientId: user._id }).sort({ createdAt: -1 });
+      device.result = {
+        status:    "found",
+        templateId,
+        user:      user.toObject(),
+        reports:   reports.map(r => r.toObject()),
+        timestamp: new Date(),
+      };
+      
       device.currentMode = "idle";
       await device.save();
 
@@ -200,8 +210,8 @@ const postResultESP = async (req, res) => {
       return res.status(200).json({ 
         success: true, 
         data: { 
-          patient: { firstname: user?.firstname || "Unknown", lastname: user?.lastname || "" },
-          reportCount: device.result.reports?.length || 0
+          patient: { firstname: user.firstname || "Unknown", lastname: user.lastname || "" },
+          reportCount: device.result.reports.length || 0
         } 
       });
     }
@@ -264,24 +274,34 @@ const postResult = async (req, res) => {
       const user = await User.findOne({ fingerprintTemplateId: templateId }).select("-password");
       if (!user) {
         state.result = { status: "not_found", timestamp: new Date() };
-      } else {
-        const reports = await MedicalReport.find({ patientId: user._id }).sort({ createdAt: -1 });
-        state.result = {
-          status:    "found",
-          templateId,
-          user:      user.toObject(),
-          reports:   reports.map(r => r.toObject()),
-          timestamp: new Date(),
-        };
+        state.mode = "idle";
+        await state.save();
+        return res.status(200).json({ 
+          success: true, 
+          data: { 
+            patient: { firstname: "Unknown", lastname: "" },
+            reportCount: 0
+          } 
+        });
       }
+
+      const reports = await MedicalReport.find({ patientId: user._id }).sort({ createdAt: -1 });
+      state.result = {
+        status:    "found",
+        templateId,
+        user:      user.toObject(),
+        reports:   reports.map(r => r.toObject()),
+        timestamp: new Date(),
+      };
+      
       state.mode = "idle";
       await state.save();
 
       return res.status(200).json({ 
         success: true, 
         data: { 
-          patient: { firstname: user?.firstname || "Unknown", lastname: user?.lastname || "" },
-          reportCount: state.result.reports?.length || 0
+          patient: { firstname: user.firstname || "Unknown", lastname: user.lastname || "" },
+          reportCount: state.result.reports.length || 0
         } 
       });
     }
