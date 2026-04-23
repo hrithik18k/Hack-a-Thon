@@ -35,6 +35,20 @@ const Doctors = () => {
     setFilters(prev => ({ ...prev, [name]: value }));
   };
 
+  const renderContent = () => {
+    if (isLoading) return <Loading />;
+    if (doctors?.length > 0) {
+      return (
+        <div className="doctors-card-container">
+          {doctors.map((ele) => (
+            <DoctorCard ele={ele} key={ele._id} />
+          ))}
+        </div>
+      );
+    }
+    return <Empty />;
+  };
+
   return (
     <>
       <Navbar />
@@ -62,17 +76,7 @@ const Doctors = () => {
             </div>
           </div>
           
-          {isLoading ? (
-            <Loading />
-          ) : doctors?.length > 0 ? (
-            <div className="doctors-card-container">
-              {doctors.map((ele) => (
-                <DoctorCard ele={ele} key={ele._id} />
-              ))}
-            </div>
-          ) : (
-            <Empty />
-          )}
+          {renderContent()}
         </div>
       </section>
       <Footer />

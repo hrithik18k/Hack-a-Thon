@@ -53,7 +53,6 @@ function ChangePassword() {
   const formSubmit = async (e) => {
     e.preventDefault();
     const { password, newpassword, confnewpassword } = formDetails;
-    // console.log(formDetails);
     if (newpassword !== confnewpassword) {
       return toast.error("Passwords do not match");
     }
@@ -73,7 +72,6 @@ function ChangePassword() {
           },
         }
       );
-      // console.log(response.data);
 
       if (response.data.success || response.data === "Password changed successfully") {
         toast.success("Password updated successfully");

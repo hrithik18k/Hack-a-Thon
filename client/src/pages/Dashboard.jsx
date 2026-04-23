@@ -10,12 +10,22 @@ import { FiMenu } from "react-icons/fi";
 const Dashboard = ({ type }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const renderContent = () => {
+    switch(type) {
+      case "home": return <DashboardHome />;
+      case "users": return <Users />;
+      case "doctors": return <AdminDoctors />;
+      case "appointments": return <AdminAppointments />;
+      default: return null;
+    }
+  };
+
   return (
     <>
       <section className="layout-section">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         {sidebarOpen && (
-          <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />
+          <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') setSidebarOpen(false); }} />
         )}
         <div className="layout-content">
           <div className="layout-content-header">
@@ -27,17 +37,7 @@ const Dashboard = ({ type }) => {
               <FiMenu />
             </button>
           </div>
-          {type === "home" ? (
-            <DashboardHome />
-          ) : type === "users" ? (
-            <Users />
-          ) : type === "doctors" ? (
-            <AdminDoctors />
-          ) : type === "appointments" ? (
-            <AdminAppointments />
-          ) : (
-            <></>
-          )}
+          {renderContent()}
         </div>
       </section>
     </>

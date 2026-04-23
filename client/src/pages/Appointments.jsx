@@ -44,9 +44,9 @@ const Appointments = () => {
     getAllAppointments();
     if (user?.role === "Doctor") {
       fetchData("/api/doctor/getalldoctors").then(data => {
-        if (data && Array.isArray(data)) {
+        if (Array.isArray(data)) {
           const me = data.find(d => d.userId?._id === user.userId);
-          if (me && me.slotConfig) {
+          if (me?.slotConfig) {
             setSlotDetails(me.slotConfig);
           }
         }

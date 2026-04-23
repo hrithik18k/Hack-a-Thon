@@ -29,7 +29,9 @@ const FingerprintModal = ({ onClose, userId, onSuccess }) => {
       stopPolling();
       axios.post("/api/device/setmode", { mode: "idle" }, {
         headers: { Authorization: `Bearer ${token}` },
-      }).catch(() => {});
+      }).catch((err) => {
+        console.error("Failed to set mode idle:", err);
+      });
     };
     // eslint-disable-next-line
   }, []);
@@ -66,7 +68,9 @@ const FingerprintModal = ({ onClose, userId, onSuccess }) => {
           setMessage(data.data.message);
           stopPolling();
         }
-      } catch (err) {}
+      } catch (err) {
+        console.error("Polling error:", err);
+      }
     }, 2000);
 
     setTimeout(() => {
@@ -391,7 +395,7 @@ const WriteReportPage = () => {
 
               <div className="medications-container">
                 {medications.map((med, index) => (
-                  <div key={index} className="medication-box">
+                  <div key={med.id || `${index}-${med.name}`} className="medication-box">
                     <div className="med-box-header">
                       <span>Medication #{index + 1}</span>
                       {medications.length > 1 && (
@@ -449,4 +453,10 @@ export default WriteReportPage;
 FingerprintIcon.propTypes = {
   color: PropTypes.any,
   size: PropTypes.any
+};
+
+FingerprintModal.propTypes = {
+  onClose: PropTypes.any,
+  userId: PropTypes.any,
+  onSuccess: PropTypes.any
 };
