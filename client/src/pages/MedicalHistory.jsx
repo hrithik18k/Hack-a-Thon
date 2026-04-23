@@ -61,11 +61,18 @@ const MedicalHistory = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
             <h2 className="page-title" style={{ marginBottom: 0 }}>My Medical History</h2>
             <div className="filter-tabs" style={{ margin: 0, scale: '0.9' }}>
-               {["Important", "General", "All"].map(f => (
-                 <button key={f} className={`filter-tab ${filter === f ? "active" : ""}`} onClick={() => setFilter(f)}>
-                    {f === "Important" ? "Critical" : f === "General" ? "Routine" : "All"}
-                 </button>
-               ))}
+               {["Important", "General", "All"].map(f => {
+                 const getFilterLabel = (filterType) => {
+                   if (filterType === "Important") return "Critical";
+                   if (filterType === "General") return "Routine";
+                   return "All";
+                 };
+                 return (
+                   <button key={f} className={`filter-tab ${filter === f ? "active" : ""}`} onClick={() => setFilter(f)}>
+                      {getFilterLabel(f)}
+                   </button>
+                 );
+               })}
             </div>
           </div>
           
@@ -82,6 +89,9 @@ const MedicalHistory = () => {
                       className={`history-strip ${isExpanded ? "expanded" : ""}`}
                       style={{ borderLeftColor: (report.importance === "Important") ? 'var(--accent-warning)' : 'var(--accent-success)' }}
                       onClick={() => toggleExpand(report._id)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(report._id); } }}
                     >
                       <span className="strip-toggle-icon">
                         {isExpanded ? <IoMdArrowDropdown /> : <IoMdArrowDropright />}
@@ -111,12 +121,12 @@ const MedicalHistory = () => {
                           </div>
                         )}
                         
-                        {report.medications && report.medications.length > 0 && (
+                        {report.medications?.length > 0 && (
                           <div className="history-detail-row">
                             <strong>Prescribed Medications:</strong>
                             <ul className="meds-list-inline">
                               {report.medications.map((med, i) => (
-                                <li key={i}>
+                                <li key={med._id || `${i}-${med.name}`}>
                                   <span className="med-name">{med.name}</span> — {med.dosage}, {med.frequency} for {med.duration}
                                   {med.notes && <em> ({med.notes})</em>}
                                 </li>
@@ -125,16 +135,19 @@ const MedicalHistory = () => {
                           </div>
                         )}
 
-                        {report.images && report.images.length > 0 && (
+                        {report.images?.length > 0 && (
                           <div className="history-detail-row">
                             <strong>Attached Images:</strong>
                             <div className="images-grid" style={{ marginTop: '0.5rem' }}>
                               {report.images.map((img, i) => (
                                 <div
-                                  key={i}
+                                  key={img._id || `${i}-${img}`}
                                   className="report-img-thumb"
                                   onClick={(e) => { e.stopPropagation(); setLightboxImg(secureUrl(img)); }}
                                   style={{ cursor: 'pointer' }}
+                                  role="button"
+                                  tabIndex={0}
+                                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); setLightboxImg(secureUrl(img)); } }}
                                 >
                                   <img src={secureUrl(img)} alt="Medical record" />
                                 </div>
@@ -165,7 +178,7 @@ const MedicalHistory = () => {
 
       {/* Lightbox Modal for Enlarged Image */}
       {lightboxImg && (
-        <div className="lightbox-overlay" onClick={() => setLightboxImg(null)}>
+        <div className="lightbox-overlay" onClick={() => setLightboxImg(null)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') setLightboxImg(null); }}>
           <button className="lightbox-close" onClick={() => setLightboxImg(null)}>
             <IoMdClose />
           </button>

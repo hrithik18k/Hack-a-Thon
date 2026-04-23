@@ -18,7 +18,9 @@ const Navbar = () => {
   let user = null;
   try {
     if (token) user = jwtDecode(token);
-  } catch (e) { }
+  } catch (e) {
+    console.error("Token decode error:", e);
+  }
 
   // Theme toggle
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
@@ -77,21 +79,21 @@ const Navbar = () => {
 
         <div className="menu-icons">
           {!iconActive ? (
-            <FiMenu className="menu-open" onClick={() => setIconActive(true)} />
+            <FiMenu className="menu-open" onClick={() => setIconActive(true)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setIconActive(true); }} />
           ) : (
-            <RxCross1 className="menu-close" onClick={() => setIconActive(false)} />
+            <RxCross1 className="menu-close" onClick={() => setIconActive(false)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setIconActive(false); }} />
           )}
         </div>
 
         {/* Mobile overlay backdrop */}
         {iconActive && (
-          <div className="nav-overlay" onClick={closeNav} />
+          <div className="nav-overlay" onClick={closeNav} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') closeNav(); }} />
         )}
 
         <ul className="nav-links">
           <li><NavLink to={"/"} onClick={closeNav}>Home</NavLink></li>
 
-          {user && user.role === "Patient" && (
+          {user?.role === "Patient" && (
             <>
               <li><NavLink to={"/doctors"} onClick={closeNav}>Find Doctors</NavLink></li>
               <li><NavLink to={"/appointments"} onClick={closeNav}>My Appointments</NavLink></li>
@@ -106,7 +108,7 @@ const Navbar = () => {
             </>
           )}
 
-          {user && user.role === "Doctor" && (
+          {user?.role === "Doctor" && (
             <>
               <li><NavLink to={"/appointments"} onClick={closeNav}>Appointments</NavLink></li>
               <li><NavLink to={"/emergency"} onClick={closeNav}>Emergency</NavLink></li>
@@ -121,7 +123,7 @@ const Navbar = () => {
             </>
           )}
 
-          {user && user.role === "Admin" && (
+          {user?.role === "Admin" && (
             <>
               <li><NavLink to={"/dashboard/home"} onClick={closeNav}>Dashboard</NavLink></li>
             </>

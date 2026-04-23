@@ -72,8 +72,6 @@ function Register() {
         if (value.length > 0 && value.length < 10) return "Phone number must be exactly 10 digits";
         return "";
       case "emergencyPhone1":
-        if (value.length > 0 && value.length < 10) return "Must be exactly 10 digits";
-        return "";
       case "emergencyPhone2":
         if (value.length > 0 && value.length < 10) return "Must be exactly 10 digits";
         return "";
@@ -124,78 +122,79 @@ function Register() {
     }
   };
 
-  const formSubmit = async (e) => {
-    e.preventDefault();
-
-    // Mark all fields as touched on submit
+  const validateForm = () => {
     const allTouched = {};
     Object.keys(formDetails).forEach(k => allTouched[k] = true);
     setTouched(allTouched);
 
-    // Check for any validation errors
     const fieldsToCheck = ["firstname", "lastname", "email", "password", "confpassword", "phone"];
     for (const field of fieldsToCheck) {
       const err = getFieldError(field, formDetails[field]);
-      if (err) {
-        toast.error(err);
-        return;
-      }
+      if (err) return err;
     }
 
-    if (formDetails.password !== formDetails.confpassword) {
-      toast.error("Passwords do not match");
-      return;
-    }
+    if (formDetails.password !== formDetails.confpassword) return "Passwords do not match";
 
-    // Phone validation
-    const phoneRegex = /^[0-9]{10}$/;
-    if (!phoneRegex.test(formDetails.phone)) {
-      toast.error("Phone number must be exactly 10 digits");
-      return;
-    }
+    const phoneRegex = /^\d{10}$/;
+    if (!phoneRegex.test(formDetails.phone)) return "Phone number must be exactly 10 digits";
 
     if (selectedRole === "Patient") {
       if (!phoneRegex.test(formDetails.emergencyPhone1) || (formDetails.emergencyPhone2 && !phoneRegex.test(formDetails.emergencyPhone2))) {
-        toast.error("Emergency phone numbers must be exactly 10 digits");
-        return;
+        return "Emergency phone numbers must be exactly 10 digits";
       }
     }
+    return null;
+  };
 
-    try {
-      const payload = {
-        firstname: formDetails.firstname,
-        lastname: formDetails.lastname,
-        email: formDetails.email,
-        password: formDetails.password,
-        phone: formDetails.phone,
-        city: formDetails.city,
-        pic: file,
-        role: selectedRole,
-      };
+  const buildPayload = () => {
+    const payload = {
+      firstname: formDetails.firstname,
+      lastname: formDetails.lastname,
+      email: formDetails.email,
+      password: formDetails.password,
+      phone: formDetails.phone,
+      city: formDetails.city,
+      pic: file,
+      role: selectedRole,
+    };
 
-      if (selectedRole === "Patient") {
-        payload.dateOfBirth = formDetails.dateOfBirth;
-        payload.gender = formDetails.gender;
-        payload.bloodGroup = formDetails.bloodGroup;
-        payload.permanentAddress = formDetails.permanentAddress;
-        payload.temporaryAddress = formDetails.temporaryAddress;
-        payload.emergencyContact = {
+    if (selectedRole === "Patient") {
+      Object.assign(payload, {
+        dateOfBirth: formDetails.dateOfBirth,
+        gender: formDetails.gender,
+        bloodGroup: formDetails.bloodGroup,
+        permanentAddress: formDetails.permanentAddress,
+        temporaryAddress: formDetails.temporaryAddress,
+        emergencyContact: {
           name: formDetails.emergencyName,
           relation: formDetails.emergencyRelation,
           phone1: formDetails.emergencyPhone1,
           phone2: formDetails.emergencyPhone2,
-        };
-      }
+        }
+      });
+    } else if (selectedRole === "Doctor") {
+      Object.assign(payload, {
+        specialization: formDetails.specialization,
+        experience: formDetails.experience,
+        fees: formDetails.fees,
+        qualifications: formDetails.qualifications,
+        hospitalName: formDetails.hospitalName,
+        certificate: certFile,
+      });
+    }
+    return payload;
+  };
 
-      if (selectedRole === "Doctor") {
-        payload.specialization = formDetails.specialization;
-        payload.experience = formDetails.experience;
-        payload.fees = formDetails.fees;
-        payload.qualifications = formDetails.qualifications;
-        payload.hospitalName = formDetails.hospitalName;
-        payload.certificate = certFile;
-      }
-      
+  const formSubmit = async (e) => {
+    e.preventDefault();
+    const errorMsg = validateForm();
+    if (errorMsg) {
+      toast.error(errorMsg);
+      return;
+    }
+
+    try {
+      const payload = buildPayload();
       const response = await axios.post("/api/user/register", payload);
       
       if (response.data.success) {
@@ -215,6 +214,12 @@ function Register() {
     const error = getFieldError(fieldName, formDetails[fieldName]);
     if (!error) return null;
     return <span className="field-error">{error}</span>;
+  };
+
+  const getSubmitText = () => {
+    if (loading) return "Processing...";
+    if (selectedRole === "Doctor") return "Apply as Doctor";
+    return "Register";
   };
 
   return (
@@ -361,7 +366,7 @@ function Register() {
             )}
 
             <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
-              {loading ? "Processing..." : selectedRole === "Doctor" ? "Apply as Doctor" : "Register"}
+              {getSubmitText()}
             </button>
           </form>
 

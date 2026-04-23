@@ -110,43 +110,55 @@ const BookAppointment = ({ setModalOpen, ele }) => {
           </div>
           <div className="form-group">
             <label>Time Slot</label>
-            {slotsLoading ? (
-              <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>Loading slots...</p>
-            ) : !formDetails.date ? (
-              <p style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>Please select a date first</p>
-            ) : availableSlots.length === 0 ? (
-              <p style={{ fontSize: "0.85rem", color: "var(--text-danger)" }}>No slots available</p>
-            ) : (
-              <div className="slots-grid" style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
-                {availableSlots.map((slot) => {
-                  const isPast = new Date(`${formDetails.date}T${slot.time}`) < new Date();
-                  const disabled = slot.isBooked || isPast;
-                  return (
-                    <button
-                      key={slot.time}
-                      type="button"
-                      disabled={disabled}
-                      onClick={() => setFormDetails({ ...formDetails, time: slot.time })}
-                      style={{
-                        padding: "0.45rem 0.7rem",
-                        borderRadius: "2px",
-                        border: formDetails.time === slot.time ? "1.5px solid var(--accent-primary)" : "1px solid var(--border-color)",
-                        background: disabled ? "var(--bg-surface)" : formDetails.time === slot.time ? "var(--accent-primary-light)" : "transparent",
-                        color: disabled ? "var(--text-muted)" : "var(--text-primary)",
-                        cursor: disabled ? "not-allowed" : "pointer",
-                        textDecoration: slot.isBooked ? "line-through" : "none",
-                        fontFamily: "var(--font-mono)",
-                        fontSize: "0.82rem",
-                        fontWeight: 500,
-                        transition: "all 0.15s ease"
-                      }}
-                    >
-                      {slot.time}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+            {(() => {
+              if (slotsLoading) {
+                return <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>Loading slots...</p>;
+              }
+              if (!formDetails.date) {
+                return <p style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>Please select a date first</p>;
+              }
+              if (availableSlots.length === 0) {
+                return <p style={{ fontSize: "0.85rem", color: "var(--text-danger)" }}>No slots available</p>;
+              }
+              return (
+                <div className="slots-grid" style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
+                  {availableSlots.map((slot) => {
+                    const isPast = new Date(`${formDetails.date}T${slot.time}`) < new Date();
+                    const disabled = slot.isBooked || isPast;
+                    
+                    const getBackground = () => {
+                      if (disabled) return "var(--bg-surface)";
+                      if (formDetails.time === slot.time) return "var(--accent-primary-light)";
+                      return "transparent";
+                    };
+
+                    return (
+                      <button
+                        key={slot.time}
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => setFormDetails({ ...formDetails, time: slot.time })}
+                        style={{
+                          padding: "0.45rem 0.7rem",
+                          borderRadius: "2px",
+                          border: formDetails.time === slot.time ? "1.5px solid var(--accent-primary)" : "1px solid var(--border-color)",
+                          background: getBackground(),
+                          color: disabled ? "var(--text-muted)" : "var(--text-primary)",
+                          cursor: disabled ? "not-allowed" : "pointer",
+                          textDecoration: slot.isBooked ? "line-through" : "none",
+                          fontFamily: "var(--font-mono)",
+                          fontSize: "0.82rem",
+                          fontWeight: 500,
+                          transition: "all 0.15s ease"
+                        }}
+                      >
+                        {slot.time}
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
           <div className="form-group">
             <label>Reason for Visit</label>

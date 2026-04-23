@@ -85,7 +85,7 @@ const DeviceSetup = () => {
               <h3 className="card-heading">Current Device Status</h3>
               {loading ? (
                 <p>Loading...</p>
-              ) : device && device.isActive ? (
+              ) : device?.isActive ? (
                 <div>
                   <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1rem" }}>
                     <div style={{ padding: "0.5rem 1rem", borderRadius: "5px", background: "rgba(0,255,0,0.1)", color: "var(--fp-success)", fontWeight: "bold" }}>
@@ -109,8 +109,8 @@ const DeviceSetup = () => {
 
             {/* Registration Form */}
             <div className="report-card prescription-card">
-              <h3 className="card-heading">{device && device.isActive ? "Re-register Device" : "Register New Device"}</h3>
-              {device && device.isActive && (
+              <h3 className="card-heading">{device?.isActive ? "Re-register Device" : "Register New Device"}</h3>
+              {device?.isActive && (
                 <p style={{ fontSize: "0.9rem", color: "gray" }}>Warning: Re-registering will generate a new token and invalidate your current hardware setup.</p>
               )}
               <form onSubmit={handleRegister} style={{ marginTop: "1rem" }}>
@@ -125,7 +125,7 @@ const DeviceSetup = () => {
                   />
                 </div>
                 <button type="submit" className="btn btn-primary">
-                  {device && device.isActive ? "Re-register Device" : "Register Device"}
+                  {device?.isActive ? "Re-register Device" : "Register Device"}
                 </button>
               </form>
 

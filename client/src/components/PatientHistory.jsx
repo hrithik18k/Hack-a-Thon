@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+
 import { IoMdClose, IoMdArrowDropdown, IoMdArrowDropright } from "react-icons/io";
 import fetchData from "../helper/apiCall";
 import toast from "react-hot-toast";
@@ -63,15 +63,22 @@ const PatientHistory = ({ patientId, setModalOpen }) => {
         <h2 className="modal-title">Patient Medical History</h2>
         
         <div className="filter-tabs" style={{ marginBottom: '1.5rem' }}>
-          {["Important", "General", "All"].map((f) => (
-            <button 
-              key={f}
-              className={`filter-tab ${filter === f ? "active" : ""}`} 
-              onClick={() => setFilter(f)}
-            >
-              {f === "Important" ? "⭐ Critical History" : f === "General" ? "Routine Visits" : "All Records"}
-            </button>
-          ))}
+          {["Important", "General", "All"].map((f) => {
+            const getFilterLabel = (filterType) => {
+              if (filterType === "Important") return "⭐ Critical History";
+              if (filterType === "General") return "Routine Visits";
+              return "All Records";
+            };
+            return (
+              <button 
+                key={f}
+                className={`filter-tab ${filter === f ? "active" : ""}`} 
+                onClick={() => setFilter(f)}
+              >
+                {getFilterLabel(f)}
+              </button>
+            );
+          })}
         </div>
 
         {loading ? (
@@ -87,6 +94,9 @@ const PatientHistory = ({ patientId, setModalOpen }) => {
                     className={`history-strip ${isExpanded ? "expanded" : ""}`}
                     style={{ borderLeftColor: (report.importance === "Important") ? 'var(--accent-warning)' : 'var(--accent-success)' }}
                     onClick={() => toggleExpand(report._id)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(report._id); } }}
                   >
                     <span className="strip-toggle-icon">
                       {isExpanded ? <IoMdArrowDropdown /> : <IoMdArrowDropright />}
@@ -113,12 +123,12 @@ const PatientHistory = ({ patientId, setModalOpen }) => {
                         </div>
                       )}
                       
-                      {report.medications && report.medications.length > 0 && (
+                      {report.medications?.length > 0 && (
                         <div className="history-detail-row">
                           <strong>Prescribed Medications:</strong>
                           <ul className="meds-list-inline">
                             {report.medications.map((med, i) => (
-                              <li key={i}>
+                              <li key={med._id || `${i}-${med.name}`}>
                                 <span className="med-name">{med.name}</span> — {med.dosage}, {med.frequency} for {med.duration}
                               </li>
                             ))}
@@ -126,16 +136,19 @@ const PatientHistory = ({ patientId, setModalOpen }) => {
                         </div>
                       )}
 
-                      {report.images && report.images.length > 0 && (
+                      {report.images?.length > 0 && (
                         <div className="history-detail-row">
                           <strong>Attached Images:</strong>
                           <div className="images-grid" style={{ marginTop: '0.5rem' }}>
                             {report.images.map((img, i) => (
                               <div
-                                key={i}
+                                key={img._id || `${i}-${img}`}
                                 className="report-img-thumb"
                                 onClick={(e) => { e.stopPropagation(); setLightboxImg(secureUrl(img)); }}
                                 style={{ cursor: 'pointer' }}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); setLightboxImg(secureUrl(img)); } }}
                               >
                                 <img src={secureUrl(img)} alt="Medical record" />
                               </div>
@@ -168,7 +181,7 @@ const PatientHistory = ({ patientId, setModalOpen }) => {
 
       {/* Lightbox Modal for Enlarged Image */}
       {lightboxImg && (
-        <div className="lightbox-overlay" onClick={() => setLightboxImg(null)}>
+        <div className="lightbox-overlay" onClick={() => setLightboxImg(null)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') setLightboxImg(null); }}>
           <button className="lightbox-close" onClick={() => setLightboxImg(null)}>
             <IoMdClose />
           </button>
