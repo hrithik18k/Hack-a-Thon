@@ -73,6 +73,10 @@ const schema = mongoose.Schema(
       type: Number,
       default: null,
     },
+    fingerprintEnrolled: {
+      type: Boolean,
+      default: false,
+    },
     
     pic: {
       type: String,

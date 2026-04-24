@@ -3,12 +3,89 @@ const DeviceState   = require("../models/deviceStateModel");
 const User          = require("../models/userModel");
 const MedicalReport = require("../models/medicalReportModel");
 const DoctorDevice  = require("../models/doctorDeviceModel");
+const FingerprintProfile = require("../models/fingerprintProfileModel");
+const DeviceFingerprintTemplate = require("../models/deviceFingerprintTemplateModel");
 
 // ── Helper: old global system ────────────────────────────────
 const getState = async () => {
   let state = await DeviceState.findOne({ key: "main" });
   if (!state) state = await DeviceState.create({ key: "main" });
   return state;
+};
+
+const createGlobalFingerprintId = () => `fp_${crypto.randomUUID()}`;
+
+const getOrCreateFingerprintProfile = async (patientId, doctorId) => {
+  let profile = await FingerprintProfile.findOne({ patientId });
+  if (!profile) {
+    profile = await FingerprintProfile.create({
+      patientId,
+      globalFingerprintId: createGlobalFingerprintId(),
+      enrolledByDoctorId: doctorId || null,
+      lastEnrolledAt: new Date(),
+    });
+  }
+  return profile;
+};
+
+const buildPatientPayload = async (user) => {
+  const reports = await MedicalReport.find({ patientId: user._id }).sort({ createdAt: -1 });
+
+  return {
+    status: "found",
+    user: user.toObject(),
+    reports: reports.map((report) => report.toObject()),
+    timestamp: new Date(),
+  };
+};
+
+const resolvePatientByTemplate = async ({ deviceId, templateId }) => {
+  const mapping = await DeviceFingerprintTemplate.findOne({ deviceId, templateId });
+  if (mapping) {
+    const mappedUser = await User.findById(mapping.patientId).select("-password");
+    if (mappedUser) {
+      return { user: mappedUser, matchedBy: "device_mapping" };
+    }
+  }
+
+  const legacyUser = await User.findOne({ fingerprintTemplateId: templateId }).select("-password");
+  if (legacyUser) {
+    return { user: legacyUser, matchedBy: "legacy_global_template" };
+  }
+
+  return { user: null, matchedBy: null };
+};
+
+const upsertDeviceTemplateForPatient = async ({ device, patientId, templateId }) => {
+  const profile = await getOrCreateFingerprintProfile(patientId, device.doctorId);
+
+  await DeviceFingerprintTemplate.deleteMany({
+    deviceId: device._id,
+    $or: [
+      { patientId },
+      { templateId },
+    ],
+  });
+
+  await DeviceFingerprintTemplate.create({
+    patientId,
+    deviceId: device._id,
+    doctorId: device.doctorId,
+    fingerprintProfileId: profile._id,
+    templateId,
+  });
+
+  await User.findByIdAndUpdate(patientId, {
+    fingerprintEnrolled: true,
+    fingerprintTemplateId: templateId,
+  });
+
+  await FingerprintProfile.findByIdAndUpdate(profile._id, {
+    enrolledByDoctorId: device.doctorId,
+    lastEnrolledAt: new Date(),
+  });
+
+  return profile;
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -53,6 +130,47 @@ const getResult = async (req, res) => {
   }
 };
 
+const getPatientFingerprintStatus = async (req, res) => {
+  try {
+    const { patientId } = req.params;
+    if (!patientId) {
+      return res.status(400).json({ success: false, message: "patientId is required" });
+    }
+
+    const user = await User.findById(patientId).select("fingerprintTemplateId fingerprintEnrolled");
+    if (!user) {
+      return res.status(404).json({ success: false, message: "Patient not found" });
+    }
+
+    const device = await DoctorDevice.findOne({ doctorId: req.locals, isActive: true });
+    const profileExists = await FingerprintProfile.exists({ patientId });
+
+    let hasTemplateOnCurrentDevice = false;
+    if (device) {
+      hasTemplateOnCurrentDevice = !!(await DeviceFingerprintTemplate.exists({
+        patientId,
+        deviceId: device._id,
+      }));
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        hasAnyFingerprint: Boolean(
+          user.fingerprintEnrolled ||
+          user.fingerprintTemplateId !== null ||
+          profileExists
+        ),
+        hasTemplateOnCurrentDevice,
+        currentDeviceRegistered: !!device,
+      },
+    });
+  } catch (err) {
+    console.error("getPatientFingerprintStatus error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
 // ─────────────────────────────────────────────────────────────
 // DOCTOR DEVICE MANAGEMENT (Frontend)
 // ─────────────────────────────────────────────────────────────
@@ -64,6 +182,7 @@ const registerDevice = async (req, res) => {
 
     let device = await DoctorDevice.findOne({ doctorId: req.locals });
     if (device) {
+      await DeviceFingerprintTemplate.deleteMany({ deviceId: device._id });
       device.deviceToken = deviceToken;
       if (deviceName) device.deviceName = deviceName;
       device.isActive = true;
@@ -163,10 +282,10 @@ const postResultESP = async (req, res) => {
     // 1. Enrollment Handlers
     if (status === "enroll_success") {
       if (!userId) return res.status(400).json({ success: false, message: "userId required" });
-      await User.findByIdAndUpdate(userId, { fingerprintTemplateId: templateId });
+      await upsertDeviceTemplateForPatient({ device, patientId: userId, templateId });
       
       device.currentMode = "idle";
-      device.result = { status: "enrolled", templateId, timestamp: new Date() };
+      device.result = { status: "enrolled", templateId, userId, timestamp: new Date() };
       await device.save();
       return res.status(200).json({ success: true, message: "Fingerprint enrolled" });
     } 
@@ -180,7 +299,7 @@ const postResultESP = async (req, res) => {
 
     // 2. Scan Handlers
     if (status === "scan_success") {
-      const user = await User.findOne({ fingerprintTemplateId: templateId }).select("-password");
+      const { user, matchedBy } = await resolvePatientByTemplate({ deviceId: device._id, templateId });
       if (!user) {
         device.result = { status: "not_found", timestamp: new Date() };
         device.currentMode = "idle";
@@ -194,13 +313,11 @@ const postResultESP = async (req, res) => {
         });
       }
 
-      const reports = await MedicalReport.find({ patientId: user._id }).sort({ createdAt: -1 });
+      const patientResult = await buildPatientPayload(user);
       device.result = {
-        status:    "found",
+        ...patientResult,
         templateId,
-        user:      user.toObject(),
-        reports:   reports.map(r => r.toObject()),
-        timestamp: new Date(),
+        matchedBy,
       };
       
       device.currentMode = "idle";
@@ -211,7 +328,7 @@ const postResultESP = async (req, res) => {
         success: true, 
         data: { 
           patient: { firstname: user.firstname || "Unknown", lastname: user.lastname || "" },
-          reportCount: device.result.reports.length || 0
+          reportCount: patientResult.reports.length || 0
         } 
       });
     }
@@ -256,7 +373,10 @@ const postResult = async (req, res) => {
 
     if (status === "enroll_success") {
       if (!userId) return res.status(400).json({ success: false, message: "userId required" });
-      await User.findByIdAndUpdate(userId, { fingerprintTemplateId: templateId });
+      await User.findByIdAndUpdate(userId, {
+        fingerprintTemplateId: templateId,
+        fingerprintEnrolled: true,
+      });
       state.mode   = "idle";
       state.result = { status: "enrolled", templateId, timestamp: new Date() };
       await state.save();
@@ -285,13 +405,11 @@ const postResult = async (req, res) => {
         });
       }
 
-      const reports = await MedicalReport.find({ patientId: user._id }).sort({ createdAt: -1 });
+      const patientResult = await buildPatientPayload(user);
       state.result = {
-        status:    "found",
+        ...patientResult,
         templateId,
-        user:      user.toObject(),
-        reports:   reports.map(r => r.toObject()),
-        timestamp: new Date(),
+        matchedBy: "legacy_global_template",
       };
       
       state.mode = "idle";
@@ -301,7 +419,7 @@ const postResult = async (req, res) => {
         success: true, 
         data: { 
           patient: { firstname: user.firstname || "Unknown", lastname: user.lastname || "" },
-          reportCount: state.result.reports.length || 0
+          reportCount: patientResult.reports.length || 0
         } 
       });
     }
@@ -322,6 +440,7 @@ const postResult = async (req, res) => {
 
 module.exports = { 
   setMode, getResult, // Website facing
+  getPatientFingerprintStatus,
   registerDevice, getMyDevice, unregisterDevice, // Doctor Device management 
   getModeESP, postResultESP, // New ESP32 routes
   getMode, postResult, // Old ESP32 routes (backward compat)

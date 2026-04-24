@@ -150,7 +150,8 @@ const WriteReportPage = () => {
     { name: "", dosage: "", frequency: "", duration: "", notes: "" }
   ]);
   const [loading, setLoading] = useState(false);
-  const [hasFingerprint, setHasFingerprint] = useState(false);
+  const [hasFingerprintOnCurrentDevice, setHasFingerprintOnCurrentDevice] = useState(false);
+  const [hasAnyFingerprint, setHasAnyFingerprint] = useState(false);
   const [showFpModal, setShowFpModal] = useState(false);
 
   useEffect(() => {
@@ -158,11 +159,28 @@ const WriteReportPage = () => {
     if (stored) {
       const parsed = JSON.parse(stored);
       setAppt(parsed);
-      setHasFingerprint(!!parsed?.userId?.fingerprintTemplateId);
     } else {
       router.push("/appointments");
     }
   }, [router]);
+
+  useEffect(() => {
+    const loadFingerprintStatus = async () => {
+      if (!appt?.userId?._id) return;
+      try {
+        const { data } = await axios.get(`/api/device/patient/${appt.userId._id}/status`);
+        if (data.success && data.data) {
+          setHasAnyFingerprint(!!data.data.hasAnyFingerprint);
+          setHasFingerprintOnCurrentDevice(!!data.data.hasTemplateOnCurrentDevice);
+        }
+      } catch (err) {
+        setHasAnyFingerprint(!!appt?.userId?.fingerprintTemplateId);
+        setHasFingerprintOnCurrentDevice(!!appt?.userId?.fingerprintTemplateId);
+      }
+    };
+
+    loadFingerprintStatus();
+  }, [appt]);
 
   const handleEnrollClick = async () => {
     try {
@@ -291,12 +309,17 @@ const WriteReportPage = () => {
                   Patient: <strong>{appt?.userId?.firstname} {appt?.userId?.lastname}</strong> | Age: {appt?.age} | Gender: {appt?.gender}
                 </p>
               </div>
-              {!hasFingerprint && (
+              {!hasFingerprintOnCurrentDevice && (
                 <button type="button" className="btn btn-secondary-outline" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }} onClick={handleEnrollClick}>
-                  <FingerprintIcon size={18} /> Enroll Fingerprint
+                  <FingerprintIcon size={18} /> {hasAnyFingerprint ? "Enroll On This Device" : "Enroll Fingerprint"}
                 </button>
               )}
             </div>
+            {hasAnyFingerprint && !hasFingerprintOnCurrentDevice && (
+              <p className="report-subtitle" style={{ marginTop: "0.5rem" }}>
+                This patient already has a fingerprint on another scanner. Enroll once on this device to enable local emergency matching here.
+              </p>
+            )}
           </div>
 
           <form onSubmit={submitReport} className="report-grid-form">
@@ -435,7 +458,10 @@ const WriteReportPage = () => {
         <FingerprintModal 
           userId={appt?.userId?._id} 
           onClose={() => setShowFpModal(false)} 
-          onSuccess={() => setHasFingerprint(true)} 
+          onSuccess={() => {
+            setHasAnyFingerprint(true);
+            setHasFingerprintOnCurrentDevice(true);
+          }} 
         />
       )}
     </>
