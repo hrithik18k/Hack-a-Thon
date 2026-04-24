@@ -95,6 +95,8 @@ const Emergency = () => {
   const fmtDate = (d) =>
     d ? new Date(d).toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" }) : "N/A";
 
+  const emergencyContact = patient?.user?.emergencyContact || {};
+
   return (
     <>
       <Navbar />
@@ -171,6 +173,13 @@ const Emergency = () => {
               </div>
 
               <h3>Medical History ({patient.reports?.length || 0})</h3>
+              <div className="report-card" style={{ marginBottom: "1rem" }}>
+                <p><strong>Blood Group:</strong> {patient.user?.bloodGroup || "N/A"}</p>
+                <p><strong>Phone:</strong> {patient.user?.phone || "N/A"}</p>
+                <p><strong>Address:</strong> {patient.user?.address || patient.user?.temporaryAddress || patient.user?.permanentAddress || "N/A"}</p>
+                <p><strong>Emergency Contact:</strong> {emergencyContact.name || "N/A"} {emergencyContact.relation ? `(${emergencyContact.relation})` : ""}</p>
+                <p><strong>Emergency Phones:</strong> {emergencyContact.phone1 || emergencyContact.phone2 ? [emergencyContact.phone1, emergencyContact.phone2].filter(Boolean).join(", ") : "N/A"}</p>
+              </div>
               <div className="reports-timeline">
                 {patient.reports?.map((r) => (
                   <div key={r._id} className="report-card">
