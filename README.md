@@ -1,126 +1,221 @@
-# 🏥 [Medi Track](https://mediconnect-fqk1.onrender.com) - Healthcare Appointment & Medical History Ecosystem
+# Medi Track
 
-![Medi Track Banner](https://img.shields.io/badge/Medi_Track-Healthcare_Platform-040d21?style=for-the-badge&logo=react)
+Medi Track is a full-stack healthcare appointment and medical history platform for patients, doctors, and admins. The app has been migrated from a split React + Express project to a Next.js 14 App Router application while keeping the same MongoDB/Mongoose data models and the same core functionality.
 
-
-**MediConnect** is an advanced, enterprise-grade, yet empathy-focused platform that bridges the gap between doctors and patients. Built with a stunning **Premium Glassmorphism** design, it provides a unified, stress-free appointment ecosystem. 
-
-Patients can seamlessly search for specialized doctors (with robust case-insensitive filtering by city), securely schedule visits, and maintain an organized, chronological record of their medical history. Doctors can efficiently manage their appointments, draft complete patient reports, and utilize modern tools so they can focus entirely on what matters most: patient care. 🚀
+Deployment link: _Coming soon_
 
 ---
 
-## ✨ Features
+## Current App
 
-### 🧑‍⚕️ For Patients
-- **Find Doctors Easily:** Robust, case-insensitive search by City and Specialization.
-- **Appointment Booking:** Seamlessly pick dates, view available slots, and book consultations.
-- **Medical History:** All past medical reports and prescriptions are securely stored chronologically in the patient's profile.
-- **Secure Authentication:** JWT-based login, intuitive password reset flow via Email.
-- **Biometric Ready:** Dedicated hub to update fingerprints (Feature rolling out soon!).
+The active migrated app lives in:
 
-### 🩺 For Doctors
-- **Doctor Onboarding:** Apply to be a verified practitioner on the platform.
-- **Appointment Management:** Accept, manage, and track incoming patient consultations.
-- **Report Generation:** Write and instantly attach medical reports/prescriptions directly to a patient's medical history.
-- **Emergency Hub:** Specialized mode to quickly retrieve patient history via biometric fingerprint scanning (Feature rolling out soon!).
-
-### 🛡️ For Admins
-- **Interactive Dashboard:** Supervise the entire platform ecosystem.
-- **Application Validation:** Approve or reject incoming verifications from newly registered doctors.
-- **User Management:** Monitor patients, view platform statistics, and remove doctors if necessary.
-- **Strict Registration:** Unprecedented security; public Admin registration is fully restricted on the backend.
-
-### 🎨 General Platform UI/UX
-- **Dynamic Theming:** Seamless Dark 🌙 / Light ☀️ Mode toggler persisting via LocalStorage.
-- **Premium Aesthetics:** Fully responsive UI engineered with **Enterprise Medical Glassmorphism** (soft glass blur, luminous glow, glowing accents on deep navy/midnight backgrounds).
-- **In-App Notifications:** Real-time push toast alerts for all activities.
-
----
-
-## 💻 Tech Stack
-
-### Frontend
-- **React.js** - Client-side UI framework.
-- **Redux Toolkit** - Powerful and optimized global state management.
-- **React-Router-Dom** - Secure protected & public routing mechanics.
-- **Axios** - Intercepting and handling robust API requests.
-- **Vanilla CSS3** - Custom, meticulously grouped styles containing CSS custom variables for theming.
-
-### Backend
-- **Node.js & Express.js** - Server ecosystem.
-- **MongoDB (Mongoose)** - NoSQL Database for robust and scalable data management.
-- **JSON Web Tokens (JWT)** - Highly encrypted, stateless user authentication.
-- **Bcrypt.js** - Advanced password hashing.
-- **Nodemailer** - For transactional email workflows (e.g. Password Resets).
-- **Socket.io** - (Backend scaffolding integrated for real-time notification streams).
-
----
-
-## 🛠️ Installation & Local Setup
-
-If you want to view, experiment, or contribute to the platform locally:
-
-### 1. Clone the repository
-```bash
-git clone https://github.com/hrithik18k/Hack-a-Thon.git
-cd Hack-a-Thon
+```text
+meditrack-next/
 ```
 
-### 2. Setup the Backend
-Navigate to the `server/` directory, install dependencies, and configure environment variables.
-```bash
-cd server
-npm install
+This repository now uses the Next.js app as the primary application:
+
+```text
+meditrack-next/   # Next.js 14 App Router app with API route handlers
 ```
-Create a `.env` file in the `/server` directory:
+
+---
+
+## Features
+
+### Patients
+
+- Register and log in securely with JWT authentication.
+- Search approved doctors by city and specialization.
+- Book appointments with available time slots.
+- View completed medical reports and prescriptions.
+- Receive and read in-app notifications.
+
+### Doctors
+
+- Apply for doctor verification.
+- Manage appointments.
+- Configure available appointment slots.
+- Write medical reports for completed consultations.
+- Register and use an ESP32 fingerprint device for emergency/patient history workflows.
+
+### Admins
+
+- View dashboard statistics.
+- Manage users.
+- Approve or reject doctor applications.
+- Remove doctors or users when needed.
+
+---
+
+## Tech Stack
+
+### Migrated Stack
+
+- Next.js 14 App Router
+- React 18
+- Redux Toolkit
+- Vanilla CSS
+- API Route Handlers under `src/app/api`
+- MongoDB with Mongoose
+- JWT authentication
+- Bcrypt password hashing
+- Nodemailer password reset emails
+- Socket.io through a custom Next server
+
+### Migration Notes
+
+- React Router routes were converted to Next.js file-based routes.
+- Express routes were converted to App Router API route handlers.
+- Mongoose schemas/models were copied into `meditrack-next/src/models`.
+- Model registration uses `mongoose.models.ModelName || mongoose.model(...)` so Next dev hot reload does not throw `OverwriteModelError`.
+- Client environment variables now use the `NEXT_PUBLIC_` prefix.
+- Socket.io runs through `meditrack-next/server.js`.
+
+---
+
+## Project Structure
+
+```text
+meditrack-next/
+├── src/
+│   ├── app/
+│   │   ├── api/
+│   │   ├── dashboard/
+│   │   ├── doctor/
+│   │   ├── layout.js
+│   │   └── page.js
+│   ├── components/
+│   ├── controllers/
+│   ├── helper/
+│   ├── lib/
+│   │   ├── auth.js
+│   │   ├── controllerAdapter.js
+│   │   └── dbConnect.js
+│   ├── middleware/
+│   ├── models/
+│   ├── redux/
+│   ├── service/
+│   └── styles/
+├── public/
+├── server.js
+├── next.config.js
+├── package.json
+└── .env.local
+```
+
+---
+
+## Environment Variables
+
+Create `meditrack-next/.env.local`:
+
 ```env
-MONGO_URI=your_mongodb_cluster_url
-JWT_SECRET=your_super_secret_key
-PORT=8000
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret
+PORT=3000
 CLIENT_URL=http://localhost:3000
 
-EMAIL_USER=your_gmail_address
-EMAIL_PASS=your_gmail_app_password
-EMAIL_FROM="MediConnect Support"
-EMAIL_SUB="Password Reset Request"
-EMAIL_TEXT="Click here to reset your password: http://localhost:3000/resetpassword/"
-```
-Start the backend server:
-```bash
-npm run dev
-# Server will run on http://localhost:8000
+EMAIL_USER=your_email_address
+EMAIL_PASS=your_email_app_password
+EMAIL_FROM=Doctor Appointment Support
+EMAIL_SUB=Password Reset for your Doctor Appointment Account
+EMAIL_TEXT=Click here to reset your password: http://localhost:3000/resetpassword/
+
+NEXT_PUBLIC_SERVER_DOMAIN=http://localhost:3000
+NEXT_PUBLIC_CLOUDINARY_BASE_URL=https://api.cloudinary.com/v1_1/your_cloud/image/upload
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your_cloud_name
+NEXT_PUBLIC_CLOUDINARY_PRESET=your_upload_preset
+NEXT_PUBLIC_REACT_FORMIK_SECRET=your_form_secret
 ```
 
-### 3. Setup the Frontend
-Open a new terminal, navigate to the `client/` directory and install the packages.
-```bash
-cd client
-npm install
-```
-Create a `.env` file in the `/client` directory:
+For local development, `NEXT_PUBLIC_SERVER_DOMAIN` should point to the Next app itself:
+
 ```env
-REACT_APP_SERVER_DOMAIN=http://localhost:8000
-REACT_APP_CLOUDINARY_BASE_URL=https://api.cloudinary.com/v1_1/your_cloud/image/upload
-REACT_APP_CLOUDINARY_CLOUD_NAME=your_cloud_name
-REACT_APP_CLOUDINARY_PRESET=your_preset
+NEXT_PUBLIC_SERVER_DOMAIN=http://localhost:3000
 ```
-Start the React App:
+
+After deployment, update it to the deployed application URL.
+
+---
+
+## Local Setup
+
+Install and run the migrated Next app:
+
+```bash
+cd meditrack-next
+npm install
+npm run dev
+```
+
+The app runs at:
+
+```text
+http://localhost:3000
+```
+
+Build for production:
+
+```bash
+npm run build
+```
+
+Start the custom production server:
+
 ```bash
 npm start
-# Client will run on http://localhost:3000
+```
+
+If port `3000` is already in use, stop the existing Node process or set another `PORT`.
+
+---
+
+## API Routes
+
+The Express API has been migrated to Next route handlers:
+
+```text
+src/app/api/user/*
+src/app/api/doctor/*
+src/app/api/appointment/*
+src/app/api/notification/*
+src/app/api/report/*
+src/app/api/device/*
+```
+
+Authenticated route handlers call the reusable auth helper in:
+
+```text
+src/lib/auth.js
+```
+
+Database connection is managed by:
+
+```text
+src/lib/dbConnect.js
 ```
 
 ---
 
-## 🌍 Deployment
-This application is scalable and designed to be effortlessly deployed. 
+## Deployment
 
-- **Backend:** Hosted dynamically on [Render](https://render.com/), equipped with customized conditional logic to prevent crashing whether running side-by-side with React or functioning as a standalone API.
-- **Frontend:** Continually deployed securely as a Static Site relying on environment variables.
+Deployment link: _Coming soon_
 
+When the deployment URL is available, update:
+
+```env
+CLIENT_URL=https://your-deployment-url
+NEXT_PUBLIC_SERVER_DOMAIN=https://your-deployment-url
+EMAIL_TEXT=Click here to reset your password: https://your-deployment-url/resetpassword/
+```
 
 ---
 
-<p align="center">
-  Built with ❤️ for a Healthier Tomorrow
-</p>
+## Notes
+
+- The active application is `meditrack-next/`.
+- Browser warnings like `fdprocessedid` usually come from extensions injecting attributes.
+- A `401` from protected API routes means no valid JWT token was sent.
+- A `400` from login usually means incorrect email/password, while role mismatch is handled separately.
