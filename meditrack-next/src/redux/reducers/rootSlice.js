@@ -1,18 +1,10 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-import jwtDecode from "jwt-decode";
-
-const getInitialUserInfo = () => {
-  if (typeof window === "undefined") return null;
-  const token = localStorage.getItem("token");
-  return token ? jwtDecode(token) : null;
-};
-
 export const rootReducer = createSlice({
   name: "root",
   initialState: {
     loading: true,
-    userInfo: getInitialUserInfo(),
+    userInfo: null,
   },
   reducers: {
     setLoading: (state, action) => {

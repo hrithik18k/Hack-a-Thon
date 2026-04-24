@@ -8,17 +8,14 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import Loading from "../../components/Loading";
 import fetchData from "../../helper/apiCall";
-import jwt_decode from "jwt-decode";
+import { useAuthSession } from "@/lib/useAuthSession";
 
 axios.defaults.baseURL = process.env.NEXT_PUBLIC_SERVER_DOMAIN || "";
+axios.defaults.withCredentials = true;
 
 function Profile() {
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : "";
-  let userId = null;
-  if (token) {
-    const decoded = jwt_decode(token);
-    userId = decoded.userId;
-  }
+  const { ready, user } = useAuthSession();
+  const userId = user?._id;
 
   const [loading, setLoading]               = useState(true);
   const [file, setFile]                     = useState("");
@@ -55,9 +52,9 @@ function Profile() {
   };
 
   useEffect(() => {
-    if (userId) getUser();
+    if (ready && userId) getUser();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [ready, userId]);
 
   const inputChange = (e) => {
     const { name, value } = e.target;
@@ -110,9 +107,7 @@ function Profile() {
     e.preventDefault();
     try {
       if (!formDetails.email) return toast.error("Email should not be empty");
-      const { data } = await axios.put("/api/user/updateprofile", { ...formDetails, pic: file }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const { data } = await axios.put("/api/user/updateprofile", { ...formDetails, pic: file });
       if (data.success) toast.success("Profile updated successfully");
     } catch (error) {
       toast.error("Unable to update profile");
@@ -122,7 +117,7 @@ function Profile() {
   return (
     <>
       <Navbar />
-      {loading ? <Loading /> : (
+      {!ready || loading ? <Loading /> : (
         <section className="auth-section">
           <div className="auth-container" style={{ maxWidth: "600px" }}>
             <div className="auth-header">

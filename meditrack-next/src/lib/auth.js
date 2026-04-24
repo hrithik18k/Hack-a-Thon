@@ -1,4 +1,4 @@
-import jwt from "jsonwebtoken";
+import { getCookieToken, verifyAuthToken } from "./session.js";
 
 export function json(data, status = 200) {
   return Response.json(data, { status });
@@ -6,13 +6,21 @@ export function json(data, status = 200) {
 
 export function getBearerToken(request) {
   const authHeader = request.headers.get("authorization") || "";
-  return authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  if (!authHeader.startsWith("Bearer ")) return "";
+  const token = authHeader.slice(7).trim();
+  if (!token || token === "null" || token === "undefined") return "";
+  return token;
+}
+
+export function getAuthToken(request) {
+  return getBearerToken(request) || getCookieToken(request);
 }
 
 export function verifyAuth(request) {
   try {
-    const token = getBearerToken(request);
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || "secret");
+    const token = getAuthToken(request);
+    if (!token) return null;
+    const decoded = verifyAuthToken(token);
     return { userId: decoded.userId, role: decoded.role };
   } catch (error) {
     return null;

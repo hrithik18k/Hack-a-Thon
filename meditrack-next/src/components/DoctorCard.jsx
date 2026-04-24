@@ -4,13 +4,14 @@ import PropTypes from 'prop-types';
 import React, { useState } from "react";
 import BookAppointment from "../components/BookAppointment";
 import toast from "react-hot-toast";
+import { useAuthSession } from "@/lib/useAuthSession";
 
 const DoctorCard = ({ ele }) => {
   const [modalOpen, setModalOpen] = useState(false);
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
+  const { ready, user } = useAuthSession();
 
   const handleModal = () => {
-    if (token === "") {
+    if (!ready || !user) {
       return toast.error("You must log in first");
     }
     setModalOpen(true);

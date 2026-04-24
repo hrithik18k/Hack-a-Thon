@@ -1,12 +1,6 @@
 export const dynamic = "force-dynamic";
 
-import { runController } from "@/lib/controllerAdapter";
-import { requireAuth, requireRole } from "@/lib/auth";
 import userController from "@/controllers/userController";
+import { withController } from "@/lib/routeHandler";
 
-export async function PUT(request, context) {
-  const { auth, error } = requireAuth(request);
-  if (error) return error;
-  return runController(userController.changepassword, request, { params: context?.params || {}, auth });
-}
-
+export const PUT = withController(userController.changepassword, { authRequired: true });

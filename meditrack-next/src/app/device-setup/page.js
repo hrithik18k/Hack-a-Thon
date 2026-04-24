@@ -15,9 +15,7 @@ const DeviceSetup = () => {
 
   const fetchDeviceStatus = async () => {
     try {
-      const { data } = await axios.get("/api/device/doctor/my-device", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
+      const { data } = await axios.get("/api/device/doctor/my-device");
       if (data.success && data.data) {
         setDevice(data.data);
       } else {
@@ -40,8 +38,7 @@ const DeviceSetup = () => {
     try {
       const { data } = await axios.post(
         "/api/device/doctor/register",
-        { deviceName },
-        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+        { deviceName }
       );
       if (data.success) {
         setNewToken(data.data.deviceToken);
@@ -57,9 +54,7 @@ const DeviceSetup = () => {
   const handleUnregister = async () => {
     if (!window.confirm("Are you sure you want to unregister this device? It will stop working immediately.")) return;
     try {
-      const { data } = await axios.delete("/api/device/doctor/unregister", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
+      const { data } = await axios.delete("/api/device/doctor/unregister");
       if (data.success) {
         toast.success("Device unregistered");
         setDevice(null);
@@ -156,7 +151,7 @@ const DeviceSetup = () => {
                 <li>In your code, set the <code>WIFI_SSID</code> and <code>WIFI_PASSWORD</code>.</li>
                 <li>Replace the placeholder token with your newly generated <strong>Device Token</strong>.</li>
                 <li>Power on the ESP32. It will automatically connect and pull modes every 3 seconds.</li>
-                <li>When its 'Last Seen' updates here, the device is online and ready!</li>
+                <li>When its &apos;Last Seen&apos; value updates here, the device is online and ready!</li>
               </ul>
             </div>
           </div>

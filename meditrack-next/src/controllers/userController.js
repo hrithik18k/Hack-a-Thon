@@ -5,9 +5,34 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 require("dotenv").config();
+const {
+  validateLoginPayload,
+  validateRegisterPayload,
+  validateProfileUpdatePayload,
+  validateChangePasswordPayload,
+  validateForgotPasswordPayload,
+  validateResetPasswordPayload,
+} = require("../lib/userValidation");
+
+const sanitizeUser = (user) => {
+  if (!user) return null;
+  const plainUser = typeof user.toObject === "function" ? user.toObject() : { ...user };
+  delete plainUser.password;
+  return plainUser;
+};
+
+const getJwtSecret = () => {
+  if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET is not configured");
+  }
+  return process.env.JWT_SECRET;
+};
 
 const getuser = async (req, res) => {
   try {
+    if (req.userRole !== "Admin" && req.locals !== req.params.id) {
+      return res.status(403).json({ success: false, message: "Forbidden" });
+    }
     const user = await User.findById(req.params.id).select("-password");
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
     return res.status(200).json({ success: true, data: user });
@@ -27,7 +52,12 @@ const getallusers = async (req, res) => {
 
 const login = async (req, res) => {
   try {
-    const { email, password, role } = req.body;
+    const validation = validateLoginPayload(req.body);
+    if (!validation.isValid) {
+      return res.status(400).json({ success: false, message: validation.message });
+    }
+
+    const { email, password, role } = validation.data;
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ success: false, message: "Incorrect credentials" });
@@ -53,10 +83,10 @@ const login = async (req, res) => {
         userId: user._id,
         role: user.role,
       },
-      process.env.JWT_SECRET || "secret",
+      getJwtSecret(),
       { expiresIn: "2 days" }
     );
-    return res.status(200).json({ success: true, data: { token, user } });
+    return res.status(200).json({ success: true, data: { token, user: sanitizeUser(user) } });
   } catch (error) {
     res.status(500).json({ success: false, message: "Unable to login user" });
   }
@@ -64,10 +94,15 @@ const login = async (req, res) => {
 
 const register = async (req, res) => {
   try {
-    const { 
-      firstname, lastname, email, password, phone, city, dateOfBirth, gender, bloodGroup, role, 
-      pic, permanentAddress, temporaryAddress, emergencyContact
-    } = req.body;
+    const validation = validateRegisterPayload(req.body);
+    if (!validation.isValid) {
+      return res.status(400).json({ success: false, message: validation.message });
+    }
+
+    const {
+      firstname, lastname, email, password, phone, city, dateOfBirth, gender, bloodGroup, role,
+      pic, permanentAddress, temporaryAddress, emergencyContact, doctorData,
+    } = validation.data;
     
     const emailPresent = await User.findOne({ email });
     if (emailPresent) {
@@ -96,7 +131,7 @@ const register = async (req, res) => {
 
     // If doctor, create pending doctor application
     if (role === "Doctor") {
-      const { specialization, experience, fees, qualifications, hospitalName, certificate } = req.body;
+      const { specialization, experience, fees, qualifications, hospitalName, certificate } = doctorData;
       const doctor = new Doctor({
         userId: user._id,
         specialization,
@@ -119,13 +154,15 @@ const register = async (req, res) => {
 
 const updateprofile = async (req, res) => {
   try {
-    const updateData = { ...req.body };
-    if (updateData.password) {
-      updateData.password = await bcrypt.hash(updateData.password, 10);
-    } else {
-      delete updateData.password;
+    const validation = validateProfileUpdatePayload(req.body);
+    if (!validation.isValid) {
+      return res.status(400).json({ success: false, message: validation.message });
     }
-    const result = await User.findByIdAndUpdate(req.locals, updateData, { new: true });
+
+    const result = await User.findByIdAndUpdate(req.locals, validation.data, {
+      new: true,
+      runValidators: true,
+    }).select("-password");
     if (!result) {
       return res.status(500).json({ success: false, message: "Unable to update user" });
     }
@@ -137,12 +174,14 @@ const updateprofile = async (req, res) => {
 
 const changepassword = async (req, res) => {
   try {
-    const { userId, currentPassword, newPassword, confirmNewPassword } = req.body;
-    if (newPassword !== confirmNewPassword) {
-      return res.status(400).json({ success: false, message: "Passwords do not match" });
+    const validation = validateChangePasswordPayload(req.body);
+    if (!validation.isValid) {
+      return res.status(400).json({ success: false, message: validation.message });
     }
 
-    const user = await User.findById(userId);
+    const { currentPassword, newPassword } = validation.data;
+
+    const user = await User.findById(req.locals);
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
@@ -175,13 +214,18 @@ const deleteuser = async (req, res) => {
 
 const forgotpassword = async (req, res) => {
   try {
-    const { email } = req.body;
+    const validation = validateForgotPasswordPayload(req.body);
+    if (!validation.isValid) {
+      return res.status(400).json({ success: false, message: validation.message });
+    }
+
+    const { email } = validation.data;
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || "secret", { expiresIn: "10m" });
+    const token = jwt.sign({ id: user._id }, getJwtSecret(), { expiresIn: "10m" });
 
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -218,8 +262,13 @@ const forgotpassword = async (req, res) => {
 const resetpassword = async (req, res) => {
   try {
     const { id, token } = req.params;
-    const { password } = req.body;
-    jwt.verify(token, process.env.JWT_SECRET || "secret", async (err, decoded) => {
+    const validation = validateResetPasswordPayload(req.body);
+    if (!validation.isValid) {
+      return res.status(400).json({ success: false, message: validation.message });
+    }
+
+    const { password } = validation.data;
+    jwt.verify(token, getJwtSecret(), async (err, decoded) => {
       if (err) {
         return res.status(400).json({ success: false, message: "Invalid or expired token" });
       }

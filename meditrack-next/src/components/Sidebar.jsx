@@ -8,15 +8,16 @@ import { useDispatch } from "react-redux";
 import { setUserInfo } from "../redux/reducers/rootSlice";
 import { FaHome, FaUsers, FaUserMd, FaCalendarCheck, FaSignOutAlt } from "react-icons/fa";
 import { RxCross1 } from "react-icons/rx";
+import { logoutSession } from "@/lib/useAuthSession";
 
 const Sidebar = ({ isOpen, onClose }) => {
   const dispatch = useDispatch();
   const router = useRouter();
   const pathname = usePathname();
 
-  const logoutFunc = () => {
+  const logoutFunc = async () => {
+    await logoutSession();
     dispatch(setUserInfo({}));
-    localStorage.removeItem("token");
     router.push("/login");
   };
 

@@ -23,16 +23,12 @@ const Notifications = () => {
       setNotifications(temp || []);
       
       // Mark all as read 
-      const token = localStorage.getItem("token");
-      if (token) {
-        const baseUrl = process.env.NEXT_PUBLIC_SERVER_DOMAIN || "";
-        await fetch(`${baseUrl}/api/notification/markallread`, {
-          method: "PUT",
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        // Let Navbar know to clear badge
-        window.dispatchEvent(new Event("notifications_read"));
-      }
+      const baseUrl = process.env.NEXT_PUBLIC_SERVER_DOMAIN || "";
+      await fetch(`${baseUrl}/api/notification/markallread`, {
+        method: "PUT",
+        credentials: "include",
+      });
+      window.dispatchEvent(new Event("notifications_read"));
     } catch (error) {
       console.error("Error fetching notifications:", error);
       dispatch(setLoading(false));

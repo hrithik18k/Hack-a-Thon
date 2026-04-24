@@ -1,10 +1,6 @@
 export const dynamic = "force-dynamic";
 
-import { runController } from "@/lib/controllerAdapter";
-import { requireAuth, requireRole } from "@/lib/auth";
 import userController from "@/controllers/userController";
+import { withController } from "@/lib/routeHandler";
 
-export async function POST(request, context) {
-  return runController(userController.resetpassword, request, { params: context?.params || {} });
-}
-
+export const POST = withController(userController.resetpassword);
