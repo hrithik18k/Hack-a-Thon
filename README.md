@@ -63,14 +63,14 @@ Medi Track is a full-stack healthcare appointment and medical history platform f
 ### IoT / Hardware
 - **ESP32 + R307 Fingerprint Sensor** — each doctor registers a personal device, receives a one-time UUID token, and flashes it into the ESP32 firmware. The device polls `/api/device/esp/mode` every 3 seconds and posts results to `/api/device/esp/result`.
 
-### Migration Notes
+## Migration Notes
 
 - React Router routes were converted to Next.js file-based routes.
 - Express routes were converted to App Router API route handlers.
 - Mongoose schemas/models were copied into `meditrack-next/src/models`.
 - Model registration uses `mongoose.models.ModelName || mongoose.model(...)` so Next dev hot reload does not throw `OverwriteModelError`.
 - Client environment variables now use the `NEXT_PUBLIC_` prefix.
-- Socket.io runs through `meditrack-next/server.js`.
+- Socket.io runs through `meditrack-next/server.js` locally or on custom Node hosting. Vercel does not run the custom Socket.io server.
 
 ---
 
@@ -78,30 +78,30 @@ Medi Track is a full-stack healthcare appointment and medical history platform f
 
 ```text
 meditrack-next/
-├── src/
-│   ├── app/
-│   │   ├── api/
-│   │   ├── dashboard/
-│   │   ├── doctor/
-│   │   ├── layout.js
-│   │   └── page.js
-│   ├── components/
-│   ├── controllers/
-│   ├── helper/
-│   ├── lib/
-│   │   ├── auth.js
-│   │   ├── controllerAdapter.js
-│   │   └── dbConnect.js
-│   ├── middleware/
-│   ├── models/
-│   ├── redux/
-│   ├── service/
-│   └── styles/
-├── public/
-├── server.js
-├── next.config.js
-├── package.json
-└── .env.local
+|-- src/
+|   |-- app/
+|   |   |-- api/
+|   |   |-- dashboard/
+|   |   |-- doctor/
+|   |   |-- layout.js
+|   |   `-- page.js
+|   |-- components/
+|   |-- controllers/
+|   |-- helper/
+|   |-- lib/
+|   |   |-- auth.js
+|   |   |-- controllerAdapter.js
+|   |   `-- dbConnect.js
+|   |-- middleware/
+|   |-- models/
+|   |-- redux/
+|   |-- service/
+|   `-- styles/
+|-- public/
+|-- server.js
+|-- next.config.js
+|-- package.json
+`-- .env.local
 ```
 
 ### 2. Setup the Backend
@@ -137,7 +137,7 @@ npm run dev
 # Server will run on http://localhost:8000
 ```
 
-After deployment, update it to the deployed application URL.
+Keep the same production values for `MONGO_URI`, `JWT_SECRET`, email credentials, and Cloudinary credentials in Vercel.
 
 ---
 
@@ -342,6 +342,8 @@ fingerprintTemplateId                medical history returned
                                      to Emergency page
 ```
 
+After changing any Vercel environment variable, redeploy the project.
+
 ---
 
 ## 🌍 Deployment
@@ -356,6 +358,8 @@ This application is scalable and designed to be effortlessly deployed.
 ## Notes
 
 - The active application is `meditrack-next/`.
+- `.env.local` is ignored and must not be committed.
 - Browser warnings like `fdprocessedid` usually come from extensions injecting attributes.
 - A `401` from protected API routes means no valid JWT token was sent.
 - A `400` from login usually means incorrect email/password, while role mismatch is handled separately.
+
