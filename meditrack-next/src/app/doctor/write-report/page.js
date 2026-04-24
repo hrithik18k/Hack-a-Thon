@@ -20,7 +20,6 @@ const FingerprintModal = ({ onClose, userId, onSuccess }) => {
   const [status, setStatus]   = useState("activating");
   const [message, setMessage] = useState("");
   const pollRef = useRef(null);
-  const token   = typeof window !== "undefined" ? localStorage.getItem("token") : "";
 
   const stopPolling = () => {
     if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
@@ -30,9 +29,7 @@ const FingerprintModal = ({ onClose, userId, onSuccess }) => {
     triggerEnroll();
     return () => {
       stopPolling();
-      axios.post("/api/device/setmode", { mode: "idle" }, {
-        headers: { Authorization: `Bearer ${token}` },
-      }).catch((err) => {
+      axios.post("/api/device/setmode", { mode: "idle" }).catch((err) => {
         console.error("Failed to set mode idle:", err);
       });
     };
@@ -42,11 +39,7 @@ const FingerprintModal = ({ onClose, userId, onSuccess }) => {
   const triggerEnroll = async () => {
     setStatus("activating");
     try {
-      await axios.post(
-        "/api/device/setmode",
-        { mode: "enroll", userId },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await axios.post("/api/device/setmode", { mode: "enroll", userId });
       setStatus("scanning");
       startPolling();
     } catch (err) {
@@ -59,9 +52,7 @@ const FingerprintModal = ({ onClose, userId, onSuccess }) => {
     stopPolling();
     pollRef.current = setInterval(async () => {
       try {
-        const { data } = await axios.get("/api/device/result", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const { data } = await axios.get("/api/device/result");
         if (data.success && data.data?.status === "enrolled") {
           setStatus("success");
           stopPolling();
@@ -106,7 +97,7 @@ const FingerprintModal = ({ onClose, userId, onSuccess }) => {
                   <FingerprintIcon color="var(--fp-primary)" size={72} />
                 </span>
               </div>
-            <h3 className="modal-title">Place Patient's Finger</h3>
+            <h3 className="modal-title">Place Patient&apos;s Finger</h3>
             <p className="fp-blink">Ask patient to put their finger on the scanner now...</p>
             <small>They will need to scan <strong>twice</strong> for accuracy.</small>
             <div style={{ marginTop: "1rem" }}>
@@ -119,7 +110,7 @@ const FingerprintModal = ({ onClose, userId, onSuccess }) => {
           <div className="fp-state-content">
             <FingerprintIcon color="var(--fp-success)" size={72} />
             <h3 className="modal-title" style={{ color: "var(--fp-success)" }}>Fingerprint Saved!</h3>
-            <p>Patient's fingerprint has been enrolled successfully.</p>
+            <p>Patient&apos;s fingerprint has been enrolled successfully.</p>
             <div style={{ marginTop: "1rem" }}>
               <button type="button" className="btn btn-primary btn-full" onClick={onClose}>Done</button>
             </div>
@@ -175,9 +166,7 @@ const WriteReportPage = () => {
 
   const handleEnrollClick = async () => {
     try {
-      const { data } = await axios.get("/api/device/doctor/my-device", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
+      const { data } = await axios.get("/api/device/doctor/my-device");
       if (!data.data || !data.data.isActive) {
         toast.error("No scanner registered. Go to Device Setup to register your ESP32.");
       } else {
@@ -272,11 +261,7 @@ const WriteReportPage = () => {
       };
 
 
-      const { data } = await axios.post("/api/report/create", payload, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const { data } = await axios.post("/api/report/create", payload);
 
       if (data.success) {
         toast.success("Report saved and published successfully!");

@@ -7,11 +7,11 @@ import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import fetchData from "../../helper/apiCall";
 import Empty from "../../components/Empty";
-import jwtDecode from "jwt-decode";
 import toast from "react-hot-toast";
 import Loading from "../../components/Loading";
 import PatientHistory from "../../components/PatientHistory";
 import { useRouter } from "next/navigation";
+import { useAuthSession } from "@/lib/useAuthSession";
 
 const Appointments = () => {
   const [appointments, setAppointments] = useState([]);
@@ -23,16 +23,13 @@ const Appointments = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
   const router = useRouter();
-
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : "";
-  let user = null;
-  if (token) user = jwtDecode(token);
+  const { ready, user } = useAuthSession();
 
   const getAllAppointments = async () => {
     try {
       setLoading(true);
       const data = await fetchData(
-        `/api/appointment/getallappointments?search=${user.userId}`
+        `/api/appointment/getallappointments?search=${user._id}`
       );
       // Ensure we sort dynamically, newest first
       setAppointments(data?.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)) || []);
@@ -44,11 +41,13 @@ const Appointments = () => {
   };
 
   useEffect(() => {
+    if (!ready || !user?._id) return;
+
     getAllAppointments();
-    if (user?.role === "Doctor") {
+    if (user.role === "Doctor") {
       fetchData("/api/doctor/getalldoctors").then(data => {
         if (Array.isArray(data)) {
-          const me = data.find(d => d.userId?._id === user.userId);
+          const me = data.find(d => d.userId?._id === user._id);
           if (me?.slotConfig) {
             setSlotDetails(me.slotConfig);
           }
@@ -56,14 +55,14 @@ const Appointments = () => {
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [ready, user]);
 
   const saveSlots = async (e) => {
     e.preventDefault();
     setSlotSaving(true);
     try {
       const response = await axios.put("/api/doctor/updateslots", slotDetails, {
-        headers: { Authorization: `Bearer ${token}` }
+        withCredentials: true,
       });
       if (response.data.success) {
         toast.success("Slots updated successfully!");

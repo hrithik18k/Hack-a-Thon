@@ -21,8 +21,7 @@ const BookAppointment = ({ setModalOpen, ele }) => {
     setSlotsLoading(true);
     try {
       const response = await axios.get(
-        `/api/appointment/getavailableslots?doctorId=${ele.userId._id}&date=${selectedDate}`,
-        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+        `/api/appointment/getavailableslots?doctorId=${ele.userId._id}&date=${selectedDate}`
       );
       if (response.data.success) {
         setAvailableSlots(response.data.data);
@@ -62,12 +61,7 @@ const BookAppointment = ({ setModalOpen, ele }) => {
 
       const { data } = await axios.post(
         "/api/appointment/bookappointment",
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
+        payload
       );
 
       if (data.success) {

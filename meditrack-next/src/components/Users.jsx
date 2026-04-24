@@ -32,9 +32,6 @@ const Users = () => {
       const confirm = window.confirm("Are you sure you want to delete this user?");
       if (confirm) {
         const { data } = await axios.delete("/api/user/deleteuser", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
           data: { userId }, // axios delete payload
         });
         if (data.success) {

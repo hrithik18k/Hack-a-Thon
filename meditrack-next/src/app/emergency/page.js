@@ -14,7 +14,6 @@ const Emergency = () => {
   const [patient, setPatient]   = useState(null);
   const [errorMsg, setErrorMsg] = useState("");
   const pollRef                 = useRef(null);
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : "";
 
   useEffect(() => {
     return () => stopPolling();
@@ -29,9 +28,7 @@ const Emergency = () => {
 
   const handleScanClick = async () => {
     try {
-      const { data } = await axios.get("/api/device/doctor/my-device", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const { data } = await axios.get("/api/device/doctor/my-device");
       if (!data.data || !data.data.isActive) {
         setStatus("error");
         setErrorMsg("No scanner registered. Go to Device Setup to register your ESP32.");
@@ -50,11 +47,7 @@ const Emergency = () => {
     setErrorMsg("");
 
     try {
-      await axios.post(
-        "/api/device/setmode",
-        { mode: "scan" },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await axios.post("/api/device/setmode", { mode: "scan" });
       startPolling();
     } catch (err) {
       setStatus("error");
@@ -66,9 +59,7 @@ const Emergency = () => {
     stopPolling();
     pollRef.current = setInterval(async () => {
       try {
-        const { data } = await axios.get("/api/device/result", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const { data } = await axios.get("/api/device/result");
 
         if (data.success && data.data?.status === "found") {
           setPatient(data.data);
@@ -98,9 +89,7 @@ const Emergency = () => {
     setStatus("idle");
     setPatient(null);
     setErrorMsg("");
-    axios.post("/api/device/setmode", { mode: "idle" }, {
-      headers: { Authorization: `Bearer ${token}` }
-    }).catch(() => {});
+    axios.post("/api/device/setmode", { mode: "idle" }).catch(() => {});
   };
 
   const fmtDate = (d) =>
@@ -114,7 +103,7 @@ const Emergency = () => {
         <div className="emergency-header">
           <div className="emergency-badge">EMERGENCY MODE</div>
           <h1 className="auth-title">Biometric Patient Lookup</h1>
-          <p className="auth-subtitle">Scan a patient's fingerprint to instantly retrieve their medical records.</p>
+          <p className="auth-subtitle">Scan a patient&apos;s fingerprint to instantly retrieve their medical records.</p>
         </div>
 
         <div className="emergency-card">
@@ -143,7 +132,7 @@ const Emergency = () => {
                   <FingerprintIcon size={80} color="var(--fp-primary)" />
                 </span>
               </div>
-              <p className="fp-status-text fp-blink">Place patient's finger on scanner...</p>
+              <p className="fp-status-text fp-blink">Place patient&apos;s finger on scanner...</p>
               <button className="btn btn-secondary-outline" onClick={reset}>Cancel</button>
             </div>
           )}

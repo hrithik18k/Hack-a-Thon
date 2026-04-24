@@ -7,35 +7,26 @@ import { useDispatch } from "react-redux";
 import { setUserInfo } from "../redux/reducers/rootSlice";
 import { FiMenu, FiSun, FiMoon } from "react-icons/fi";
 import { RxCross1 } from "react-icons/rx";
-import jwtDecode from "jwt-decode";
 import axios from "axios";
+import { logoutSession, useAuthSession } from "@/lib/useAuthSession";
 
 axios.defaults.baseURL = process.env.NEXT_PUBLIC_SERVER_DOMAIN || "";
+axios.defaults.withCredentials = true;
 
 const Navbar = () => {
   const [iconActive, setIconActive] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [token, setToken] = useState("");
-  const [user, setUser] = useState(null);
   const [mounted, setMounted] = useState(false);
   const dispatch = useDispatch();
   const router = useRouter();
+  const { ready, user } = useAuthSession();
 
   // Theme toggle
   const [theme, setTheme] = useState("light");
 
   useEffect(() => {
-    const storedToken = localStorage.getItem("token") || "";
-    setToken(storedToken);
     setTheme(localStorage.getItem("theme") || "light");
     setMounted(true);
-
-    try {
-      setUser(storedToken ? jwtDecode(storedToken) : null);
-    } catch (e) {
-      console.error("Token decode error:", e);
-      setUser(null);
-    }
   }, []);
 
   useEffect(() => {
@@ -46,9 +37,7 @@ const Navbar = () => {
 
   const fetchUnreadCount = async () => {
     try {
-      const { data } = await axios.get("/api/notification/unreadcount", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const { data } = await axios.get("/api/notification/unreadcount");
       if (data.success) {
         setUnreadCount(data.count);
       }
@@ -58,8 +47,10 @@ const Navbar = () => {
   };
 
   useEffect(() => {
-    if (token) {
+    if (ready && user) {
       fetchUnreadCount();
+    } else {
+      setUnreadCount(0);
     }
     
     // Listen for custom event to clear unread count
@@ -69,17 +60,15 @@ const Navbar = () => {
     return () => {
       window.removeEventListener("notifications_read", handleClearCount);
     };
-  }, [token]);
+  }, [ready, user]);
 
   const toggleTheme = () => {
     setTheme(prev => prev === "light" ? "dark" : "light");
   };
 
-  const logoutFunc = () => {
+  const logoutFunc = async () => {
+    await logoutSession();
     dispatch(setUserInfo({}));
-    localStorage.removeItem("token");
-    setToken("");
-    setUser(null);
     router.push("/login");
   };
 
@@ -145,7 +134,7 @@ const Navbar = () => {
             </>
           )}
 
-          {mounted && !token ? (
+          {mounted && !user ? (
             <>
               <li><Link className="btn-secondary" href={"/login"} onClick={closeNav}>Login</Link></li>
               <li><Link className="btn-primary-outline" href={"/register"} onClick={closeNav}>Register</Link></li>

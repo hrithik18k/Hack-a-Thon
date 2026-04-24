@@ -10,15 +10,15 @@ import { setLoading } from "../../redux/reducers/rootSlice";
 import { useDispatch, useSelector } from "react-redux";
 import Loading from "../../components/Loading";
 import fetchData from "../../helper/apiCall";
-import jwt_decode from "jwt-decode";
+import { useAuthSession } from "@/lib/useAuthSession";
 
 axios.defaults.baseURL = process.env.NEXT_PUBLIC_SERVER_DOMAIN || "";
+axios.defaults.withCredentials = true;
 
 function ChangePassword() {
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : "";
-  const { userId } = token ? jwt_decode(token) : { userId: "" };
   const dispatch = useDispatch();
   const { loading } = useSelector((state) => state.root);
+  const { ready, user } = useAuthSession();
   const [file, setFile] = useState("");
   const [formDetails, setFormDetails] = useState({
     password: "",
@@ -29,7 +29,7 @@ function ChangePassword() {
   const getUser = async () => {
     try {
       dispatch(setLoading(true));
-      const temp = await fetchData(`/api/user/getuser/${userId}`);
+      const temp = await fetchData(`/api/user/getuser/${user?._id}`);
       setFormDetails({
         ...temp,
         password: "",
@@ -43,8 +43,10 @@ function ChangePassword() {
   };
 
   useEffect(() => {
-    getUser();
-  }, [dispatch]);
+    if (ready && user?._id) {
+      getUser();
+    }
+  }, [dispatch, ready, user]);
 
   const inputChange = (e) => {
     const { name, value } = e.target;
@@ -65,15 +67,9 @@ function ChangePassword() {
       const response = await axios.put(
         "/api/user/changepassword",
         {
-          userId: userId,
           currentPassword: password,
           newPassword: newpassword,
           confirmNewPassword: confnewpassword,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
         }
       );
 
@@ -101,7 +97,7 @@ function ChangePassword() {
   return (
     <>
       <Navbar />
-      {loading ? (
+      {!ready || loading ? (
         <Loading />
       ) : (
         <section className="register-section flex-center">

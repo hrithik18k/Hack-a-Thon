@@ -1,12 +1,6 @@
 export const dynamic = "force-dynamic";
 
-import { runController } from "@/lib/controllerAdapter";
-import { requireAuth, requireRole } from "@/lib/auth";
 import userController from "@/controllers/userController";
+import { withController } from "@/lib/routeHandler";
 
-export async function GET(request, context) {
-  const { auth, error } = requireAuth(request);
-  if (error) return error;
-  return runController(userController.getuser, request, { params: context?.params || {}, auth });
-}
-
+export const GET = withController(userController.getuser, { authRequired: true });

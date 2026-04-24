@@ -10,10 +10,9 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { setUserInfo } from "../../redux/reducers/rootSlice";
-import jwt_decode from "jwt-decode";
-import fetchData from "../../helper/apiCall";
 
 axios.defaults.baseURL = process.env.NEXT_PUBLIC_SERVER_DOMAIN || "";
+axios.defaults.withCredentials = true;
 
 function Login() {
   const dispatch = useDispatch();
@@ -84,27 +83,15 @@ function Login() {
       
       if (response.data.success) {
         toast.success("Login successful!");
-        const { token } = response.data.data;
-        localStorage.setItem("token", token);
-        const decoded = jwt_decode(token);
-        dispatch(setUserInfo(decoded.userId));
-        await getUser(decoded.userId, role);
+        const { user } = response.data.data;
+        dispatch(setUserInfo(user));
+        if (role === "Admin") return router.push("/dashboard/home");
+        return router.push("/");
       }
     } catch (error) {
       toast.error(error?.response?.data?.message || "Login failed");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const getUser = async (id, role) => {
-    try {
-      const temp = await fetchData(`/api/user/getuser/${id}`);
-      dispatch(setUserInfo(temp));
-      if (role === "Admin") return router.push("/dashboard/home");
-      return router.push("/");
-    } catch (error) {
-      toast.error("Failed to fetch user details");
     }
   };
 

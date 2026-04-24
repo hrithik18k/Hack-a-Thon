@@ -33,11 +33,7 @@ const AdminDoctors = () => {
       const confirmStr = `Are you sure you want to ${action.toLowerCase()} this doctor?`;
       
       if (window.confirm(confirmStr)) {
-        const { data } = await axios.put(endpoint, { userId }, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
+        const { data } = await axios.put(endpoint, { userId });
         
         if (data.success) {
           toast.success(data.message || `Doctor ${action.toLowerCase()}ed`);
@@ -52,11 +48,7 @@ const AdminDoctors = () => {
   const deleteDoctor = async (userId) => {
     try {
       if (window.confirm("Are you sure you want to delete this doctor?")) {
-        const { data } = await axios.put("/api/doctor/deletedoctor", { userId }, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
+        const { data } = await axios.put("/api/doctor/deletedoctor", { userId });
         if (data.success) {
           toast.success(data.message || "Doctor removed");
           getAllDoctors();

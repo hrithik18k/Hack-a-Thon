@@ -362,4 +362,11 @@ This application is scalable and designed to be effortlessly deployed.
 - Browser warnings like `fdprocessedid` usually come from extensions injecting attributes.
 - A `401` from protected API routes means no valid JWT token was sent.
 - A `400` from login usually means incorrect email/password, while role mismatch is handled separately.
+- Core user flows now validate input centrally in `meditrack-next/src/lib/userValidation.js`.
 
+Run the focused automated tests with:
+
+```bash
+cd meditrack-next
+npm test
+```
