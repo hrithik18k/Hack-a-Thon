@@ -2,7 +2,7 @@
 
 Medi Track is a full-stack healthcare appointment and medical history platform for patients, doctors, and admins. The app has been migrated from a split React + Express project to a Next.js 14 App Router application while keeping the same MongoDB/Mongoose data models and the same core functionality.
 
-Deployment link: _Coming soon_
+Deployment link: https://medi-track-sable.vercel.app/
 
 ---
 
@@ -51,8 +51,6 @@ meditrack-next/   # Next.js 14 App Router app with API route handlers
 
 ## Tech Stack
 
-### Migrated Stack
-
 - Next.js 14 App Router
 - React 18
 - Redux Toolkit
@@ -62,16 +60,18 @@ meditrack-next/   # Next.js 14 App Router app with API route handlers
 - JWT authentication
 - Bcrypt password hashing
 - Nodemailer password reset emails
-- Socket.io through a custom Next server
+- Socket.io through a custom Next server for local/custom hosting
 
-### Migration Notes
+---
+
+## Migration Notes
 
 - React Router routes were converted to Next.js file-based routes.
 - Express routes were converted to App Router API route handlers.
 - Mongoose schemas/models were copied into `meditrack-next/src/models`.
 - Model registration uses `mongoose.models.ModelName || mongoose.model(...)` so Next dev hot reload does not throw `OverwriteModelError`.
 - Client environment variables now use the `NEXT_PUBLIC_` prefix.
-- Socket.io runs through `meditrack-next/server.js`.
+- Socket.io runs through `meditrack-next/server.js` locally or on custom Node hosting. Vercel does not run the custom Socket.io server.
 
 ---
 
@@ -79,37 +79,37 @@ meditrack-next/   # Next.js 14 App Router app with API route handlers
 
 ```text
 meditrack-next/
-├── src/
-│   ├── app/
-│   │   ├── api/
-│   │   ├── dashboard/
-│   │   ├── doctor/
-│   │   ├── layout.js
-│   │   └── page.js
-│   ├── components/
-│   ├── controllers/
-│   ├── helper/
-│   ├── lib/
-│   │   ├── auth.js
-│   │   ├── controllerAdapter.js
-│   │   └── dbConnect.js
-│   ├── middleware/
-│   ├── models/
-│   ├── redux/
-│   ├── service/
-│   └── styles/
-├── public/
-├── server.js
-├── next.config.js
-├── package.json
-└── .env.local
+|-- src/
+|   |-- app/
+|   |   |-- api/
+|   |   |-- dashboard/
+|   |   |-- doctor/
+|   |   |-- layout.js
+|   |   `-- page.js
+|   |-- components/
+|   |-- controllers/
+|   |-- helper/
+|   |-- lib/
+|   |   |-- auth.js
+|   |   |-- controllerAdapter.js
+|   |   `-- dbConnect.js
+|   |-- middleware/
+|   |-- models/
+|   |-- redux/
+|   |-- service/
+|   `-- styles/
+|-- public/
+|-- server.js
+|-- next.config.js
+|-- package.json
+`-- .env.local
 ```
 
 ---
 
 ## Environment Variables
 
-Create `meditrack-next/.env.local`:
+Create `meditrack-next/.env.local` for local development:
 
 ```env
 MONGO_URI=your_mongodb_connection_string
@@ -130,13 +130,15 @@ NEXT_PUBLIC_CLOUDINARY_PRESET=your_upload_preset
 NEXT_PUBLIC_REACT_FORMIK_SECRET=your_form_secret
 ```
 
-For local development, `NEXT_PUBLIC_SERVER_DOMAIN` should point to the Next app itself:
+Use these values in the Vercel project environment variables:
 
 ```env
-NEXT_PUBLIC_SERVER_DOMAIN=http://localhost:3000
+CLIENT_URL=https://medi-track-sable.vercel.app
+NEXT_PUBLIC_SERVER_DOMAIN=https://medi-track-sable.vercel.app
+EMAIL_TEXT=Click here to reset your password: https://medi-track-sable.vercel.app/resetpassword/
 ```
 
-After deployment, update it to the deployed application URL.
+Keep the same production values for `MONGO_URI`, `JWT_SECRET`, email credentials, and Cloudinary credentials in Vercel.
 
 ---
 
@@ -201,21 +203,31 @@ src/lib/dbConnect.js
 
 ## Deployment
 
-Deployment link: _Coming soon_
+Production URL:
 
-When the deployment URL is available, update:
-
-```env
-CLIENT_URL=https://your-deployment-url
-NEXT_PUBLIC_SERVER_DOMAIN=https://your-deployment-url
-EMAIL_TEXT=Click here to reset your password: https://your-deployment-url/resetpassword/
+```text
+https://medi-track-sable.vercel.app/
 ```
+
+Vercel settings:
+
+```text
+Framework Preset: Next.js
+Root Directory: meditrack-next
+Build Command: npm run build
+Install Command: npm install
+Output Directory: default
+```
+
+After changing any Vercel environment variable, redeploy the project.
 
 ---
 
 ## Notes
 
 - The active application is `meditrack-next/`.
+- `.env.local` is ignored and must not be committed.
 - Browser warnings like `fdprocessedid` usually come from extensions injecting attributes.
 - A `401` from protected API routes means no valid JWT token was sent.
 - A `400` from login usually means incorrect email/password, while role mismatch is handled separately.
+
