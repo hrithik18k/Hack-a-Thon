@@ -7,11 +7,12 @@ import { useRouter } from "next/navigation";
 import { MdAdminPanelSettings, MdArrowBack } from "react-icons/md";
 import Navbar from "../../components/Navbar";
 import axios from "axios";
+import { getApiBaseUrl } from "@/lib/apiBaseUrl";
 import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { setUserInfo } from "../../redux/reducers/rootSlice";
 
-axios.defaults.baseURL = process.env.NEXT_PUBLIC_SERVER_DOMAIN || "";
+axios.defaults.baseURL = getApiBaseUrl();
 axios.defaults.withCredentials = true;
 
 function Login() {

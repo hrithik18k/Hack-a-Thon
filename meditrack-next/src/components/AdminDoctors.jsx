@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { getApiBaseUrl } from "@/lib/apiBaseUrl";
 import toast from "react-hot-toast";
 import Loading from "./Loading";
 import fetchData from "../helper/apiCall";
 import Empty from "./Empty";
 
-axios.defaults.baseURL = process.env.NEXT_PUBLIC_SERVER_DOMAIN || "";
+axios.defaults.baseURL = getApiBaseUrl();
 
 const AdminDoctors = () => {
   const [doctors, setDoctors] = useState([]);

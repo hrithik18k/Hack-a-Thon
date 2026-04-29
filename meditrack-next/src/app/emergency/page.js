@@ -6,8 +6,9 @@ import React, { useState, useEffect, useRef } from "react";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import axios from "axios";
+import { getApiBaseUrl } from "@/lib/apiBaseUrl";
 
-axios.defaults.baseURL = process.env.NEXT_PUBLIC_SERVER_DOMAIN || "";
+axios.defaults.baseURL = getApiBaseUrl();
 
 const Emergency = () => {
   const [status, setStatus]     = useState("idle");

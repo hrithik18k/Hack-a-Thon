@@ -8,9 +8,10 @@ import { setUserInfo } from "../redux/reducers/rootSlice";
 import { FiMenu, FiSun, FiMoon } from "react-icons/fi";
 import { RxCross1 } from "react-icons/rx";
 import axios from "axios";
+import { getApiBaseUrl } from "@/lib/apiBaseUrl";
 import { logoutSession, useAuthSession } from "@/lib/useAuthSession";
 
-axios.defaults.baseURL = process.env.NEXT_PUBLIC_SERVER_DOMAIN || "";
+axios.defaults.baseURL = getApiBaseUrl();
 axios.defaults.withCredentials = true;
 
 const Navbar = () => {

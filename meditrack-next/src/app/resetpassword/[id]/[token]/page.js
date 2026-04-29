@@ -6,9 +6,10 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import Navbar from "../../../../components/Navbar";
 import axios from "axios";
+import { getApiBaseUrl } from "@/lib/apiBaseUrl";
 import toast from "react-hot-toast";
 
-axios.defaults.baseURL = process.env.NEXT_PUBLIC_SERVER_DOMAIN || "";
+axios.defaults.baseURL = getApiBaseUrl();
 
 function ResetPassword() {
   const { id, token } = useParams();
