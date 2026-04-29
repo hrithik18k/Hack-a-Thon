@@ -1,6 +1,7 @@
 import axios from "axios";
+import { getApiBaseUrl } from "@/lib/apiBaseUrl";
 
-axios.defaults.baseURL = process.env.NEXT_PUBLIC_SERVER_DOMAIN || "";
+axios.defaults.baseURL = getApiBaseUrl();
 axios.defaults.withCredentials = true;
 
 const fetchData = async (url) => {

@@ -1,233 +1,404 @@
 #include <WiFi.h>
-#include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
+#include <HTTPClient.h>
+#include <WiFiClient.h>
+#include <WiFiClientSecure.h>
+#include <ArduinoJson.h>
 #include <Adafruit_Fingerprint.h>
 
-// ==========================================
-// Basic test configuration
-// ==========================================
+// =========================
+// User configuration
+// =========================
 const char* WIFI_SSID = "YOUR_WIFI_NAME";
 const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
 
-// Set to false if you are testing without the OLED
-const bool USE_OLED = false;
+// Use your deployed URL or local server URL.
+// Examples:
+// "https://medi-track-sable.vercel.app"
+// "http://192.168.1.20:3000"
+const char* SERVER_BASE_URL = "https://medi-track-sable.vercel.app";
 
-// ESP32 pin mapping
-static const int FP_RX_PIN = 16;   // ESP32 RX2 <- sensor TX (yellow)
-static const int FP_TX_PIN = 17;   // ESP32 TX2 -> sensor RX (green)
-static const int OLED_SDA_PIN = 21;
-static const int OLED_SCL_PIN = 22;
+// Copy this from Device Setup in the doctor account
+const char* DEVICE_TOKEN = "PASTE_DOCTOR_DEVICE_TOKEN_HERE";
 
-static const uint8_t SCREEN_WIDTH = 128;
-static const uint8_t SCREEN_HEIGHT = 64;
-static const uint8_t OLED_ADDR = 0x3C;
+// Fingerprint UART pins on your ESP32 board
+static const int FP_RX_PIN = 16;  // ESP32 receives from sensor TX (yellow wire)
+static const int FP_TX_PIN = 17;  // ESP32 sends to sensor RX (green wire)
+
+static const uint32_t POLL_INTERVAL_MS = 3000;
 
 HardwareSerial fingerSerial(2);
 Adafruit_Fingerprint finger = Adafruit_Fingerprint(&fingerSerial);
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
-unsigned long lastStatusPrintAt = 0;
+String lastMode = "idle";
+unsigned long lastPollAt = 0;
+bool sensorReady = false;
 
-void logLine(const char* text) {
-  Serial.println(text);
+bool isHttpsUrl(const String& url) {
+  return url.startsWith("https://");
 }
 
-void oledShow(const String& line1, const String& line2 = "", const String& line3 = "") {
-  if (!USE_OLED) {
+String makeUrl(const char* path) {
+  return String(SERVER_BASE_URL) + path;
+}
+
+void connectWifi() {
+  if (WiFi.status() == WL_CONNECTED) {
     return;
   }
 
-  display.clearDisplay();
-  display.setTextSize(1);
-  display.setTextColor(SSD1306_WHITE);
-  display.setCursor(0, 0);
-  display.println(line1);
-  if (line2.length()) display.println(line2);
-  if (line3.length()) display.println(line3);
-  display.display();
-}
-
-bool testWiFi() {
-  logLine("========================================");
-  logLine("TEST 1: Wi-Fi");
-  logLine("Connecting to Wi-Fi...");
-  oledShow("TEST 1", "Wi-Fi", "Connecting...");
-
+  Serial.print("Connecting to Wi-Fi");
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
   unsigned long startedAt = millis();
-  while (WiFi.status() != WL_CONNECTED && millis() - startedAt < 20000) {
+  while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
+
+    if (millis() - startedAt > 30000) {
+      Serial.println("\nWi-Fi timeout. Retrying...");
+      WiFi.disconnect();
+      delay(1000);
+      WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+      startedAt = millis();
+    }
   }
+
   Serial.println();
+  Serial.print("Wi-Fi connected. IP: ");
+  Serial.println(WiFi.localIP());
+}
 
-  if (WiFi.status() == WL_CONNECTED) {
-    logLine("[PASS] Wi-Fi connected");
-    Serial.print("IP address: ");
-    Serial.println(WiFi.localIP());
-    oledShow("TEST 1 PASS", "Wi-Fi connected", WiFi.localIP().toString());
-    return true;
+bool httpGetJson(const String& url, DynamicJsonDocument& doc) {
+  HTTPClient http;
+  WiFiClient plainClient;
+  WiFiClientSecure secureClient;
+
+  bool begun = false;
+  if (isHttpsUrl(url)) {
+    secureClient.setInsecure();
+    begun = http.begin(secureClient, url);
+  } else {
+    begun = http.begin(plainClient, url);
   }
 
-  logLine("[FAIL] Wi-Fi did not connect");
-  oledShow("TEST 1 FAIL", "Wi-Fi failed");
+  if (!begun) {
+    Serial.println("HTTP GET begin failed");
+    return false;
+  }
+
+  int httpCode = http.GET();
+  if (httpCode <= 0) {
+    Serial.print("HTTP GET error: ");
+    Serial.println(http.errorToString(httpCode));
+    http.end();
+    return false;
+  }
+
+  String payload = http.getString();
+  http.end();
+
+  if (httpCode != 200) {
+    Serial.print("HTTP GET unexpected status: ");
+    Serial.println(httpCode);
+    Serial.println(payload);
+    return false;
+  }
+
+  DeserializationError err = deserializeJson(doc, payload);
+  if (err) {
+    Serial.print("GET JSON parse failed: ");
+    Serial.println(err.c_str());
+    return false;
+  }
+
+  return true;
+}
+
+bool httpPostJson(const String& url, const String& body, DynamicJsonDocument& responseDoc) {
+  HTTPClient http;
+  WiFiClient plainClient;
+  WiFiClientSecure secureClient;
+
+  bool begun = false;
+  if (isHttpsUrl(url)) {
+    secureClient.setInsecure();
+    begun = http.begin(secureClient, url);
+  } else {
+    begun = http.begin(plainClient, url);
+  }
+
+  if (!begun) {
+    Serial.println("HTTP POST begin failed");
+    return false;
+  }
+
+  http.addHeader("Content-Type", "application/json");
+  int httpCode = http.POST(body);
+  String payload = http.getString();
+  http.end();
+
+  if (httpCode <= 0) {
+    Serial.print("HTTP POST error: ");
+    Serial.println(http.errorToString(httpCode));
+    return false;
+  }
+
+  if (payload.length() > 0) {
+    deserializeJson(responseDoc, payload);
+  }
+
+  if (httpCode < 200 || httpCode >= 300) {
+    Serial.print("HTTP POST unexpected status: ");
+    Serial.println(httpCode);
+    Serial.println(payload);
+    return false;
+  }
+
+  return true;
+}
+
+bool initFingerprintSensor() {
+  fingerSerial.begin(57600, SERIAL_8N1, FP_RX_PIN, FP_TX_PIN);
+  finger.begin(57600);
+  delay(100);
+
+  if (!finger.verifyPassword()) {
+    Serial.println("Fingerprint sensor not found or wrong wiring.");
+    return false;
+  }
+
+  if (finger.getTemplateCount() == FINGERPRINT_OK) {
+    Serial.print("Templates in sensor: ");
+    Serial.println(finger.templateCount);
+  }
+
+  Serial.println("Fingerprint sensor ready.");
+  return true;
+}
+
+int findNextTemplateId() {
+  if (finger.getTemplateCount() != FINGERPRINT_OK) {
+    return 1;
+  }
+
+  int nextId = finger.templateCount + 1;
+  if (nextId < 1) {
+    nextId = 1;
+  }
+  return nextId;
+}
+
+bool postResult(const char* status, int templateId, const String& userId, const String& errorMessage) {
+  String url = makeUrl("/api/device/esp/result?token=") + DEVICE_TOKEN;
+
+  DynamicJsonDocument requestDoc(512);
+  requestDoc["token"] = DEVICE_TOKEN;
+  requestDoc["status"] = status;
+
+  if (templateId > 0) {
+    requestDoc["templateId"] = templateId;
+  }
+  if (userId.length() > 0) {
+    requestDoc["userId"] = userId;
+  }
+  if (errorMessage.length() > 0) {
+    requestDoc["error"] = errorMessage;
+  }
+
+  String body;
+  serializeJson(requestDoc, body);
+
+  DynamicJsonDocument responseDoc(1024);
+  bool ok = httpPostJson(url, body, responseDoc);
+  if (!ok) {
+    Serial.println("Posting result failed");
+    return false;
+  }
+
+  Serial.print("Posted result: ");
+  Serial.println(status);
+  return true;
+}
+
+bool waitForFingerPress(uint32_t timeoutMs) {
+  unsigned long startedAt = millis();
+  while (millis() - startedAt < timeoutMs) {
+    uint8_t result = finger.getImage();
+    if (result == FINGERPRINT_OK) {
+      return true;
+    }
+    if (result != FINGERPRINT_NOFINGER) {
+      delay(50);
+    }
+    delay(50);
+  }
   return false;
 }
 
-bool testOled() {
-  logLine("========================================");
-  logLine("TEST 2: OLED");
+bool waitForFingerRelease(uint32_t timeoutMs) {
+  unsigned long startedAt = millis();
+  while (millis() - startedAt < timeoutMs) {
+    uint8_t result = finger.getImage();
+    if (result == FINGERPRINT_NOFINGER) {
+      return true;
+    }
+    delay(50);
+  }
+  return false;
+}
 
-  if (!USE_OLED) {
-    logLine("[SKIP] OLED disabled in code");
+bool captureTemplateSlot(uint8_t slotNumber) {
+  uint8_t result = finger.image2Tz(slotNumber);
+  if (result != FINGERPRINT_OK) {
+    Serial.print("image2Tz failed on slot ");
+    Serial.println(slotNumber);
     return false;
   }
-
-  Wire.begin(OLED_SDA_PIN, OLED_SCL_PIN);
-
-  if (!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {
-    logLine("[FAIL] OLED not found at I2C address 0x3C");
-    return false;
-  }
-
-  oledShow("TEST 2 PASS", "OLED working", "Address 0x3C");
-  logLine("[PASS] OLED initialized");
-  delay(1500);
-
-  display.clearDisplay();
-  display.drawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SSD1306_WHITE);
-  display.drawLine(0, 0, SCREEN_WIDTH - 1, SCREEN_HEIGHT - 1, SSD1306_WHITE);
-  display.drawLine(SCREEN_WIDTH - 1, 0, 0, SCREEN_HEIGHT - 1, SSD1306_WHITE);
-  display.display();
-  logLine("[PASS] OLED drew test pattern");
-  delay(1500);
-
-  oledShow("OLED OK", "Look at screen");
   return true;
 }
 
-bool testFingerprintSensor() {
-  logLine("========================================");
-  logLine("TEST 3: Fingerprint sensor");
-  logLine("Initializing sensor on UART2...");
-  oledShow("TEST 3", "Fingerprint", "Init...");
-
-  fingerSerial.begin(57600, SERIAL_8N1, FP_RX_PIN, FP_TX_PIN);
-  finger.begin(57600);
-  delay(200);
-
-  if (!finger.verifyPassword()) {
-    logLine("[FAIL] Fingerprint sensor not detected");
-    logLine("Check wiring:");
-    logLine("Red -> 3V3");
-    logLine("Black -> GND");
-    logLine("Yellow -> P16");
-    logLine("Green -> P17");
-    oledShow("TEST 3 FAIL", "Sensor not found");
-    return false;
+bool enrollFingerprint(const String& userId) {
+  if (userId.length() == 0) {
+    return postResult("enroll_error", 0, "", "Missing userId from server");
   }
 
-  logLine("[PASS] Fingerprint sensor detected");
+  int templateId = findNextTemplateId();
+  Serial.print("Enroll start. User: ");
+  Serial.print(userId);
+  Serial.print(" Template ID: ");
+  Serial.println(templateId);
 
-  uint8_t countStatus = finger.getTemplateCount();
-  if (countStatus == FINGERPRINT_OK) {
-    Serial.print("Templates stored in sensor: ");
-    Serial.println(finger.templateCount);
-  } else {
-    logLine("[WARN] Could not read template count");
+  Serial.println("Place finger for first scan...");
+  if (!waitForFingerPress(30000)) {
+    return postResult("enroll_error", 0, userId, "Timeout waiting for first finger scan");
+  }
+  if (!captureTemplateSlot(1)) {
+    return postResult("enroll_error", 0, userId, "Failed to read first finger image");
   }
 
-  oledShow("TEST 3 PASS", "Sensor connected");
-  return true;
+  Serial.println("Remove finger...");
+  if (!waitForFingerRelease(15000)) {
+    return postResult("enroll_error", 0, userId, "Finger was not removed in time");
+  }
+
+  Serial.println("Place same finger again...");
+  if (!waitForFingerPress(30000)) {
+    return postResult("enroll_error", 0, userId, "Timeout waiting for second finger scan");
+  }
+  if (!captureTemplateSlot(2)) {
+    return postResult("enroll_error", 0, userId, "Failed to read second finger image");
+  }
+
+  if (finger.createModel() != FINGERPRINT_OK) {
+    return postResult("enroll_error", 0, userId, "Fingerprints did not match");
+  }
+
+  if (finger.storeModel(templateId) != FINGERPRINT_OK) {
+    return postResult("enroll_error", 0, userId, "Failed to save fingerprint in sensor memory");
+  }
+
+  Serial.println("Enroll success");
+  return postResult("enroll_success", templateId, userId, "");
 }
 
-void liveFingerprintReadTest() {
-  logLine("========================================");
-  logLine("LIVE TEST: Place finger on scanner");
-  logLine("Open Serial Monitor at 115200 baud");
-  logLine("You should see NO FINGER / IMAGE OK / MATCH STATUS logs");
-  oledShow("LIVE TEST", "Place finger", "See Serial log");
+bool scanFingerprint() {
+  Serial.println("Waiting for finger to scan...");
+
+  unsigned long startedAt = millis();
+  while (millis() - startedAt < 30000) {
+    uint8_t result = finger.getImage();
+
+    if (result == FINGERPRINT_NOFINGER) {
+      delay(100);
+      continue;
+    }
+
+    if (result != FINGERPRINT_OK) {
+      return postResult("scan_notfound", 0, "", "");
+    }
+
+    if (finger.image2Tz() != FINGERPRINT_OK) {
+      return postResult("scan_notfound", 0, "", "");
+    }
+
+    if (finger.fingerFastSearch() == FINGERPRINT_OK) {
+      Serial.print("Matched template ID: ");
+      Serial.println(finger.fingerID);
+      return postResult("scan_success", finger.fingerID, "", "");
+    }
+
+    return postResult("scan_notfound", 0, "", "");
+  }
+
+  Serial.println("Scan timeout");
+  return postResult("scan_notfound", 0, "", "");
+}
+
+void handleServerMode() {
+  String url = makeUrl("/api/device/esp/mode?token=") + DEVICE_TOKEN;
+
+  DynamicJsonDocument responseDoc(1024);
+  bool ok = httpGetJson(url, responseDoc);
+  if (!ok) {
+    return;
+  }
+
+  bool success = responseDoc["success"] | false;
+  if (!success) {
+    Serial.println("Server returned unsuccessful mode response");
+    return;
+  }
+
+  String mode = responseDoc["data"]["mode"] | "idle";
+  String userId = responseDoc["data"]["userId"] | "";
+
+  if (mode != lastMode) {
+    Serial.print("Mode changed to: ");
+    Serial.println(mode);
+    lastMode = mode;
+  }
+
+  if (mode == "enroll") {
+    enrollFingerprint(userId);
+    lastMode = "idle";
+    return;
+  }
+
+  if (mode == "scan") {
+    scanFingerprint();
+    lastMode = "idle";
+    return;
+  }
 }
 
 void setup() {
   Serial.begin(115200);
-  delay(1200);
+  delay(1000);
 
-  logLine("");
-  logLine("========================================");
-  logLine("Medi Track Hardware Tester");
-  logLine("========================================");
-  logLine("This sketch tests Wi-Fi, OLED, and fingerprint sensor.");
-  logLine("Wiring for fingerprint:");
-  logLine("Red -> 3V3");
-  logLine("Black -> GND");
-  logLine("Yellow -> P16");
-  logLine("Green -> P17");
+  Serial.println();
+  Serial.println("Medi Track Doctor Scanner booting...");
 
-  if (USE_OLED) {
-    logLine("Wiring for OLED:");
-    logLine("GND -> GND");
-    logLine("VCC -> 3V3");
-    logLine("SCL -> P22");
-    logLine("SDA -> P21");
-  } else {
-    logLine("OLED test is disabled in code");
-  }
-
-  testOled();
-  testWiFi();
-  bool fingerprintOk = testFingerprintSensor();
-
-  if (fingerprintOk) {
-    liveFingerprintReadTest();
-  } else {
-    logLine("Skipping live fingerprint read test because init failed.");
-  }
+  connectWifi();
+  sensorReady = initFingerprintSensor();
 }
 
 void loop() {
-  if (millis() - lastStatusPrintAt < 500) {
-    return;
-  }
-  lastStatusPrintAt = millis();
-
-  uint8_t imageResult = finger.getImage();
-
-  if (imageResult == FINGERPRINT_NOFINGER) {
-    logLine("Sensor status: NO FINGER");
-    return;
+  if (WiFi.status() != WL_CONNECTED) {
+    connectWifi();
   }
 
-  if (imageResult == FINGERPRINT_OK) {
-    logLine("Sensor status: IMAGE OK");
-
-    uint8_t convertResult = finger.image2Tz();
-    if (convertResult == FINGERPRINT_OK) {
-      logLine("Sensor status: TEMPLATE CONVERSION OK");
-
-      uint8_t searchResult = finger.fingerFastSearch();
-      if (searchResult == FINGERPRINT_OK) {
-        Serial.print("MATCH FOUND. Template ID: ");
-        Serial.println(finger.fingerID);
-        Serial.print("Confidence: ");
-        Serial.println(finger.confidence);
-        oledShow("MATCH FOUND", "ID: " + String(finger.fingerID), "Conf: " + String(finger.confidence));
-      } else {
-        logLine("No stored match found. Sensor is still reading correctly.");
-        oledShow("Finger read OK", "No stored match");
-      }
-    } else {
-      Serial.print("Template conversion failed. Code: ");
-      Serial.println(convertResult);
-    }
-
-    delay(1500);
+  if (!sensorReady) {
+    sensorReady = initFingerprintSensor();
+    delay(2000);
     return;
   }
 
-  Serial.print("Sensor read error. Code: ");
-  Serial.println(imageResult);
+  unsigned long now = millis();
+  if (now - lastPollAt >= POLL_INTERVAL_MS) {
+    lastPollAt = now;
+    handleServerMode();
+  }
+
+  delay(50);
 }

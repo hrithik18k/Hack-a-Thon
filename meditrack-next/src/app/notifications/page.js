@@ -7,6 +7,7 @@ import Empty from "../../components/Empty";
 import Footer from "../../components/Footer";
 import Navbar from "../../components/Navbar";
 import fetchData from "../../helper/apiCall";
+import { getApiBaseUrl } from "@/lib/apiBaseUrl";
 import { setLoading } from "../../redux/reducers/rootSlice";
 import Loading from "../../components/Loading";
 
@@ -23,7 +24,7 @@ const Notifications = () => {
       setNotifications(temp || []);
       
       // Mark all as read 
-      const baseUrl = process.env.NEXT_PUBLIC_SERVER_DOMAIN || "";
+        const baseUrl = getApiBaseUrl();
       await fetch(`${baseUrl}/api/notification/markallread`, {
         method: "PUT",
         credentials: "include",

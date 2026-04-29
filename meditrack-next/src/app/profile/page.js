@@ -5,12 +5,13 @@ import React, { useEffect, useState } from "react";
 import Footer from "../../components/Footer";
 import Navbar from "../../components/Navbar";
 import axios from "axios";
+import { getApiBaseUrl } from "@/lib/apiBaseUrl";
 import toast from "react-hot-toast";
 import Loading from "../../components/Loading";
 import fetchData from "../../helper/apiCall";
 import { useAuthSession } from "@/lib/useAuthSession";
 
-axios.defaults.baseURL = process.env.NEXT_PUBLIC_SERVER_DOMAIN || "";
+axios.defaults.baseURL = getApiBaseUrl();
 axios.defaults.withCredentials = true;
 
 function Profile() {
