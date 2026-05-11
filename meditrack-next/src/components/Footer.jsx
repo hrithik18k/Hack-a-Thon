@@ -9,8 +9,31 @@ const Footer = () => {
     <>
       <footer>
         <div className="footer">
+          <div className="footer-brand">
+            <h3 style={{ 
+              fontSize: "1.1rem", 
+              letterSpacing: "2px",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              marginBottom: "0.75rem"
+            }}>
+              <span style={{
+                width: "10px",
+                height: "10px",
+                borderRadius: "50%",
+                background: "var(--accent-gradient)",
+                display: "inline-block",
+                boxShadow: "0 0 12px rgba(99, 102, 241, 0.4)"
+              }}></span>
+              MEDI TRACK
+            </h3>
+            <p style={{ fontSize: "0.85rem", maxWidth: "280px", lineHeight: "1.6" }}>
+              Your trusted healthcare companion. Connecting patients with top doctors for a healthier tomorrow.
+            </p>
+          </div>
           <div className="footer-links">
-            <h3>Links</h3>
+            <h3>Quick Links</h3>
             <ul>
               <li>
                 <Link href={"/"}>Home</Link>
@@ -33,7 +56,7 @@ const Footer = () => {
             </ul>
           </div>
           <div className="social">
-            <h3>Social links</h3>
+            <h3>Follow Us</h3>
             <ul>
               <li className="facebook">
                 <a
@@ -66,8 +89,7 @@ const Footer = () => {
           </div>
         </div>
         <div className="footer-bottom">
-          Copy Right
-          © {new Date().getFullYear()}
+          &copy; {new Date().getFullYear()} Medi Track. All rights reserved.
         </div>
       </footer>
     </>
