@@ -3,8 +3,6 @@
 import { Protected } from "../../middleware/route";
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import Navbar from "../../components/Navbar";
-import Footer from "../../components/Footer";
 import fetchData from "../../helper/apiCall";
 import Empty from "../../components/Empty";
 import toast from "react-hot-toast";
@@ -12,6 +10,7 @@ import Loading from "../../components/Loading";
 import PatientHistory from "../../components/PatientHistory";
 import { useRouter } from "next/navigation";
 import { useAuthSession } from "@/lib/useAuthSession";
+import EditorialShell from "../../components/editorial/EditorialShell";
 
 const Appointments = () => {
   const [appointments, setAppointments] = useState([]);
@@ -97,117 +96,109 @@ const Appointments = () => {
   };
 
   return (
-    <>
-      <Navbar />
-      <section className="appts-section">
-        <div className="container">
-          <div className="appts-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h2 className="page-title" style={{ marginBottom: 0 }}>
-              {user?.role === "Doctor" ? "My Appointments" : "My Appointments"}
-            </h2>
-            {user?.role === "Doctor" && (
-              <button className="btn btn-primary" onClick={() => setSlotModal(true)}>
-                Manage Slots
-              </button>
-            )}
+    <EditorialShell>
+      <main className="editorial-page">
+        <section className="editorial-page-hero">
+          <div className="editorial-shell">
+            <div className="editorial-page-head-row">
+              <div>
+                <span className="editorial-eyebrow">{user?.role === "Doctor" ? "Doctor schedule" : "Patient calendar"}</span>
+                <h1 className="editorial-page-title">Appointments and follow-up actions in one timeline.</h1>
+                <p className="editorial-lede">
+                  The data is unchanged. The screen is now organized around the next action instead of a generic table.
+                </p>
+              </div>
+              {user?.role === "Doctor" && (
+                <button className="editorial-btn editorial-btn-primary" onClick={() => setSlotModal(true)}>
+                  Manage slots
+                </button>
+              )}
+            </div>
           </div>
-          {loading ? (
-            <Loading />
-          ) : appointments.length > 0 ? (
-            <>
-              <div className="table-wrapper">
-                <table className="appointments-table">
-                  <thead>
-                    <tr>
-                      <th>S.No</th>
-                      {user?.role === "Doctor" ? <th>Patient Name</th> : <th>Doctor Name</th>}
-                      <th>Date</th>
-                      <th>Time</th>
-                      <th>Reason</th>
-                      {user?.role === "Doctor" && (
-                        <>
-                          <th>Age</th>
-                          <th>Gender</th>
-                        </>
-                      )}
-                      <th>Status</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {currentItems.map((ele, idx) => {
-                      const absoluteIndex = (currentPage - 1) * itemsPerPage + idx + 1;
-                      return (
-                      <tr key={ele._id}>
-                        <td>{absoluteIndex}</td>
-                        {user?.role === "Doctor" ? (
-                          <td>{ele.userId?.firstname} {ele.userId?.lastname}</td>
-                        ) : (
-                          <td>Dr. {ele.doctorId?.firstname} {ele.doctorId?.lastname}</td>
-                        )}
-                        <td>{ele.date}</td>
-                        <td>{ele.time}</td>
-                        <td>{ele.reason}</td>
-                        {user?.role === "Doctor" && (
-                          <>
-                            <td>{ele.age}</td>
-                            <td>{ele.gender}</td>
-                          </>
-                        )}
-                        <td>
-                          <span className={`badge ${getStatusBadge(ele.status)}`}>
-                            {ele.status}
-                          </span>
-                        </td>
-                        <td className="action-cell">
-                          {user?.role === "Doctor" && (
-                            <div className="action-buttons">
+        </section>
+
+        <section className="editorial-section editorial-section-tight">
+          <div className="editorial-shell">
+            {loading ? (
+              <Loading />
+            ) : appointments.length > 0 ? (
+              <>
+                <div className="editorial-appointments-grid">
+                  {currentItems.map((ele, idx) => {
+                    const absoluteIndex = (currentPage - 1) * itemsPerPage + idx + 1;
+                    return (
+                      <article key={ele._id} className="editorial-appt-card">
+                        <div className="editorial-appt-topline">
+                          <span>#{absoluteIndex}</span>
+                          <span className={`badge ${getStatusBadge(ele.status)}`}>{ele.status}</span>
+                        </div>
+                        <h3>
+                          {user?.role === "Doctor"
+                            ? `${ele.userId?.firstname || ""} ${ele.userId?.lastname || ""}`
+                            : `Dr. ${ele.doctorId?.firstname || ""} ${ele.doctorId?.lastname || ""}`}
+                        </h3>
+                        <p>{ele.reason}</p>
+                        <div className="editorial-appt-meta">
+                          <span>{ele.date}</span>
+                          <span>{ele.time}</span>
+                          {user?.role === "Doctor" ? <span>{ele.gender} · {ele.age}</span> : null}
+                        </div>
+
+                        <div className="editorial-appt-actions">
+                          {user?.role === "Doctor" ? (
+                            <>
                               <button
-                                className="btn btn-secondary-outline btn-sm"
+                                className="editorial-btn editorial-btn-outline"
                                 onClick={() => setHistoryModal({ open: true, patientId: ele.userId?._id })}
                               >
-                                Open Patient
+                                Open patient
                               </button>
-                              {ele.status === "Pending" && (
+                              {ele.status === "Pending" ? (
                                 <button
-                                  className="btn btn-primary btn-sm"
+                                  className="editorial-btn editorial-btn-primary"
                                   onClick={() => {
                                     sessionStorage.setItem("writeReportAppointment", JSON.stringify(ele));
                                     router.push("/doctor/write-report");
                                   }}
                                 >
-                                  + Report
+                                  Write report
                                 </button>
-                              )}
-                            </div>
-                          )}
-                          {user?.role === "Patient" && ele.status === "Completed" && (
+                              ) : null}
+                            </>
+                          ) : ele.status === "Completed" ? (
                             <button
-                              className="btn btn-primary-outline btn-sm"
+                              className="editorial-btn editorial-btn-primary"
                               onClick={() => router.push("/medical-history")}
                             >
-                              View Report
+                              View report
                             </button>
+                          ) : (
+                            <span className="editorial-inline-note">Awaiting completion before report access.</span>
                           )}
-                        </td>
-                      </tr>
-                    )})}
-                  </tbody>
-                </table>
-              </div>
-              {totalPages > 1 && (
-                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1.5rem', gap: '0.5rem', alignItems: 'center' }}>
-                  <button className="btn btn-secondary-outline btn-sm" onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>Previous</button>
-                  <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Page {currentPage} of {totalPages}</span>
-                  <button className="btn btn-secondary-outline btn-sm" onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>Next</button>
+                        </div>
+                      </article>
+                    );
+                  })}
                 </div>
-              )}
-            </>
-          ) : (
-            <Empty title="No Appointments Found" message="You don't have any appointments scheduled yet." />
-          )}
-        </div>
-      </section>
+
+                {totalPages > 1 && (
+                  <div className="editorial-pagination">
+                    <button className="editorial-btn editorial-btn-outline" onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
+                      Previous
+                    </button>
+                    <span>Page {currentPage} of {totalPages}</span>
+                    <button className="editorial-btn editorial-btn-outline" onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>
+                      Next
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <Empty title="No appointments found" message="You do not have any appointments scheduled yet." />
+            )}
+          </div>
+        </section>
+      </main>
 
       {slotModal && (
         <div className="modal flex-center">
@@ -253,9 +244,7 @@ const Appointments = () => {
              setModalOpen={(val) => setHistoryModal({ open: val, patientId: null })}
           />
       )}
-
-      <Footer />
-    </>
+    </EditorialShell>
   );
 };
 
