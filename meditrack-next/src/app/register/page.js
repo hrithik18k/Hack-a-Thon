@@ -4,10 +4,10 @@ import { Public } from "../../middleware/route";
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Navbar from "../../components/Navbar";
 import axios from "axios";
 import { getApiBaseUrl } from "@/lib/apiBaseUrl";
 import toast from "react-hot-toast";
+import { FiArrowRight } from "react-icons/fi";
 
 axios.defaults.baseURL = getApiBaseUrl();
 
@@ -228,66 +228,87 @@ function Register() {
   };
 
   return (
-    <>
-      <Navbar />
-      <section className="auth-section">
-        <div className="auth-container register-container">
-          <h2 className="auth-heading">Create an Account</h2>
-          
-          <div className="role-selector">
-            <button 
-              className={`role-btn ${selectedRole === "Patient" ? "active" : ""}`}
+    <main className="editorial-auth-page">
+      <section className="editorial-auth-shell editorial-auth-shell-register">
+        <aside className="editorial-auth-aside">
+          <span className="editorial-eyebrow editorial-eyebrow-invert">Open your file</span>
+          <h1 className="editorial-section-title editorial-section-title-invert">
+            Registration now matches the rest of the redesigned care journey.
+          </h1>
+          <p className="editorial-lede editorial-lede-invert">
+            Patients can add emergency details and doctors can apply with credentials without leaving the same streamlined form language.
+          </p>
+        </aside>
+
+        <section className="editorial-auth-panel editorial-auth-panel-wide">
+          <span className="editorial-eyebrow">Registration</span>
+          <h2 className="editorial-auth-title">Create an account</h2>
+
+          <div className="editorial-role-picker">
+            <button
+              type="button"
+              className={`editorial-role-button ${selectedRole === "Patient" ? "is-active" : ""}`}
               onClick={() => setSelectedRole("Patient")}
             >
               Patient
             </button>
-            <button 
-              className={`role-btn ${selectedRole === "Doctor" ? "active" : ""}`}
+            <button
+              type="button"
+              className={`editorial-role-button ${selectedRole === "Doctor" ? "is-active" : ""}`}
               onClick={() => setSelectedRole("Doctor")}
             >
               Doctor
             </button>
           </div>
 
-          <form onSubmit={formSubmit} className="auth-form">
+          <form onSubmit={formSubmit} className="editorial-auth-form editorial-auth-form-wide">
             <div className="form-row">
               <div className="form-field">
-                <input type="text" name="firstname" className="form-input" placeholder="First Name" value={formDetails.firstname} onChange={inputChange} onBlur={handleBlur} required />
+                <label className="editorial-label" htmlFor="firstname">First name</label>
+                <input id="firstname" type="text" name="firstname" className="editorial-input" placeholder="First name" value={formDetails.firstname} onChange={inputChange} onBlur={handleBlur} required />
                 {renderError("firstname")}
               </div>
               <div className="form-field">
-                <input type="text" name="lastname" className="form-input" placeholder="Last Name" value={formDetails.lastname} onChange={inputChange} onBlur={handleBlur} required />
+                <label className="editorial-label" htmlFor="lastname">Last name</label>
+                <input id="lastname" type="text" name="lastname" className="editorial-input" placeholder="Last name" value={formDetails.lastname} onChange={inputChange} onBlur={handleBlur} required />
                 {renderError("lastname")}
               </div>
             </div>
 
             <div className="form-row">
               <div className="form-field">
-                <input type="email" name="email" className="form-input" placeholder="Email Address" value={formDetails.email} onChange={inputChange} onBlur={handleBlur} required />
+                <label className="editorial-label" htmlFor="register-email">Email</label>
+                <input id="register-email" type="email" name="email" className="editorial-input" placeholder="Email address" value={formDetails.email} onChange={inputChange} onBlur={handleBlur} required />
                 {renderError("email")}
               </div>
               <div className="form-field">
-                <input type="tel" name="phone" className="form-input" placeholder="Phone Number" value={formDetails.phone} onChange={inputChange} onBlur={handleBlur} required maxLength="10" inputMode="numeric" />
+                <label className="editorial-label" htmlFor="phone">Phone</label>
+                <input id="phone" type="tel" name="phone" className="editorial-input" placeholder="Phone number" value={formDetails.phone} onChange={inputChange} onBlur={handleBlur} required maxLength="10" inputMode="numeric" />
                 {renderError("phone")}
               </div>
             </div>
 
             <div className="form-row">
               <div className="form-field">
-                <input type="password" name="password" className="form-input" placeholder="Password" value={formDetails.password} onChange={inputChange} onBlur={handleBlur} required />
+                <label className="editorial-label" htmlFor="register-password">Password</label>
+                <input id="register-password" type="password" name="password" className="editorial-input" placeholder="Password" value={formDetails.password} onChange={inputChange} onBlur={handleBlur} required />
                 {renderError("password")}
               </div>
               <div className="form-field">
-                <input type="password" name="confpassword" className="form-input" placeholder="Confirm Password" value={formDetails.confpassword} onChange={inputChange} onBlur={handleBlur} required />
+                <label className="editorial-label" htmlFor="confirm-password">Confirm password</label>
+                <input id="confirm-password" type="password" name="confpassword" className="editorial-input" placeholder="Confirm password" value={formDetails.confpassword} onChange={inputChange} onBlur={handleBlur} required />
                 {renderError("confpassword")}
               </div>
             </div>
 
             <div className="form-row">
-              <input type="text" name="city" className="form-input" placeholder="City" value={formDetails.city} onChange={inputChange} required />
+              <div className="form-field">
+                <label className="editorial-label" htmlFor="city">City</label>
+                <input id="city" type="text" name="city" className="editorial-input" placeholder="City" value={formDetails.city} onChange={inputChange} required />
+              </div>
               <div className="file-input-wrapper" style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                <label style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>Profile Picture</label>
-                <input type="file" onChange={(e) => onUpload(e.target.files[0], "profile")} name="profile-pic" className="form-input file-input" />
+                <label className="editorial-label">Profile picture</label>
+                <input type="file" onChange={(e) => onUpload(e.target.files[0], "profile")} name="profile-pic" className="editorial-input" />
               </div>
             </div>
 
@@ -295,11 +316,12 @@ function Register() {
               <>
                 <div className="form-row">
                   <div className="form-field" style={{ position: "relative" }}>
-                    <small style={{ position: "absolute", top: "-18px", left: "4px", color: "var(--text-secondary)", fontSize: "0.75rem" }}>Date of Birth</small>
-                    <input type="date" name="dateOfBirth" className="form-input" value={formDetails.dateOfBirth} onChange={inputChange} required title="Date of Birth" />
+                    <label className="editorial-label" htmlFor="dateOfBirth">Date of birth</label>
+                    <input id="dateOfBirth" type="date" name="dateOfBirth" className="editorial-input" value={formDetails.dateOfBirth} onChange={inputChange} required title="Date of Birth" />
                   </div>
                   <div className="form-field">
-                    <select name="gender" className="form-input" value={formDetails.gender} onChange={inputChange} required>
+                    <label className="editorial-label" htmlFor="gender">Gender</label>
+                    <select id="gender" name="gender" className="editorial-input" value={formDetails.gender} onChange={inputChange} required>
                       <option value="">Select Gender</option>
                       <option value="male">Male</option>
                       <option value="female">Female</option>
@@ -310,7 +332,8 @@ function Register() {
 
                 <div className="form-row">
                   <div className="form-field">
-                    <select name="bloodGroup" className="form-input" value={formDetails.bloodGroup} onChange={inputChange} required>
+                    <label className="editorial-label" htmlFor="bloodGroup">Blood group</label>
+                    <select id="bloodGroup" name="bloodGroup" className="editorial-input" value={formDetails.bloodGroup} onChange={inputChange} required>
                       <option value="">Select Blood Group</option>
                       <option value="A+">A+</option>
                       <option value="A-">A-</option>
@@ -328,22 +351,36 @@ function Register() {
                 </div>
 
                 <div className="form-row">
-                  <input type="text" name="permanentAddress" className="form-input" placeholder="Permanent Address" value={formDetails.permanentAddress} onChange={inputChange} required />
-                  <input type="text" name="temporaryAddress" className="form-input" placeholder="Temporary Address" value={formDetails.temporaryAddress} onChange={inputChange} required />
+                  <div className="form-field">
+                    <label className="editorial-label" htmlFor="permanentAddress">Permanent address</label>
+                    <input id="permanentAddress" type="text" name="permanentAddress" className="editorial-input" placeholder="Permanent address" value={formDetails.permanentAddress} onChange={inputChange} required />
+                  </div>
+                  <div className="form-field">
+                    <label className="editorial-label" htmlFor="temporaryAddress">Temporary address</label>
+                    <input id="temporaryAddress" type="text" name="temporaryAddress" className="editorial-input" placeholder="Temporary address" value={formDetails.temporaryAddress} onChange={inputChange} required />
+                  </div>
                 </div>
 
-                <div className="form-section-title" style={{ marginTop: "1rem", marginBottom: "0.5rem", fontWeight: "600", color: "var(--text-secondary)" }}>Emergency Contact Details</div>
+                <div className="editorial-form-section-title">Emergency contact details</div>
                 <div className="form-row">
-                  <input type="text" name="emergencyName" className="form-input" placeholder="Contact Person Name" value={formDetails.emergencyName} onChange={inputChange} required />
-                  <input type="text" name="emergencyRelation" className="form-input" placeholder="Relation" value={formDetails.emergencyRelation} onChange={inputChange} required />
+                  <div className="form-field">
+                    <label className="editorial-label" htmlFor="emergencyName">Contact name</label>
+                    <input id="emergencyName" type="text" name="emergencyName" className="editorial-input" placeholder="Contact person name" value={formDetails.emergencyName} onChange={inputChange} required />
+                  </div>
+                  <div className="form-field">
+                    <label className="editorial-label" htmlFor="emergencyRelation">Relation</label>
+                    <input id="emergencyRelation" type="text" name="emergencyRelation" className="editorial-input" placeholder="Relation" value={formDetails.emergencyRelation} onChange={inputChange} required />
+                  </div>
                 </div>
                 <div className="form-row">
                   <div className="form-field">
-                    <input type="tel" name="emergencyPhone1" className="form-input" placeholder="Emergency Phone 1" value={formDetails.emergencyPhone1} onChange={inputChange} onBlur={handleBlur} required maxLength="10" inputMode="numeric" />
+                    <label className="editorial-label" htmlFor="emergencyPhone1">Emergency phone 1</label>
+                    <input id="emergencyPhone1" type="tel" name="emergencyPhone1" className="editorial-input" placeholder="Emergency phone 1" value={formDetails.emergencyPhone1} onChange={inputChange} onBlur={handleBlur} required maxLength="10" inputMode="numeric" />
                     {renderError("emergencyPhone1")}
                   </div>
                   <div className="form-field">
-                    <input type="tel" name="emergencyPhone2" className="form-input" placeholder="Emergency Phone 2 (Optional)" value={formDetails.emergencyPhone2} onChange={inputChange} onBlur={handleBlur} maxLength="10" inputMode="numeric" />
+                    <label className="editorial-label" htmlFor="emergencyPhone2">Emergency phone 2</label>
+                    <input id="emergencyPhone2" type="tel" name="emergencyPhone2" className="editorial-input" placeholder="Emergency phone 2 (optional)" value={formDetails.emergencyPhone2} onChange={inputChange} onBlur={handleBlur} maxLength="10" inputMode="numeric" />
                     {renderError("emergencyPhone2")}
                   </div>
                 </div>
@@ -353,34 +390,50 @@ function Register() {
             {selectedRole === "Doctor" && (
               <>
                 <div className="form-row">
-                  <input type="text" name="specialization" className="form-input" placeholder="Specialization" value={formDetails.specialization} onChange={inputChange} required />
-                  <input type="number" name="experience" className="form-input" placeholder="Experience (years)" value={formDetails.experience} onChange={inputChange} required />
+                  <div className="form-field">
+                    <label className="editorial-label" htmlFor="specialization">Specialization</label>
+                    <input id="specialization" type="text" name="specialization" className="editorial-input" placeholder="Specialization" value={formDetails.specialization} onChange={inputChange} required />
+                  </div>
+                  <div className="form-field">
+                    <label className="editorial-label" htmlFor="experience">Experience</label>
+                    <input id="experience" type="number" name="experience" className="editorial-input" placeholder="Experience (years)" value={formDetails.experience} onChange={inputChange} required />
+                  </div>
                 </div>
                 <div className="form-row">
-                  <input type="number" name="fees" className="form-input" placeholder="Consultation Fees" value={formDetails.fees} onChange={inputChange} required />
-                  <input type="text" name="qualifications" className="form-input" placeholder="Qualifications/Degree" value={formDetails.qualifications} onChange={inputChange} required />
+                  <div className="form-field">
+                    <label className="editorial-label" htmlFor="fees">Consultation fee</label>
+                    <input id="fees" type="number" name="fees" className="editorial-input" placeholder="Consultation fees" value={formDetails.fees} onChange={inputChange} required />
+                  </div>
+                  <div className="form-field">
+                    <label className="editorial-label" htmlFor="qualifications">Qualifications</label>
+                    <input id="qualifications" type="text" name="qualifications" className="editorial-input" placeholder="Qualifications or degree" value={formDetails.qualifications} onChange={inputChange} required />
+                  </div>
                 </div>
                 <div className="form-row">
-                  <input type="text" name="hospitalName" className="form-input" placeholder="Hospital/Clinic Name" value={formDetails.hospitalName} onChange={inputChange} required />
+                  <div className="form-field">
+                    <label className="editorial-label" htmlFor="hospitalName">Hospital or clinic</label>
+                    <input id="hospitalName" type="text" name="hospitalName" className="editorial-input" placeholder="Hospital or clinic name" value={formDetails.hospitalName} onChange={inputChange} required />
+                  </div>
                   <div className="file-input-wrapper" style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                    <label style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>Qualification Certificate (Degree/License)</label>
-                    <input type="file" onChange={(e) => onUpload(e.target.files[0], "cert")} name="certificate" className="form-input file-input" required={selectedRole === "Doctor"} />
+                    <label className="editorial-label">Qualification certificate</label>
+                    <input type="file" onChange={(e) => onUpload(e.target.files[0], "cert")} name="certificate" className="editorial-input" required={selectedRole === "Doctor"} />
                   </div>
                 </div>
               </>
             )}
 
-            <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
-              {getSubmitText()}
+            <button type="submit" className="editorial-btn editorial-btn-primary editorial-btn-block" disabled={loading}>
+              <span>{getSubmitText()}</span>
+              {!loading ? <FiArrowRight /> : null}
             </button>
           </form>
 
-          <p className="auth-footer">
-            Already have an account? <Link className="auth-link" href="/login">Log in</Link>
+          <p className="editorial-auth-links">
+            <span>Already have an account? <Link href="/login">Log in</Link></span>
           </p>
-        </div>
+        </section>
       </section>
-    </>
+    </main>
   );
 }
 
