@@ -5,9 +5,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { FiArrowRight, FiBell, FiGrid, FiLogOut, FiMenu, FiUser, FiX } from "react-icons/fi";
 import { HiOutlineCalendarDays, HiOutlineCpuChip, HiOutlineDocumentText, HiOutlineMagnifyingGlass } from "react-icons/hi2";
-import { useDispatch } from "react-redux";
 import { logoutSession, useAuthSession } from "@/lib/useAuthSession";
 import { setUserInfo } from "@/redux/reducers/rootSlice";
+import store from "@/redux/store";
 import axios from "axios";
 
 const brand = (
@@ -59,7 +59,6 @@ export function EditorialNavbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const { ready, user } = useAuthSession();
-  const dispatch = useDispatch();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -104,7 +103,7 @@ export function EditorialNavbar() {
 
   async function handleLogout() {
     await logoutSession();
-    dispatch(setUserInfo({}));
+    store.dispatch(setUserInfo({}));
     router.push("/login");
   }
 
@@ -152,7 +151,7 @@ export function EditorialNavbar() {
                     Sign in
                   </Link>
                   <Link href="/register" className="editorial-btn editorial-btn-primary">
-                    <span>Open your file</span>
+                    <span>Create care profile</span>
                     <FiArrowRight />
                   </Link>
                 </>
@@ -187,7 +186,7 @@ export function EditorialFooter() {
               {brand}
             </Link>
             <p className="editorial-footer-copy">
-              Clinical records, booking workflows, doctor operations, and emergency fingerprint lookup in one platform.
+              A refined healthcare platform for appointments, medical records, care coordination, and emergency access.
             </p>
           </div>
 
@@ -213,8 +212,8 @@ export function EditorialFooter() {
         </div>
 
         <div className="editorial-footer-bottom">
-          <span>Built for Medi Track</span>
-          <span>Secure sessions, audit trails, and biometric emergency access</span>
+          <span>Built for Medi Track care journeys</span>
+          <span>Secure sessions, clinical workflows, and biometric emergency access</span>
         </div>
       </div>
     </footer>
