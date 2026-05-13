@@ -2,11 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import DoctorCard from "../../components/DoctorCard";
-import Footer from "../../components/Footer";
-import Navbar from "../../components/Navbar";
 import fetchData from "../../helper/apiCall";
 import Loading from "../../components/Loading";
 import Empty from "../../components/Empty";
+import EditorialShell from "../../components/editorial/EditorialShell";
 
 const Doctors = () => {
   const [doctors, setDoctors] = useState([]);
@@ -37,52 +36,55 @@ const Doctors = () => {
     setFilters(prev => ({ ...prev, [name]: value }));
   };
 
-  const renderContent = () => {
-    if (isLoading) return <Loading />;
-    if (doctors?.length > 0) {
-      return (
-        <div className="doctors-card-container">
-          {doctors.map((ele) => (
-            <DoctorCard ele={ele} key={ele._id} />
-          ))}
-        </div>
-      );
-    }
-    return <Empty />;
-  };
-
   return (
-    <>
-      <Navbar />
-      <section className="doctors-section">
-        <div className="container">
-          <div className="doctors-header">
-            <h2 className="page-title">Find a Doctor</h2>
-            <div className="filters-container">
-              <input 
-                type="text" 
-                name="city" 
-                value={filters.city} 
-                onChange={handleFilterChange} 
-                placeholder="Search by City..." 
-                className="filter-input"
+    <EditorialShell>
+      <main className="editorial-page">
+        <section className="editorial-page-hero">
+          <div className="editorial-shell">
+            <span className="editorial-eyebrow">Patient discovery</span>
+            <h1 className="editorial-page-title">Find the right specialist without leaving the care workflow.</h1>
+            <p className="editorial-lede">
+              Search the approved doctor network by city and specialization, then move directly into booking from the same interface.
+            </p>
+
+            <div className="editorial-filter-bar">
+              <input
+                type="text"
+                name="city"
+                value={filters.city}
+                onChange={handleFilterChange}
+                placeholder="Filter by city"
+                className="editorial-input"
               />
-              <input 
-                type="text" 
-                name="specialization" 
-                value={filters.specialization} 
-                onChange={handleFilterChange} 
-                placeholder="Specialization..." 
-                className="filter-input"
+              <input
+                type="text"
+                name="specialization"
+                value={filters.specialization}
+                onChange={handleFilterChange}
+                placeholder="Filter by specialization"
+                className="editorial-input"
               />
             </div>
           </div>
-          
-          {renderContent()}
-        </div>
-      </section>
-      <Footer />
-    </>
+        </section>
+
+        <section className="editorial-section editorial-section-tight">
+          <div className="editorial-shell">
+            {isLoading ? (
+              <Loading />
+            ) : doctors?.length > 0 ? (
+              <div className="editorial-doctor-grid">
+                {doctors.map((ele) => (
+                  <DoctorCard ele={ele} key={ele._id} />
+                ))}
+              </div>
+            ) : (
+              <Empty title="No doctors found" message="Try a different city or specialization filter." />
+            )}
+          </div>
+        </section>
+      </main>
+    </EditorialShell>
   );
 };
 
