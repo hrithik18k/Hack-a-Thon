@@ -1,14 +1,23 @@
 "use client";
 
 import React from "react";
-import HomeExperience from "../components/editorial/HomeExperience";
-import EditorialShell from "../components/editorial/EditorialShell";
+import Contact from "../components/Contact";
+import AboutUs from "../components/AboutUs";
+import Footer from "../components/Footer";
+import Hero from "../components/Hero";
+import Navbar from "../components/Navbar";
+import HomeCircles from "../components/HomeCircles";
 
 const Home = () => {
   return (
-    <EditorialShell>
-      <HomeExperience />
-    </EditorialShell>
+    <>
+      <Navbar />
+      <Hero />
+      <AboutUs />
+      <HomeCircles />
+      <Contact />
+      <Footer />
+    </>
   );
 };
 
