@@ -2,24 +2,20 @@
 
 import { Protected } from "../../middleware/route";
 import React, { useEffect, useState } from "react";
-import Footer from "../../components/Footer";
-import Navbar from "../../components/Navbar";
 import axios from "axios";
-import { getApiBaseUrl } from "@/lib/apiBaseUrl";
-import toast from "react-hot-toast";
-import { setLoading } from "../../redux/reducers/rootSlice";
-import { useDispatch, useSelector } from "react-redux";
+import EditorialShell from "../../components/editorial/EditorialShell";
 import Loading from "../../components/Loading";
 import fetchData from "../../helper/apiCall";
+import { getApiBaseUrl } from "@/lib/apiBaseUrl";
 import { useAuthSession } from "@/lib/useAuthSession";
+import toast from "react-hot-toast";
 
 axios.defaults.baseURL = getApiBaseUrl();
 axios.defaults.withCredentials = true;
 
 function ChangePassword() {
-  const dispatch = useDispatch();
-  const { loading } = useSelector((state) => state.root);
   const { ready, user } = useAuthSession();
+  const [loading, setLoading] = useState(true);
   const [file, setFile] = useState("");
   const [formDetails, setFormDetails] = useState({
     password: "",
@@ -27,122 +23,100 @@ function ChangePassword() {
     confnewpassword: "",
   });
 
-  const getUser = async () => {
-    try {
-      dispatch(setLoading(true));
-      const temp = await fetchData(`/api/user/getuser/${user?._id}`);
-      setFormDetails({
-        ...temp,
-        password: "",
-        newpassword: temp.newpassword === null ? "" : temp.newpassword,
-      });
-      setFile(temp.pic);
-      dispatch(setLoading(false));
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    }
-  };
-
   useEffect(() => {
+    async function getUser() {
+      try {
+        setLoading(true);
+        const data = await fetchData(`/api/user/getuser/${user?._id}`);
+        setFile(data.pic);
+      } finally {
+        setLoading(false);
+      }
+    }
+
     if (ready && user?._id) {
       getUser();
     }
-  }, [dispatch, ready, user]);
+  }, [ready, user]);
 
-  const inputChange = (e) => {
-    const { name, value } = e.target;
-    setFormDetails({
-      ...formDetails,
-      [name]: value,
-    });
+  const inputChange = (event) => {
+    const { name, value } = event.target;
+    setFormDetails((prev) => ({ ...prev, [name]: value }));
   };
 
-  const formSubmit = async (e) => {
-    e.preventDefault();
+  const formSubmit = async (event) => {
+    event.preventDefault();
     const { password, newpassword, confnewpassword } = formDetails;
+
     if (newpassword !== confnewpassword) {
-      return toast.error("Passwords do not match");
+      toast.error("Passwords do not match");
+      return;
     }
 
     try {
-      const response = await axios.put(
-        "/api/user/changepassword",
-        {
-          currentPassword: password,
-          newPassword: newpassword,
-          confirmNewPassword: confnewpassword,
-        }
-      );
+      const response = await axios.put("/api/user/changepassword", {
+        currentPassword: password,
+        newPassword: newpassword,
+        confirmNewPassword: confnewpassword,
+      });
 
       if (response.data.success || response.data === "Password changed successfully") {
         toast.success("Password updated successfully");
-        setFormDetails({
-          ...formDetails,
-          password: "",
-          newpassword: "",
-          confnewpassword: "",
-        });
+        setFormDetails({ password: "", newpassword: "", confnewpassword: "" });
       } else {
         toast.error("Unable to update password");
       }
     } catch (error) {
-      console.error("Error updating password:", error);
-      if (error.response) {
-        toast.error(error.response.data);
-      } else {
-        toast.error("Network error. Please try again.");
-      }
+      toast.error(error.response?.data || "Network error. Please try again.");
     }
   };
 
   return (
-    <>
-      <Navbar />
-      {!ready || loading ? (
-        <Loading />
-      ) : (
-        <section className="register-section flex-center">
-          <div className="profile-container flex-center">
-            <h2 className="form-heading">Profile</h2>
-            <img src={file} alt="profile" className="profile-pic" />
-            <form onSubmit={formSubmit} className="register-form">
-              <div className="form-same-row">
-                <input
-                  type="password"
-                  name="password"
-                  className="form-input"
-                  placeholder="Enter your current password"
-                  value={formDetails.password}
-                  onChange={inputChange}
-                />
-              </div>
-              <div className="form-same-row">
-                <input
-                  type="password"
-                  name="newpassword"
-                  className="form-input"
-                  placeholder="Enter your new password"
-                  value={formDetails.newpassword}
-                  onChange={inputChange}
-                />
-                <input
-                  type="password"
-                  name="confnewpassword"
-                  className="form-input"
-                  placeholder="Confirm your new password"
-                  value={formDetails.confnewpassword}
-                  onChange={inputChange}
-                />
-              </div>
-              <button type="submit" className="btn form-btn">
-                Update
-              </button>
-            </form>
+    <EditorialShell>
+      <main className="editorial-page">
+        <section className="editorial-page-hero">
+          <div className="editorial-shell editorial-narrow-shell">
+            <span className="editorial-eyebrow">Security settings</span>
+            <h1 className="editorial-page-title">Change your password with the same secure medical account flow.</h1>
+            <p className="editorial-lede">
+              Keep your profile protected while staying inside the refined care interface.
+            </p>
           </div>
         </section>
-      )}
-      <Footer />
-    </>
+
+        <section className="editorial-section editorial-section-tight">
+          <div className="editorial-shell editorial-narrow-shell">
+            {!ready || loading ? (
+              <Loading label="Loading security settings..." />
+            ) : (
+              <div className="editorial-form-card">
+                <div className="editorial-profile-avatar-row">
+                  <img src={file} alt="Profile" className="profile-pic" />
+                </div>
+
+                <form onSubmit={formSubmit} className="editorial-stack">
+                  <div className="form-field">
+                    <label className="editorial-label">Current password</label>
+                    <input type="password" name="password" className="editorial-input" placeholder="Enter your current password" value={formDetails.password} onChange={inputChange} />
+                  </div>
+                  <div className="editorial-form-grid">
+                    <div className="form-field">
+                      <label className="editorial-label">New password</label>
+                      <input type="password" name="newpassword" className="editorial-input" placeholder="Enter your new password" value={formDetails.newpassword} onChange={inputChange} />
+                    </div>
+                    <div className="form-field">
+                      <label className="editorial-label">Confirm new password</label>
+                      <input type="password" name="confnewpassword" className="editorial-input" placeholder="Confirm your new password" value={formDetails.confnewpassword} onChange={inputChange} />
+                    </div>
+                  </div>
+                  <button type="submit" className="editorial-btn editorial-btn-primary editorial-btn-block">Update password</button>
+                </form>
+              </div>
+            )}
+          </div>
+        </section>
+      </main>
+    </EditorialShell>
   );
 }
 

@@ -13,59 +13,66 @@ const DashboardHome = () => {
   });
   const [loading, setLoading] = useState(true);
 
-  const fetchStats = async () => {
-    try {
-      setLoading(true);
-      // Let's create a combined request or separate based on what controllers we have.
-      // We have getallusers, getalldoctors, getallappointments
-      const [uRes, dRes, aRes, appDocs] = await Promise.all([
-        fetchData("/api/user/getallusers"),
-        fetchData("/api/doctor/getnotdoctors"), // pending/approved/rejected
-        fetchData("/api/appointment/getallappointments"),
-        fetchData("/api/doctor/getalldoctors") // only approved
-      ]);
-
-      setStats({
-        users: uRes?.length || 0,
-        doctors: ((dRes?.length || 0) + (appDocs?.length || 0)),
-        appointments: aRes?.length || 0,
-      });
-    } catch (error) {
-      toast.error("Failed to fetch dashboard stats");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    async function fetchStats() {
+      try {
+        setLoading(true);
+        const [users, pendingDoctors, appointments, approvedDoctors] = await Promise.all([
+          fetchData("/api/user/getallusers"),
+          fetchData("/api/doctor/getnotdoctors"),
+          fetchData("/api/appointment/getallappointments"),
+          fetchData("/api/doctor/getalldoctors"),
+        ]);
+
+        setStats({
+          users: users?.length || 0,
+          doctors: (pendingDoctors?.length || 0) + (approvedDoctors?.length || 0),
+          appointments: appointments?.length || 0,
+        });
+      } catch {
+        toast.error("Failed to fetch dashboard metrics");
+      } finally {
+        setLoading(false);
+      }
+    }
+
     fetchStats();
   }, []);
 
+  if (loading) {
+    return <Loading label="Loading operational metrics..." />;
+  }
+
   return (
-    <div>
-      <div className="admin-header">
-        <h2 className="admin-title">System Overview</h2>
+    <section className="editorial-dashboard-stack">
+      <div className="editorial-stat-grid">
+        <article className="editorial-stat-card">
+          <span>Registered patients</span>
+          <strong>{stats.users}</strong>
+          <p>Total patient accounts with care access.</p>
+        </article>
+        <article className="editorial-stat-card">
+          <span>Doctor profiles</span>
+          <strong>{stats.doctors}</strong>
+          <p>Approved and pending clinicians in the review pipeline.</p>
+        </article>
+        <article className="editorial-stat-card">
+          <span>Appointments logged</span>
+          <strong>{stats.appointments}</strong>
+          <p>Scheduled consultations tracked by the platform.</p>
+        </article>
       </div>
 
-      {loading ? (
-        <Loading />
-      ) : (
-        <div className="dashboard-stats">
-          <div className="stat-card">
-            <span className="stat-title">Total Users</span>
-            <span className="stat-value">{stats.users}</span>
-          </div>
-          <div className="stat-card">
-            <span className="stat-title">Total Doctors</span>
-            <span className="stat-value">{stats.doctors}</span>
-          </div>
-          <div className="stat-card">
-            <span className="stat-title">Total Appointments</span>
-            <span className="stat-value">{stats.appointments}</span>
-          </div>
+      <div className="editorial-info-band">
+        <div>
+          <h2 className="editorial-card-title">Platform health is easier to scan now.</h2>
+          <p>
+            The dashboard keeps the information density an admin console needs, but with calmer spacing,
+            clearer headings, and a more clinical visual rhythm.
+          </p>
         </div>
-      )}
-    </div>
+      </div>
+    </section>
   );
 };
 
