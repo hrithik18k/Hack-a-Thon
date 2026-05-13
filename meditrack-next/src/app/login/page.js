@@ -5,12 +5,12 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MdAdminPanelSettings, MdArrowBack } from "react-icons/md";
+import Navbar from "../../components/Navbar";
 import axios from "axios";
 import { getApiBaseUrl } from "@/lib/apiBaseUrl";
 import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { setUserInfo } from "../../redux/reducers/rootSlice";
-import { FiArrowRight } from "react-icons/fi";
 
 axios.defaults.baseURL = getApiBaseUrl();
 axios.defaults.withCredentials = true;
@@ -97,68 +97,52 @@ function Login() {
   };
 
   return (
-    <main className="editorial-auth-page">
-      <section className="editorial-auth-shell">
-        <aside className="editorial-auth-aside">
-          <span className="editorial-eyebrow editorial-eyebrow-invert">Secure access</span>
-          <h1 className="editorial-section-title editorial-section-title-invert">
-            Sign into the same system that powers booking, records, and emergency lookup.
-          </h1>
-          <p className="editorial-lede editorial-lede-invert">
-            Patient, doctor, and admin access stay distinct, but the new UI keeps them in one coherent entry flow.
-          </p>
-        </aside>
+    <>
+      <Navbar />
+      <section className="auth-section">
+        <button 
+          type="button" 
+          className="admin-login-corner-btn"
+          onClick={() => setFormDetails({...formDetails, role: formDetails.role === "Admin" ? "Patient" : "Admin"})}
+        >
+          {formDetails.role === "Admin" ? (
+            <><MdArrowBack /> Back to Login</>
+          ) : (
+            <><MdAdminPanelSettings /> Admin Login</>
+          )}
+        </button>
 
-        <section className="editorial-auth-panel">
-          <button
-            type="button"
-            className="editorial-toggle-link"
-            onClick={() => setFormDetails({ ...formDetails, role: formDetails.role === "Admin" ? "Patient" : "Admin" })}
-          >
-            {formDetails.role === "Admin" ? (
-              <>
-                <MdArrowBack />
-                <span>Back to standard sign in</span>
-              </>
-            ) : (
-              <>
-                <MdAdminPanelSettings />
-                <span>Switch to admin login</span>
-              </>
-            )}
-          </button>
-
-          <span className="editorial-eyebrow">Account access</span>
-          <h2 className="editorial-auth-title">{formDetails.role === "Admin" ? "Admin sign in" : "Welcome back"}</h2>
-
+        <div className="auth-container">
+          <h2 className="auth-heading">
+            {formDetails.role === "Admin" ? "Admin Login" : "Welcome Back"}
+          </h2>
+          
           {formDetails.role !== "Admin" && (
-            <div className="editorial-role-picker">
-              <button
+            <div className="role-selector">
+              <button 
                 type="button"
-                className={`editorial-role-button ${formDetails.role === "Patient" ? "is-active" : ""}`}
-                onClick={() => setFormDetails({ ...formDetails, role: "Patient" })}
+                className={`role-btn ${formDetails.role === "Patient" ? "active" : ""}`}
+                onClick={() => setFormDetails({...formDetails, role: "Patient"})}
               >
                 Patient
               </button>
-              <button
+              <button 
                 type="button"
-                className={`editorial-role-button ${formDetails.role === "Doctor" ? "is-active" : ""}`}
-                onClick={() => setFormDetails({ ...formDetails, role: "Doctor" })}
+                className={`role-btn ${formDetails.role === "Doctor" ? "active" : ""}`}
+                onClick={() => setFormDetails({...formDetails, role: "Doctor"})}
               >
                 Doctor
               </button>
             </div>
           )}
 
-          <form onSubmit={formSubmit} className="editorial-auth-form">
+          <form onSubmit={formSubmit} className="auth-form">
             <div className="form-field">
-              <label className="editorial-label" htmlFor="email">Email</label>
               <input
-                id="email"
                 type="email"
                 name="email"
-                className="editorial-input"
-                placeholder="you@example.com"
+                className="form-input"
+                placeholder="Email Address"
                 value={formDetails.email}
                 onChange={inputChange}
                 onBlur={handleBlur}
@@ -168,13 +152,11 @@ function Login() {
             </div>
 
             <div className="form-field">
-              <label className="editorial-label" htmlFor="password">Password</label>
               <input
-                id="password"
                 type="password"
                 name="password"
-                className="editorial-input"
-                placeholder="Enter your password"
+                className="form-input"
+                placeholder="Password"
                 value={formDetails.password}
                 onChange={inputChange}
                 onBlur={handleBlur}
@@ -183,19 +165,24 @@ function Login() {
               {renderError("password")}
             </div>
 
-            <button type="submit" className="editorial-btn editorial-btn-primary editorial-btn-block" disabled={loading}>
-              <span>{loading ? "Signing in..." : "Sign in"}</span>
-              {!loading ? <FiArrowRight /> : null}
+            <button
+              type="submit"
+              className="btn btn-primary btn-full"
+              disabled={loading}
+            >
+              {loading ? "Signing in..." : "Sign In"}
             </button>
           </form>
 
-          <p className="editorial-auth-links">
-            <Link href="/forgotpassword">Forgot password?</Link>
-            <span>New here? <Link href="/register">Create an account</Link></span>
+          <p className="auth-footer">
+            <Link className="auth-link" href="/forgotpassword" style={{ display: "block", marginBottom: "0.5rem" }}>
+              Forgot Password?
+            </Link>
+            Not a user? <Link className="auth-link" href="/register">Register</Link>
           </p>
-        </section>
+        </div>
       </section>
-    </main>
+    </>
   );
 }
 
