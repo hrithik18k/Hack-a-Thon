@@ -1,12 +1,20 @@
 "use client";
 
-import PropTypes from 'prop-types';
+import PropTypes from "prop-types";
 import React, { useEffect, useState } from "react";
-
-import { IoMdClose, IoMdArrowDropdown, IoMdArrowDropright } from "react-icons/io";
+import { FiChevronDown, FiChevronRight, FiImage, FiX } from "react-icons/fi";
 import fetchData from "../helper/apiCall";
-import toast from "react-hot-toast";
 import Loading from "./Loading";
+import toast from "react-hot-toast";
+
+const filters = ["Important", "General", "All"];
+
+const secureUrl = (url) => {
+  if (url && url.startsWith("http://res.cloudinary.com")) {
+    return url.replace("http://", "https://");
+  }
+  return url;
+};
 
 const PatientHistory = ({ patientId, setModalOpen }) => {
   const [reports, setReports] = useState([]);
@@ -15,182 +23,135 @@ const PatientHistory = ({ patientId, setModalOpen }) => {
   const [expandedId, setExpandedId] = useState(null);
   const [lightboxImg, setLightboxImg] = useState(null);
 
-  const fetchReports = async () => {
-    try {
-      setLoading(true);
-      const data = await fetchData(`/api/report/patient/${patientId}`);
-      if (data) {
-        setReports(data || []);
-      }
-    } catch (error) {
-      toast.error("Failed to load patient history");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    async function fetchReports() {
+      try {
+        setLoading(true);
+        const data = await fetchData(`/api/report/patient/${patientId}`);
+        setReports(data || []);
+      } catch {
+        toast.error("Failed to load patient history");
+      } finally {
+        setLoading(false);
+      }
+    }
+
     fetchReports();
   }, [patientId]);
 
-  const filteredReports = reports.filter(r => {
-    const imp = (r.importance || "General").toLowerCase();
-    const f = filter.toLowerCase();
-    if (f === "all") return true;
-    return imp === f;
+  const filteredReports = reports.filter((report) => {
+    const importance = (report.importance || "General").toLowerCase();
+    const activeFilter = filter.toLowerCase();
+    return activeFilter === "all" ? true : importance === activeFilter;
   });
 
-  const toggleExpand = (id) => {
-    setExpandedId(prev => prev === id ? null : id);
-  };
-
-  // Fix http -> https for cloudinary images
-  const secureUrl = (url) => {
-    if (url && url.startsWith("http://res.cloudinary.com")) {
-      return url.replace("http://", "https://");
-    }
-    return url;
-  };
-
   return (
-    <div className="modal flex-center report-modal-overlay">
-      <div className="modal-content history-modal" style={{ maxWidth: '800px', width: '90%' }}>
-        <button
-          type="button"
-          className="close-btn"
-          onClick={() => setModalOpen(false)}
-        >
-          <IoMdClose />
-        </button>
-        <h2 className="modal-title">Patient Medical History</h2>
-        
-        <div className="filter-tabs" style={{ marginBottom: '1.5rem' }}>
-          {["Important", "General", "All"].map((f) => {
-            const getFilterLabel = (filterType) => {
-              if (filterType === "Important") return "⭐ Critical History";
-              if (filterType === "General") return "Routine Visits";
-              return "All Records";
-            };
-            return (
-              <button 
-                key={f}
-                className={`filter-tab ${filter === f ? "active" : ""}`} 
-                onClick={() => setFilter(f)}
+    <>
+      <div className="editorial-overlay" role="presentation">
+        <div className="editorial-modal-card editorial-modal-card-history">
+          <button type="button" className="close-btn" onClick={() => setModalOpen(false)}>
+            <FiX />
+          </button>
+
+          <div className="editorial-modal-head">
+            <span className="editorial-eyebrow">Patient record timeline</span>
+            <h2 className="editorial-card-title">Medical history</h2>
+            <p>Review critical and routine reports in one expandable summary.</p>
+          </div>
+
+          <div className="editorial-chip-row">
+            {filters.map((value) => (
+              <button
+                key={value}
+                type="button"
+                className={`editorial-filter-chip ${filter === value ? "is-active" : ""}`}
+                onClick={() => setFilter(value)}
               >
-                {getFilterLabel(f)}
+                {value === "Important" ? "Critical history" : value === "General" ? "Routine visits" : "All records"}
               </button>
-            );
-          })}
-        </div>
+            ))}
+          </div>
 
-        {loading ? (
-          <Loading />
-        ) : filteredReports.length > 0 ? (
-          <div className="history-timeline" style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: '0.5rem' }}>
-            {filteredReports.map((report) => {
-              const isExpanded = expandedId === report._id;
-              return (
-                <div key={report._id} className="history-strip-wrapper">
-                  {/* Collapsed Strip */}
-                  <div
-                    className={`history-strip ${isExpanded ? "expanded" : ""}`}
-                    style={{ borderLeftColor: (report.importance === "Important") ? 'var(--accent-warning)' : 'var(--accent-success)' }}
-                    onClick={() => toggleExpand(report._id)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(report._id); } }}
-                  >
-                    <span className="strip-toggle-icon">
-                      {isExpanded ? <IoMdArrowDropdown /> : <IoMdArrowDropright />}
-                    </span>
-                    <span className="strip-date">
-                      {new Date(report.appointmentDate).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' })}
-                    </span>
-                    <span className="strip-doctor">{report.doctorName}</span>
-                    <span className="strip-diagnosis">{report.diagnosis}</span>
-                    <span className={`badge ${(report.importance === "Important") ? "badge-warning" : "badge-success"}`} style={{ fontSize: '0.7rem', marginLeft: 'auto', flexShrink: 0 }}>
-                      {(report.importance || "General").toUpperCase()}
-                    </span>
-                  </div>
+          {loading ? (
+            <Loading label="Loading patient history..." />
+          ) : filteredReports.length ? (
+            <div className="editorial-history-list">
+              {filteredReports.map((report) => {
+                const expanded = expandedId === report._id;
 
-                  {/* Expanded Details */}
-                  {isExpanded && (
-                    <div className="history-details" style={{ borderLeftColor: (report.importance === "Important") ? 'var(--accent-warning)' : 'var(--accent-success)' }}>
-                      <div className="history-detail-row">
-                        <strong>Hospital:</strong> {report.hospitalName}
-                      </div>
-                      {report.notes && (
-                        <div className="history-detail-row">
-                          <strong>Notes:</strong> {report.notes}
-                        </div>
-                      )}
-                      
-                      {report.medications?.length > 0 && (
-                        <div className="history-detail-row">
-                          <strong>Prescribed Medications:</strong>
-                          <ul className="meds-list-inline">
-                            {report.medications.map((med, i) => (
-                              <li key={med._id || `${i}-${med.name}`}>
-                                <span className="med-name">{med.name}</span> — {med.dosage}, {med.frequency} for {med.duration}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
+                return (
+                  <article key={report._id} className="editorial-history-item">
+                    <button type="button" className="editorial-history-summary" onClick={() => setExpandedId(expanded ? null : report._id)}>
+                      <span className="editorial-history-toggle">{expanded ? <FiChevronDown /> : <FiChevronRight />}</span>
+                      <span>{new Date(report.appointmentDate).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</span>
+                      <strong>{report.doctorName}</strong>
+                      <span>{report.diagnosis}</span>
+                      <span className={`badge ${report.importance === "Important" ? "badge-warning" : "badge-success"}`}>
+                        {report.importance || "General"}
+                      </span>
+                    </button>
 
-                      {report.images?.length > 0 && (
-                        <div className="history-detail-row">
-                          <strong>Attached Images:</strong>
-                          <div className="images-grid" style={{ marginTop: '0.5rem' }}>
-                            {report.images.map((img, i) => (
-                              <div
-                                key={img._id || `${i}-${img}`}
-                                className="report-img-thumb"
-                                onClick={(e) => { e.stopPropagation(); setLightboxImg(secureUrl(img)); }}
-                                style={{ cursor: 'pointer' }}
-                                role="button"
-                                tabIndex={0}
-                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); setLightboxImg(secureUrl(img)); } }}
-                              >
-                                <img src={secureUrl(img)} alt="Medical record" />
-                              </div>
-                            ))}
+                    {expanded ? (
+                      <div className="editorial-history-details">
+                        <p><strong>Hospital:</strong> {report.hospitalName}</p>
+                        {report.notes ? <p><strong>Notes:</strong> {report.notes}</p> : null}
+
+                        {report.medications?.length ? (
+                          <div>
+                            <strong>Medications</strong>
+                            <ul className="editorial-detail-list">
+                              {report.medications.map((medication, index) => (
+                                <li key={medication._id || `${index}-${medication.name}`}>
+                                  {medication.name} - {medication.dosage}, {medication.frequency} for {medication.duration}
+                                </li>
+                              ))}
+                            </ul>
                           </div>
-                        </div>
-                      )}
+                        ) : null}
 
-                      {report.followUpDate && (
-                        <div className="history-detail-row follow-up">
-                          <strong>Follow-up:</strong> {new Date(report.followUpDate).toLocaleDateString()}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="empty-history" style={{ textAlign: 'center', padding: '3rem 1rem' }}>
-             <img src="/images/empty-history.svg" alt="Empty" style={{ width: 120, opacity: 0.5, marginBottom: '1rem' }} onError={(e) => e.target.style.display='none'} />
-            <p>No {filter !== "All" ? filter.toLowerCase() : ""} medical records found for this patient.</p>
-            {filter !== "All" && (
-                <button className="btn btn-secondary-outline btn-sm" style={{ marginTop: '1rem' }} onClick={() => setFilter("All")}>View All Records</button>
-            )}
-          </div>
-        )}
+                        {report.images?.length ? (
+                          <div>
+                            <strong>Attachments</strong>
+                            <div className="editorial-media-grid">
+                              {report.images.map((image, index) => (
+                                <button key={image._id || `${index}-${image}`} type="button" className="editorial-media-thumb" onClick={() => setLightboxImg(secureUrl(image))}>
+                                  <img src={secureUrl(image)} alt="Medical record" />
+                                  <span><FiImage /> Open image</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
+
+                        {report.followUpDate ? <p><strong>Follow-up:</strong> {new Date(report.followUpDate).toLocaleDateString()}</p> : null}
+                      </div>
+                    ) : null}
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="editorial-empty-state">
+              <h3 className="editorial-card-title">No records in this filter</h3>
+              <p>Switch to another filter or wait for more reports to be published.</p>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Lightbox Modal for Enlarged Image */}
-      {lightboxImg && (
-        <div className="lightbox-overlay" onClick={() => setLightboxImg(null)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') setLightboxImg(null); }}>
+      {lightboxImg ? (
+        <div className="lightbox-overlay" onClick={() => setLightboxImg(null)} role="button" tabIndex={0} onKeyDown={(event) => {
+          if (event.key === "Escape" || event.key === "Enter" || event.key === " ") {
+            setLightboxImg(null);
+          }
+        }}>
           <button className="lightbox-close" onClick={() => setLightboxImg(null)}>
-            <IoMdClose />
+            <FiX />
           </button>
-          <img src={lightboxImg} alt="Enlarged medical record" className="lightbox-image" onClick={(e) => e.stopPropagation()} />
+          <img src={lightboxImg} alt="Enlarged medical record" className="lightbox-image" onClick={(event) => event.stopPropagation()} />
         </div>
-      )}
-    </div>
+      ) : null}
+    </>
   );
 };
 
@@ -198,5 +159,5 @@ export default PatientHistory;
 
 PatientHistory.propTypes = {
   patientId: PropTypes.any,
-  setModalOpen: PropTypes.any
+  setModalOpen: PropTypes.any,
 };

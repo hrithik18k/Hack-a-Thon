@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FiArrowRight, FiShield } from "react-icons/fi";
+import { FiArrowRight, FiHeart, FiShield } from "react-icons/fi";
 import { HiOutlineCalendarDays, HiOutlineCpuChip, HiOutlineDocumentText, HiOutlineMagnifyingGlass } from "react-icons/hi2";
 
 const previewDoctors = [
@@ -30,26 +30,26 @@ const previewDoctors = [
 
 const capabilityCards = [
   {
-    title: "Find the right specialist",
-    body: "Search by city, hospital, specialization, and price without leaving your clinical history behind.",
+    title: "Find the right specialist faster",
+    body: "Browse trusted clinicians by specialty, location, language, and availability in a calm patient-first directory.",
     href: "/doctors",
     icon: HiOutlineMagnifyingGlass,
   },
   {
-    title: "Book and manage visits",
-    body: "Patients, doctors, and admins share one appointment layer instead of disconnected tools.",
+    title: "Book visits with less friction",
+    body: "Appointments, follow-ups, and clinician schedules stay aligned in one flow for patients, doctors, and staff.",
     href: "/appointments",
     icon: HiOutlineCalendarDays,
   },
   {
-    title: "Keep one medical timeline",
-    body: "Reports, diagnoses, and prescriptions remain linked across every consultation.",
+    title: "Keep one connected health record",
+    body: "Reports, prescriptions, notes, and diagnosis history remain organized as one medical timeline.",
     href: "/medical-history",
     icon: HiOutlineDocumentText,
   },
   {
-    title: "Use emergency fingerprint access",
-    body: "An ESP32 reader can surface critical patient details when the patient cannot unlock a phone.",
+    title: "Enable emergency fingerprint access",
+    body: "Critical patient details can be surfaced quickly at triage when time matters more than device navigation.",
     href: "/emergency",
     icon: FingerprintGlyph,
   },
@@ -61,42 +61,42 @@ export default function HomeExperience() {
       <section className="editorial-hero">
         <div className="editorial-shell editorial-hero-grid">
           <div className="editorial-hero-copy">
-            <span className="editorial-eyebrow">Clinical record platform</span>
+            <span className="editorial-eyebrow">Trusted digital care experience</span>
             <h1 className="editorial-display">
-              One patient file.
+              Care feels warmer
               <br />
-              One fingerprint away.
+              when every step is clear.
             </h1>
             <p className="editorial-lede">
-              Medi Track connects patient care, doctor workflow, and emergency lookup in a single system built around the real pace of hospitals and clinics.
+              Medi Track brings appointments, records, doctor discovery, and emergency access into one refined healthcare workspace designed to feel clinical, reassuring, and easy to use.
             </p>
 
             <div className="editorial-hero-actions">
               <Link href="/register" className="editorial-btn editorial-btn-primary">
-                <span>Create account</span>
+                <span>Start your care profile</span>
                 <FiArrowRight />
               </Link>
               <Link href="/doctors" className="editorial-btn editorial-btn-outline">
-                Browse doctors
+                Explore specialists
               </Link>
               <span className="editorial-inline-note">
                 <FiShield />
-                Secure sessions, audit trails, and biometric access
+                Secure records, verified care teams, and biometric access
               </span>
             </div>
 
             <div className="editorial-hero-stats">
               <div>
                 <strong>12k+</strong>
-                <span>Patients onboarded</span>
+                <span>Patient profiles supported</span>
               </div>
               <div>
                 <strong>250+</strong>
-                <span>Partner clinics</span>
+                <span>Clinics and care desks</span>
               </div>
               <div>
                 <strong>0.31s</strong>
-                <span>Median fingerprint match</span>
+                <span>Emergency lookup response</span>
               </div>
             </div>
           </div>
@@ -115,9 +115,9 @@ export default function HomeExperience() {
               />
             </div>
             <div className="editorial-stage-panel">
-              <span className="editorial-stage-label">Emergency stream</span>
-              <strong>Live patient lookup</strong>
-              <p>Reader paired, scan mode armed, triage file ready.</p>
+              <span className="editorial-stage-label">Clinical readiness</span>
+              <strong>Reception to recovery, in one flow</strong>
+              <p>Prepared for walk-ins, routine care, and urgent lookup without breaking the experience.</p>
             </div>
           </div>
         </div>
@@ -126,25 +126,25 @@ export default function HomeExperience() {
       <section className="editorial-band">
         <div className="editorial-shell editorial-band-grid">
           <div>
-            <span className="editorial-eyebrow editorial-eyebrow-invert">Fingerprint layer</span>
-            <h2 className="editorial-section-title editorial-section-title-invert">When seconds matter, the login screen should not.</h2>
+            <span className="editorial-eyebrow editorial-eyebrow-invert">Hospital-grade continuity</span>
+            <h2 className="editorial-section-title editorial-section-title-invert">A hospitality tone for patients, with clinical control for staff.</h2>
             <p className="editorial-lede editorial-lede-invert">
-              Device pairing, clinician verification, and patient record lookup are tied together so the emergency flow remains fast without becoming anonymous.
+              The interface now balances a welcoming front-door feel with the precision healthcare teams need for appointments, documentation, and emergency response.
             </p>
           </div>
 
           <div className="editorial-band-metrics">
             <div>
               <strong>99.94%</strong>
-              <span>True positive match rate</span>
+              <span>Biometric verification accuracy</span>
             </div>
             <div>
               <strong>142</strong>
-              <span>Partner triage desks</span>
+              <span>Triage-ready care desks</span>
             </div>
             <div>
-              <strong>ESP32</strong>
-              <span>Reader-based device network</span>
+              <strong>24/7</strong>
+              <span>Continuous care visibility</span>
             </div>
           </div>
         </div>
@@ -155,10 +155,10 @@ export default function HomeExperience() {
           <div className="editorial-section-head">
             <div>
               <span className="editorial-eyebrow">Care journey</span>
-              <h2 className="editorial-section-title">The redesign maps directly to the workflows already in the app.</h2>
+              <h2 className="editorial-section-title">Every section now reads like a coordinated healthcare service.</h2>
             </div>
             <p className="editorial-lede">
-              The frontend now reflects the same structure the backend already supports: discovery, booking, records, clinician tools, and emergency access.
+              The homepage presents discovery, scheduling, records, and urgent access with clearer text, stronger alignment, and a cleaner sense of trust.
             </p>
           </div>
 
@@ -186,10 +186,10 @@ export default function HomeExperience() {
           <div className="editorial-section-head">
             <div>
               <span className="editorial-eyebrow">In network</span>
-              <h2 className="editorial-section-title">Verified specialists already fit the new interface.</h2>
+              <h2 className="editorial-section-title">Verified doctors are presented with more clarity and confidence.</h2>
             </div>
             <p className="editorial-lede">
-              The doctor directory remains connected to your backend filters and booking flow while the presentation becomes more deliberate.
+              Provider cards now feel more consistent with a medical booking platform while still keeping the warm hospitality tone you asked for.
             </p>
           </div>
 
@@ -215,8 +215,33 @@ export default function HomeExperience() {
             </Link>
             <Link href="/device-setup" className="editorial-btn editorial-btn-outline">
               <HiOutlineCpuChip />
-              <span>Set up a device</span>
+              <span>Prepare emergency device access</span>
             </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="editorial-section editorial-promise-section">
+        <div className="editorial-shell">
+          <div className="editorial-promise-card">
+            <div>
+              <span className="editorial-eyebrow">Patient confidence</span>
+              <h2 className="editorial-section-title">The experience feels welcoming at the front desk and dependable in treatment rooms.</h2>
+            </div>
+            <div className="editorial-promise-points">
+              <div>
+                <FiHeart />
+                <p>Warmer language reduces friction for patients and families.</p>
+              </div>
+              <div>
+                <FiShield />
+                <p>Medical records remain protected with secure access patterns.</p>
+              </div>
+              <div>
+                <HiOutlineCpuChip />
+                <p>Emergency hardware stays integrated without dominating the interface.</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
