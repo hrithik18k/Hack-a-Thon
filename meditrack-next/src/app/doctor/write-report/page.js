@@ -1,40 +1,54 @@
 "use client";
 
 import { DoctorOnly } from "../../../middleware/route";
-import PropTypes from "prop-types";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import PropTypes from 'prop-types';
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { FiArrowLeft, FiCheckCircle, FiFingerprint, FiLoader, FiPlus, FiTrash2, FiUpload, FiXCircle } from "react-icons/fi";
-import EditorialShell from "../../../components/editorial/EditorialShell";
+import { IoMdAdd, IoMdTrash, IoMdArrowBack } from "react-icons/io";
+import Navbar from "../../../components/Navbar";
+import Footer from "../../../components/Footer";
 
 const FingerprintIcon = ({ color = "currentColor", size = 20 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4" />
-    <path d="M14 13.12c0 2.38 0 6.38-1 8.88" />
-    <path d="M17.29 21.02c.12-.6.43-2.3.5-3.02" />
-    <path d="M2 12a10 10 0 0 1 18-6" />
-    <path d="M2 17.5a14.5 14.5 0 0 0 4.24 5.5" />
-    <path d="M6 10a8 8 0 0 1 14.7-2.4" />
-    <path d="M6 14a6 6 0 0 1 11.94-1.5" />
-    <path d="M6.18 17A14 14 0 0 0 7 22" />
+    <path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4" /><path d="M14 13.12c0 2.38 0 6.38-1 8.88" /><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02" /><path d="M2 12a10 10 0 0 1 18-6" /><path d="M2 17.5a14.5 14.5 0 0 0 4.24 5.5" /><path d="M6 10a8 8 0 0 1 14.7-2.4" /><path d="M6 14a6 6 0 0 1 11.94-1.5" /><path d="M6.18 17A14 14 0 0 0 7 22" />
   </svg>
 );
 
 const FingerprintModal = ({ onClose, userId, onSuccess }) => {
-  const [status, setStatus] = useState("activating");
+  const [status, setStatus]   = useState("activating");
   const [message, setMessage] = useState("");
   const pollRef = useRef(null);
 
-  const stopPolling = useCallback(() => {
-    if (pollRef.current) {
-      clearInterval(pollRef.current);
-      pollRef.current = null;
-    }
+  const stopPolling = () => {
+    if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+  };
+
+  useEffect(() => {
+    triggerEnroll();
+    return () => {
+      stopPolling();
+      axios.post("/api/device/setmode", { mode: "idle" }).catch((err) => {
+        console.error("Failed to set mode idle:", err);
+      });
+    };
+    // eslint-disable-next-line
   }, []);
 
-  const startPolling = useCallback(() => {
+  const triggerEnroll = async () => {
+    setStatus("activating");
+    try {
+      await axios.post("/api/device/setmode", { mode: "enroll", userId });
+      setStatus("scanning");
+      startPolling();
+    } catch (err) {
+      setStatus("error");
+      setMessage(err?.response?.data?.message || "Could not reach server");
+    }
+  };
+
+  const startPolling = () => {
     stopPolling();
     pollRef.current = setInterval(async () => {
       try {
@@ -42,84 +56,78 @@ const FingerprintModal = ({ onClose, userId, onSuccess }) => {
         if (data.success && data.data?.status === "enrolled") {
           setStatus("success");
           stopPolling();
-          onSuccess?.();
+          if (onSuccess) onSuccess();
         } else if (data.data?.status === "error") {
           setStatus("error");
           setMessage(data.data.message);
           stopPolling();
         }
-      } catch {}
+      } catch (err) {
+        console.error("Polling error:", err);
+      }
     }, 2000);
 
     setTimeout(() => {
       if (pollRef.current) {
         stopPolling();
         setStatus("error");
-        setMessage("Timeout: no finger detected in 60 seconds.");
+        setMessage("Timeout: No finger detected in 60 seconds.");
       }
     }, 60000);
-  }, [onSuccess, stopPolling]);
-
-  const triggerEnroll = useCallback(async () => {
-    setStatus("activating");
-    try {
-      await axios.post("/api/device/setmode", { mode: "enroll", userId });
-      setStatus("scanning");
-      startPolling();
-    } catch (error) {
-      setStatus("error");
-      setMessage(error?.response?.data?.message || "Could not reach server");
-    }
-  }, [startPolling, userId]);
-
-  useEffect(() => {
-    triggerEnroll();
-    return () => {
-      stopPolling();
-      axios.post("/api/device/setmode", { mode: "idle" }).catch(() => {});
-    };
-  }, [stopPolling, triggerEnroll]);
+  };
 
   return (
-    <div className="editorial-overlay">
-      <div className="editorial-modal-card editorial-modal-card-narrow">
-        {status === "activating" ? (
-          <div className="editorial-centered-state">
-            <FiLoader className="editorial-spin" />
-            <h3 className="editorial-card-title">Activating scanner</h3>
-            <p>Preparing the fingerprint device for enrollment.</p>
+    <div className="modal flex-center">
+      <div className="modal-content" style={{ maxWidth: 420, textAlign: "center", padding: "2.5rem" }}>
+        {status === "activating" && (
+          <div className="fp-state-content">
+            <FingerprintIcon color="var(--fp-warning)" size={72} />
+            <h3 className="modal-title">Activating Device</h3>
+            <p>Waking up the fingerprint scanner...</p>
           </div>
-        ) : null}
+        )}
 
-        {status === "scanning" ? (
-          <div className="editorial-centered-state">
-            <FingerprintIcon color="var(--editorial-teal)" size={72} />
-            <h3 className="editorial-card-title">Place the patient&apos;s finger on the scanner</h3>
-            <p>Two scans may be required for a successful enrollment.</p>
-            <button type="button" className="editorial-btn editorial-btn-outline" onClick={onClose}>Cancel</button>
-          </div>
-        ) : null}
-
-        {status === "success" ? (
-          <div className="editorial-centered-state">
-            <FiCheckCircle className="editorial-success-icon" />
-            <h3 className="editorial-card-title">Fingerprint saved</h3>
-            <p>The patient can now be matched on this device during emergency lookup.</p>
-            <button type="button" className="editorial-btn editorial-btn-primary" onClick={onClose}>Done</button>
-          </div>
-        ) : null}
-
-        {status === "error" ? (
-          <div className="editorial-centered-state">
-            <FiXCircle className="editorial-danger-icon" />
-            <h3 className="editorial-card-title">Enrollment failed</h3>
-            <p>{message}</p>
-            <div className="editorial-action-row">
-              <button type="button" className="editorial-btn editorial-btn-primary" onClick={triggerEnroll}>Retry</button>
-              <button type="button" className="editorial-btn editorial-btn-outline" onClick={onClose}>Close</button>
+        {status === "scanning" && (
+          <div className="fp-state-content">
+             <div className="fp-icon-container">
+                <div className="fp-ring fp-ring-1" />
+                <div className="fp-ring fp-ring-2" />
+                <div className="fp-ring fp-ring-3" />
+                <span className="fp-pulse">
+                  <FingerprintIcon color="var(--fp-primary)" size={72} />
+                </span>
+              </div>
+            <h3 className="modal-title">Place Patient&apos;s Finger</h3>
+            <p className="fp-blink">Ask patient to put their finger on the scanner now...</p>
+            <small>They will need to scan <strong>twice</strong> for accuracy.</small>
+            <div style={{ marginTop: "1rem" }}>
+              <button type="button" className="btn btn-secondary-outline btn-sm" onClick={onClose}>Cancel</button>
             </div>
           </div>
-        ) : null}
+        )}
+
+        {status === "success" && (
+          <div className="fp-state-content">
+            <FingerprintIcon color="var(--fp-success)" size={72} />
+            <h3 className="modal-title" style={{ color: "var(--fp-success)" }}>Fingerprint Saved!</h3>
+            <p>Patient&apos;s fingerprint has been enrolled successfully.</p>
+            <div style={{ marginTop: "1rem" }}>
+              <button type="button" className="btn btn-primary btn-full" onClick={onClose}>Done</button>
+            </div>
+          </div>
+        )}
+
+        {status === "error" && (
+          <div className="fp-state-content">
+            <FingerprintIcon color="var(--fp-danger)" size={72} />
+            <h3 className="modal-title" style={{ color: "var(--fp-danger)" }}>Enrollment Failed</h3>
+            <p>{message}</p>
+            <div style={{ display: "flex", gap: "1rem", width: "100%", marginTop: "1rem" }}>
+              <button type="button" className="btn btn-primary" style={{ flex: 1 }} onClick={triggerEnroll}>Retry</button>
+              <button type="button" className="btn btn-secondary-outline" style={{ flex: 1 }} onClick={onClose}>Cancel</button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -128,14 +136,19 @@ const FingerprintModal = ({ onClose, userId, onSuccess }) => {
 const WriteReportPage = () => {
   const router = useRouter();
   const [appt, setAppt] = useState(null);
+
   const [formDetails, setFormDetails] = useState({
     diagnosis: "",
     notes: "",
     followUpDate: "",
     importance: "General",
   });
+
   const [images, setImages] = useState([]);
-  const [medications, setMedications] = useState([{ name: "", dosage: "", frequency: "", duration: "", notes: "" }]);
+
+  const [medications, setMedications] = useState([
+    { name: "", dosage: "", frequency: "", duration: "", notes: "" }
+  ]);
   const [loading, setLoading] = useState(false);
   const [hasFingerprintOnCurrentDevice, setHasFingerprintOnCurrentDevice] = useState(false);
   const [hasAnyFingerprint, setHasAnyFingerprint] = useState(false);
@@ -143,29 +156,28 @@ const WriteReportPage = () => {
 
   useEffect(() => {
     const stored = sessionStorage.getItem("writeReportAppointment");
-    if (!stored) {
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      setAppt(parsed);
+    } else {
       router.push("/appointments");
-      return;
     }
-    setAppt(JSON.parse(stored));
   }, [router]);
 
   useEffect(() => {
-    async function loadFingerprintStatus() {
-      if (!appt?.userId?._id) {
-        return;
-      }
+    const loadFingerprintStatus = async () => {
+      if (!appt?.userId?._id) return;
       try {
         const { data } = await axios.get(`/api/device/patient/${appt.userId._id}/status`);
         if (data.success && data.data) {
           setHasAnyFingerprint(!!data.data.hasAnyFingerprint);
           setHasFingerprintOnCurrentDevice(!!data.data.hasTemplateOnCurrentDevice);
         }
-      } catch {
+      } catch (err) {
         setHasAnyFingerprint(!!appt?.userId?.fingerprintTemplateId);
         setHasFingerprintOnCurrentDevice(!!appt?.userId?.fingerprintTemplateId);
       }
-    }
+    };
 
     loadFingerprintStatus();
   }, [appt]);
@@ -175,39 +187,40 @@ const WriteReportPage = () => {
       const { data } = await axios.get("/api/device/doctor/my-device");
       if (!data.data || !data.data.isActive) {
         toast.error("No scanner registered. Go to Device Setup to register your ESP32.");
-        return;
+      } else {
+        setShowFpModal(true);
       }
-      setShowFpModal(true);
-    } catch {
+    } catch(err) {
       toast.error("Could not verify device status.");
     }
   };
 
-  const handleInputChange = (event) => {
-    const { name, value } = event.target;
-    setFormDetails((prev) => ({ ...prev, [name]: value }));
+  if (!appt) return null;
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormDetails({ ...formDetails, [name]: value });
   };
 
-  const handleMedicationChange = (index, event) => {
-    const { name, value } = event.target;
-    setMedications((prev) => prev.map((medication, medIndex) => (
-      medIndex === index ? { ...medication, [name]: value } : medication
-    )));
+  const handleMedicationChange = (index, e) => {
+    const { name, value } = e.target;
+    const newMedications = [...medications];
+    newMedications[index][name] = value;
+    setMedications(newMedications);
   };
 
   const addMedicationRow = () => {
-    setMedications((prev) => [...prev, { name: "", dosage: "", frequency: "", duration: "", notes: "" }]);
+    setMedications([...medications, { name: "", dosage: "", frequency: "", duration: "", notes: "" }]);
   };
 
   const removeMedicationRow = (index) => {
-    setMedications((prev) => prev.filter((_, medIndex) => medIndex !== index));
+    const newMedications = medications.filter((_, i) => i !== index);
+    setMedications(newMedications);
   };
 
-  const handleImageUpload = async (event) => {
-    const files = Array.from(event.target.files || []);
-    if (!files.length) {
-      return;
-    }
+  const handleImageUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
 
     setLoading(true);
     const toastId = toast.loading("Uploading images...");
@@ -224,11 +237,11 @@ const WriteReportPage = () => {
         data.append("upload_preset", process.env.NEXT_PUBLIC_CLOUDINARY_PRESET);
         data.append("cloud_name", process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME);
 
-        const response = await fetch(process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL, {
+        const res = await fetch(process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL, {
           method: "POST",
           body: data,
         });
-        const uploadData = await response.json();
+        const uploadData = await res.json();
         if (uploadData.secure_url) {
           uploadedUrls.push(uploadData.secure_url.toString());
         } else if (uploadData.url) {
@@ -236,8 +249,8 @@ const WriteReportPage = () => {
         }
       }
       setImages((prev) => [...prev, ...uploadedUrls]);
-      toast.success(`${uploadedUrls.length} image(s) uploaded successfully`, { id: toastId });
-    } catch {
+      toast.success(`${uploadedUrls.length} images uploaded successfully`, { id: toastId });
+    } catch (err) {
       toast.error("Failed to upload images", { id: toastId });
     } finally {
       setLoading(false);
@@ -245,30 +258,31 @@ const WriteReportPage = () => {
   };
 
   const removeImage = (index) => {
-    setImages((prev) => prev.filter((_, imageIndex) => imageIndex !== index));
+    setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const submitReport = async (event) => {
-    event.preventDefault();
-    if (loading || !appt) {
-      return;
-    }
+  const submitReport = async (e) => {
+    e.preventDefault();
+    if (loading) return;
 
     try {
       setLoading(true);
+      
       const payload = {
         appointmentId: appt._id,
         diagnosis: formDetails.diagnosis,
         notes: formDetails.notes,
         followUpDate: formDetails.followUpDate,
         importance: formDetails.importance,
-        images,
-        medications: medications.filter((medication) => medication.name.trim() !== ""),
+        images: images,
+        medications: medications.filter(m => m.name.trim() !== ""), 
       };
 
+
       const { data } = await axios.post("/api/report/create", payload);
+
       if (data.success) {
-        toast.success("Report saved and published successfully");
+        toast.success("Report saved and published successfully!");
         router.push("/appointments");
       }
     } catch (error) {
@@ -278,168 +292,179 @@ const WriteReportPage = () => {
     }
   };
 
-  if (!appt) {
-    return null;
-  }
-
   return (
-    <EditorialShell>
-      <main className="editorial-page">
-        <section className="editorial-page-hero">
-          <div className="editorial-shell">
-            <button className="editorial-btn editorial-btn-outline" onClick={() => router.push("/appointments")}>
-              <FiArrowLeft />
-              <span>Back to appointments</span>
-            </button>
-
-            <div className="editorial-page-head-row">
+    <>
+      <Navbar />
+      <section className="report-page-section">
+        <div className="container">
+          <button className="back-btn" onClick={() => router.push("/appointments")}>
+            <IoMdArrowBack /> Back to Appointments
+          </button>
+          
+          <div className="report-header">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", width: "100%" }}>
               <div>
-                <span className="editorial-eyebrow">Doctor reporting</span>
-                <h1 className="editorial-page-title">Publish a structured medical report for this visit.</h1>
-                <p className="editorial-lede">
+                <h2 className="page-title">Publish Medical Report</h2>
+                <p className="report-subtitle">
                   Patient: <strong>{appt?.userId?.firstname} {appt?.userId?.lastname}</strong> | Age: {appt?.age} | Gender: {appt?.gender}
                 </p>
               </div>
-              {!hasFingerprintOnCurrentDevice ? (
-                <button type="button" className="editorial-btn editorial-btn-primary" onClick={handleEnrollClick}>
-                  <FiFingerprint />
-                  <span>{hasAnyFingerprint ? "Enroll on this device" : "Enroll fingerprint"}</span>
+              {!hasFingerprintOnCurrentDevice && (
+                <button type="button" className="btn btn-secondary-outline" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }} onClick={handleEnrollClick}>
+                  <FingerprintIcon size={18} /> {hasAnyFingerprint ? "Enroll On This Device" : "Enroll Fingerprint"}
                 </button>
-              ) : null}
+              )}
+            </div>
+            {hasAnyFingerprint && !hasFingerprintOnCurrentDevice && (
+              <p className="report-subtitle" style={{ marginTop: "0.5rem" }}>
+                This patient already has a fingerprint on another scanner. Enroll once on this device to enable local emergency matching here.
+              </p>
+            )}
+          </div>
+
+          <form onSubmit={submitReport} className="report-grid-form">
+            
+            {/* Left Column: Summary & Diagnosis */}
+            <div className="report-card summary-card">
+              <h3 className="card-heading">Patient Summary & Diagnosis</h3>
+              
+              <div className="form-group">
+                <label>Primary Diagnosis *</label>
+                <input
+                  type="text"
+                  name="diagnosis"
+                  className="form-input"
+                  placeholder="e.g. Viral Pharyngitis"
+                  value={formDetails.diagnosis}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Doctor Notes / Observations</label>
+                <textarea
+                  name="notes"
+                  className="form-input"
+                  placeholder="Include symptoms, test results, or dietary recommendations..."
+                  rows={8}
+                  value={formDetails.notes}
+                  onChange={handleInputChange}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Report Importance</label>
+                <select 
+                  name="importance" 
+                  className="form-input" 
+                  value={formDetails.importance} 
+                  onChange={handleInputChange}
+                >
+                  <option value="General">General (Normal)</option>
+                  <option value="Important">Important (Critical History)</option>
+                </select>
+                <small style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>Important reports are shown by default to doctors in future visits.</small>
+              </div>
+
+              <div className="form-group">
+                <label>Medical Images / Reports (Optional)</label>
+                <div className="image-upload-wrapper">
+                   <input type="file" multiple accept="image/*" onChange={handleImageUpload} id="report-images" hidden />
+                   <label htmlFor="report-images" className="btn btn-secondary-outline btn-full" style={{ borderStyle: "dashed" }}>
+                      <IoMdAdd /> Add Images
+                   </label>
+                </div>
+                {images.length > 0 && (
+                  <div className="image-preview-grid">
+                    {images.map((img, idx) => (
+                      <div key={idx} className="img-preview-item">
+                        <img src={img} alt={`report-${idx}`} />
+                        <button type="button" className="remove-img-btn" onClick={() => removeImage(idx)}>
+                          <IoMdTrash />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="form-group">
+                <label>Follow-up Date (Optional)</label>
+                <input
+                  type="date"
+                  name="followUpDate"
+                  className="form-input"
+                  value={formDetails.followUpDate}
+                  onChange={handleInputChange}
+                />
+              </div>
             </div>
 
-            {hasAnyFingerprint && !hasFingerprintOnCurrentDevice ? (
-              <p className="editorial-inline-note">
-                This patient already has a fingerprint enrolled elsewhere. Add one on this device to support local emergency matching.
-              </p>
-            ) : null}
-          </div>
-        </section>
-
-        <section className="editorial-section editorial-section-tight">
-          <div className="editorial-shell">
-            <form onSubmit={submitReport} className="editorial-report-grid">
-              <div className="editorial-form-card">
-                <h2 className="editorial-card-title">Clinical summary</h2>
-                <div className="editorial-stack">
-                  <div className="form-field">
-                    <label className="editorial-label">Primary diagnosis</label>
-                    <input type="text" name="diagnosis" className="editorial-input" placeholder="Example: Viral pharyngitis" value={formDetails.diagnosis} onChange={handleInputChange} required />
-                  </div>
-
-                  <div className="form-field">
-                    <label className="editorial-label">Doctor notes and observations</label>
-                    <textarea name="notes" className="editorial-input editorial-textarea" rows={8} placeholder="Include symptoms, clinical findings, tests, or care advice." value={formDetails.notes} onChange={handleInputChange} />
-                  </div>
-
-                  <div className="editorial-form-grid">
-                    <div className="form-field">
-                      <label className="editorial-label">Report importance</label>
-                      <select name="importance" className="editorial-input" value={formDetails.importance} onChange={handleInputChange}>
-                        <option value="General">General</option>
-                        <option value="Important">Important</option>
-                      </select>
-                    </div>
-                    <div className="form-field">
-                      <label className="editorial-label">Follow-up date</label>
-                      <input type="date" name="followUpDate" className="editorial-input" value={formDetails.followUpDate} onChange={handleInputChange} />
-                    </div>
-                  </div>
-
-                  <div className="form-field">
-                    <label className="editorial-label">Medical images and attachments</label>
-                    <label className="editorial-upload-tile" htmlFor="report-images">
-                      <FiUpload />
-                      <span>Upload clinical images or report scans</span>
-                    </label>
-                    <input id="report-images" type="file" multiple accept="image/*" onChange={handleImageUpload} hidden />
-                    {images.length ? (
-                      <div className="editorial-media-grid">
-                        {images.map((image, index) => (
-                          <div key={`${image}-${index}`} className="editorial-media-thumb is-static">
-                            <img src={image} alt={`report-${index}`} />
-                            <button type="button" className="remove-img-btn" onClick={() => removeImage(index)}>
-                              <FiTrash2 />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-
-              <div className="editorial-form-card">
-                <div className="editorial-page-head-row">
-                  <div>
-                    <h2 className="editorial-card-title">Prescription plan</h2>
-                    <p className="editorial-helper-text">Add medications only when they are needed for this consultation.</p>
-                  </div>
-                  <button type="button" className="editorial-btn editorial-btn-outline editorial-btn-sm" onClick={addMedicationRow}>
-                    <FiPlus />
-                    <span>Add medication</span>
-                  </button>
-                </div>
-
-                <div className="editorial-stack">
-                  {medications.map((medication, index) => (
-                    <div key={`${index}-${medication.name}`} className="editorial-medication-card">
-                      <div className="editorial-page-head-row">
-                        <strong>Medication {index + 1}</strong>
-                        {medications.length > 1 ? (
-                          <button type="button" className="editorial-btn editorial-btn-danger editorial-btn-sm" onClick={() => removeMedicationRow(index)}>
-                            <FiTrash2 />
-                            <span>Remove</span>
-                          </button>
-                        ) : null}
-                      </div>
-
-                      <div className="editorial-form-grid">
-                        <div className="form-field editorial-form-grid-span-2">
-                          <label className="editorial-label">Drug name</label>
-                          <input type="text" name="name" className="editorial-input" placeholder="Example: Amoxicillin 500mg" value={medication.name} onChange={(event) => handleMedicationChange(index, event)} />
-                        </div>
-                        <div className="form-field">
-                          <label className="editorial-label">Dosage</label>
-                          <input type="text" name="dosage" className="editorial-input" placeholder="1 tablet" value={medication.dosage} onChange={(event) => handleMedicationChange(index, event)} />
-                        </div>
-                        <div className="form-field">
-                          <label className="editorial-label">Frequency</label>
-                          <input type="text" name="frequency" className="editorial-input" placeholder="Twice daily" value={medication.frequency} onChange={(event) => handleMedicationChange(index, event)} />
-                        </div>
-                        <div className="form-field">
-                          <label className="editorial-label">Duration</label>
-                          <input type="text" name="duration" className="editorial-input" placeholder="7 days" value={medication.duration} onChange={(event) => handleMedicationChange(index, event)} />
-                        </div>
-                        <div className="form-field">
-                          <label className="editorial-label">Notes</label>
-                          <input type="text" name="notes" className="editorial-input" placeholder="After meals, if needed, etc." value={medication.notes} onChange={(event) => handleMedicationChange(index, event)} />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <button type="submit" className="editorial-btn editorial-btn-primary editorial-btn-block" disabled={loading}>
-                  {loading ? "Publishing report..." : "Complete and publish report"}
+            {/* Right Column: Prescription Section */}
+            <div className="report-card prescription-card">
+              <div className="card-heading-row">
+                <h3 className="card-heading">Prescription</h3>
+                <button type="button" className="btn-secondary-outline btn-sm" onClick={addMedicationRow}>
+                  <IoMdAdd /> Add Medication
                 </button>
               </div>
-            </form>
-          </div>
-        </section>
-      </main>
 
-      {showFpModal ? (
-        <FingerprintModal
-          userId={appt?.userId?._id}
-          onClose={() => setShowFpModal(false)}
+              <div className="medications-container">
+                {medications.map((med, index) => (
+                  <div key={med.id || `${index}-${med.name}`} className="medication-box">
+                    <div className="med-box-header">
+                      <span>Medication #{index + 1}</span>
+                      {medications.length > 1 && (
+                        <button type="button" className="remove-med-btn" onClick={() => removeMedicationRow(index)}>
+                          <IoMdTrash /> Remove
+                        </button>
+                      )}
+                    </div>
+                    <div className="med-box-grid">
+                      <div className="form-group full-width">
+                        <label>Drug Name</label>
+                        <input type="text" name="name" className="form-input" placeholder="e.g. Amoxicillin 500mg" value={med.name} onChange={(e) => handleMedicationChange(index, e)} />
+                      </div>
+                      <div className="form-group">
+                        <label>Dosage</label>
+                        <input type="text" name="dosage" className="form-input" placeholder="e.g. 1 Tablet" value={med.dosage} onChange={(e) => handleMedicationChange(index, e)} />
+                      </div>
+                      <div className="form-group">
+                        <label>Frequency</label>
+                        <input type="text" name="frequency" className="form-input" placeholder="e.g. Twice a day" value={med.frequency} onChange={(e) => handleMedicationChange(index, e)} />
+                      </div>
+                      <div className="form-group full-width">
+                        <label>Duration</label>
+                        <input type="text" name="duration" className="form-input" placeholder="e.g. 7 Days" value={med.duration} onChange={(e) => handleMedicationChange(index, e)} />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="submit-section">
+                <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
+                  {loading ? "Publishing Report..." : "Complete & Publish Report"}
+                </button>
+              </div>
+            </div>
+
+          </form>
+        </div>
+      </section>
+      <Footer />
+      {showFpModal && (
+        <FingerprintModal 
+          userId={appt?.userId?._id} 
+          onClose={() => setShowFpModal(false)} 
           onSuccess={() => {
             setHasAnyFingerprint(true);
             setHasFingerprintOnCurrentDevice(true);
-          }}
+          }} 
         />
-      ) : null}
-    </EditorialShell>
+      )}
+    </>
   );
 };
 
@@ -449,11 +474,11 @@ export default DoctorWriteReportPage;
 
 FingerprintIcon.propTypes = {
   color: PropTypes.any,
-  size: PropTypes.any,
+  size: PropTypes.any
 };
 
 FingerprintModal.propTypes = {
   onClose: PropTypes.any,
   userId: PropTypes.any,
-  onSuccess: PropTypes.any,
+  onSuccess: PropTypes.any
 };

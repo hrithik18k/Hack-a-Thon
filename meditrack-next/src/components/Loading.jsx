@@ -2,11 +2,19 @@
 
 import React from "react";
 
-function Loading({ label = "Preparing your care workspace..." }) {
+function Loading() {
   return (
-    <div className="editorial-loading">
+    <div className="loading">
       <div className="loader">Loading</div>
-      <span className="editorial-loading-label">{label}</span>
+      <span style={{ 
+        fontSize: "0.8rem", 
+        color: "var(--text-muted)", 
+        fontFamily: "var(--font-body)",
+        letterSpacing: "0.5px",
+        textTransform: "uppercase"
+      }}>
+        Loading...
+      </span>
     </div>
   );
 }

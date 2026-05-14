@@ -2,168 +2,195 @@
 
 import { Protected } from "../../middleware/route";
 import React, { useEffect, useState } from "react";
-import { FiChevronDown, FiChevronRight, FiImage, FiRefreshCw, FiX } from "react-icons/fi";
-import EditorialShell from "../../components/editorial/EditorialShell";
-import Empty from "../../components/Empty";
-import Loading from "../../components/Loading";
+
+import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
 import fetchData from "../../helper/apiCall";
 import toast from "react-hot-toast";
-
-const filters = ["Important", "General", "All"];
-
-const secureUrl = (url) => {
-  if (url && url.startsWith("http://res.cloudinary.com")) {
-    return url.replace("http://", "https://");
-  }
-  return url;
-};
+import Loading from "../../components/Loading";
+import Empty from "../../components/Empty";
+import { IoMdClose, IoMdArrowDropdown, IoMdArrowDropright } from "react-icons/io";
 
 const MedicalHistory = () => {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState(null);
   const [lightboxImg, setLightboxImg] = useState(null);
-  const [filter, setFilter] = useState("All");
+
+  const fetchReports = async () => {
+    try {
+      setLoading(true);
+      const data = await fetchData("/api/report/mine");
+      if (data) {
+        setReports(data || []);
+      }
+    } catch (error) {
+      toast.error("Failed to load your medical history");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function fetchReports() {
-      try {
-        setLoading(true);
-        const data = await fetchData("/api/report/mine");
-        setReports(data || []);
-      } catch {
-        toast.error("Failed to load your medical history");
-      } finally {
-        setLoading(false);
-      }
-    }
-
     fetchReports();
   }, []);
 
-  const filteredReports = reports.filter((report) => {
-    const importance = (report.importance || "General").toLowerCase();
-    const activeFilter = filter.toLowerCase();
-    return activeFilter === "all" ? true : importance === activeFilter;
+  const [filter, setFilter] = useState("All");
+
+  const filteredReports = reports.filter(r => {
+    const imp = (r.importance || "General").toLowerCase();
+    const f = filter.toLowerCase();
+    if (f === "all") return true;
+    return imp === f;
   });
 
-  return (
-    <EditorialShell>
-      <main className="editorial-page">
-        <section className="editorial-page-hero">
-          <div className="editorial-shell">
-            <span className="editorial-eyebrow">Patient records</span>
-            <h1 className="editorial-page-title">Your medical history is now easier to scan and revisit.</h1>
-            <p className="editorial-lede">
-              Reports, follow-ups, attachments, and prescribed medications stay grouped into one readable timeline.
-            </p>
+  const toggleExpand = (id) => {
+    setExpandedId(prev => prev === id ? null : id);
+  };
 
-            <div className="editorial-chip-row">
-              {filters.map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  className={`editorial-filter-chip ${filter === value ? "is-active" : ""}`}
-                  onClick={() => setFilter(value)}
-                >
-                  {value === "Important" ? "Critical history" : value === "General" ? "Routine visits" : "All records"}
-                </button>
-              ))}
+  // Fix http -> https for cloudinary images
+  const secureUrl = (url) => {
+    if (url && url.startsWith("http://res.cloudinary.com")) {
+      return url.replace("http://", "https://");
+    }
+    return url;
+  };
+
+  return (
+    <>
+      <Navbar />
+      <section className="appts-section">
+        <div className="container">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <h2 className="page-title" style={{ marginBottom: 0 }}>My Medical History</h2>
+            <div className="filter-tabs" style={{ margin: 0, scale: '0.9' }}>
+               {["Important", "General", "All"].map(f => {
+                 const getFilterLabel = (filterType) => {
+                   if (filterType === "Important") return "Critical";
+                   if (filterType === "General") return "Routine";
+                   return "All";
+                 };
+                 return (
+                   <button key={f} className={`filter-tab ${filter === f ? "active" : ""}`} onClick={() => setFilter(f)}>
+                      {getFilterLabel(f)}
+                   </button>
+                 );
+               })}
             </div>
           </div>
-        </section>
+          
+          {loading ? (
+            <Loading />
+          ) : filteredReports.length > 0 ? (
+            <div className="history-timeline">
+              {filteredReports.map((report) => {
+                const isExpanded = expandedId === report._id;
+                return (
+                  <div key={report._id} className="history-strip-wrapper">
+                    {/* Collapsed Strip */}
+                    <div
+                      className={`history-strip ${isExpanded ? "expanded" : ""}`}
+                      style={{ borderLeftColor: (report.importance === "Important") ? 'var(--accent-warning)' : 'var(--accent-success)' }}
+                      onClick={() => toggleExpand(report._id)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(report._id); } }}
+                    >
+                      <span className="strip-toggle-icon">
+                        {isExpanded ? <IoMdArrowDropdown /> : <IoMdArrowDropright />}
+                      </span>
+                      <span className="strip-date">
+                        {new Date(report.appointmentDate).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' })}
+                      </span>
+                      <span className="strip-doctor">{report.doctorName}</span>
+                      <span className="strip-diagnosis">{report.diagnosis}</span>
+                      <span className={`badge ${(report.importance === "Important") ? "badge-warning" : "badge-success"}`} style={{ fontSize: '0.7rem', marginLeft: 'auto', flexShrink: 0 }}>
+                        {(report.importance || "General").toUpperCase()}
+                      </span>
+                    </div>
 
-        <section className="editorial-section editorial-section-tight">
-          <div className="editorial-shell editorial-narrow-shell">
-            {loading ? (
-              <Loading label="Loading your medical history..." />
-            ) : filteredReports.length ? (
-              <div className="editorial-history-list">
-                {filteredReports.map((report) => {
-                  const expanded = expandedId === report._id;
-
-                  return (
-                    <article key={report._id} className="editorial-history-item">
-                      <button type="button" className="editorial-history-summary" onClick={() => setExpandedId(expanded ? null : report._id)}>
-                        <span className="editorial-history-toggle">{expanded ? <FiChevronDown /> : <FiChevronRight />}</span>
-                        <span>{new Date(report.appointmentDate).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</span>
-                        <strong>{report.doctorName}</strong>
-                        <span>{report.diagnosis}</span>
-                        <span className={`badge ${report.importance === "Important" ? "badge-warning" : "badge-success"}`}>
-                          {report.importance || "General"}
-                        </span>
-                      </button>
-
-                      {expanded ? (
-                        <div className="editorial-history-details">
-                          <p><strong>Hospital:</strong> {report.hospitalName}</p>
-                          <p><strong>Diagnosis:</strong> {report.diagnosis}</p>
-                          {report.notes ? <p><strong>Notes:</strong> {report.notes}</p> : null}
-
-                          {report.medications?.length ? (
-                            <div>
-                              <strong>Medications</strong>
-                              <ul className="editorial-detail-list">
-                                {report.medications.map((medication, index) => (
-                                  <li key={medication._id || `${index}-${medication.name}`}>
-                                    {medication.name} - {medication.dosage}, {medication.frequency} for {medication.duration}
-                                    {medication.notes ? ` (${medication.notes})` : ""}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          ) : null}
-
-                          {report.images?.length ? (
-                            <div>
-                              <strong>Attachments</strong>
-                              <div className="editorial-media-grid">
-                                {report.images.map((image, index) => (
-                                  <button key={image._id || `${index}-${image}`} type="button" className="editorial-media-thumb" onClick={() => setLightboxImg(secureUrl(image))}>
-                                    <img src={secureUrl(image)} alt="Medical record" />
-                                    <span><FiImage /> Open image</span>
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          ) : null}
-
-                          {report.followUpDate ? <p><strong>Follow-up:</strong> {new Date(report.followUpDate).toLocaleDateString()}</p> : null}
+                    {/* Expanded Details */}
+                    {isExpanded && (
+                      <div className="history-details" style={{ borderLeftColor: (report.importance === "Important") ? 'var(--accent-warning)' : 'var(--accent-success)' }}>
+                        <div className="history-detail-row">
+                          <strong>Hospital:</strong> {report.hospitalName}
                         </div>
-                      ) : null}
-                    </article>
-                  );
-                })}
-              </div>
-            ) : (
-              <Empty
-                title="No records match this filter"
-                message="When consultations are completed, your reports will appear here."
-                action={filter !== "All" ? (
-                  <button type="button" className="editorial-btn editorial-btn-outline" onClick={() => setFilter("All")}>
-                    <FiRefreshCw />
-                    <span>Show all records</span>
-                  </button>
-                ) : null}
-              />
-            )}
-          </div>
-        </section>
-      </main>
+                        <div className="history-detail-row">
+                          <strong>Diagnosis:</strong> {report.diagnosis}
+                        </div>
+                        {report.notes && (
+                          <div className="history-detail-row">
+                            <strong>Notes:</strong> {report.notes}
+                          </div>
+                        )}
+                        
+                        {report.medications?.length > 0 && (
+                          <div className="history-detail-row">
+                            <strong>Prescribed Medications:</strong>
+                            <ul className="meds-list-inline">
+                              {report.medications.map((med, i) => (
+                                <li key={med._id || `${i}-${med.name}`}>
+                                  <span className="med-name">{med.name}</span> — {med.dosage}, {med.frequency} for {med.duration}
+                                  {med.notes && <em> ({med.notes})</em>}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
 
-      {lightboxImg ? (
-        <div className="lightbox-overlay" onClick={() => setLightboxImg(null)} role="button" tabIndex={0} onKeyDown={(event) => {
-          if (event.key === "Escape" || event.key === "Enter" || event.key === " ") {
-            setLightboxImg(null);
-          }
-        }}>
-          <button className="lightbox-close" onClick={() => setLightboxImg(null)}>
-            <FiX />
-          </button>
-          <img src={lightboxImg} alt="Enlarged medical record" className="lightbox-image" onClick={(event) => event.stopPropagation()} />
+                        {report.images?.length > 0 && (
+                          <div className="history-detail-row">
+                            <strong>Attached Images:</strong>
+                            <div className="images-grid" style={{ marginTop: '0.5rem' }}>
+                              {report.images.map((img, i) => (
+                                <div
+                                  key={img._id || `${i}-${img}`}
+                                  className="report-img-thumb"
+                                  onClick={(e) => { e.stopPropagation(); setLightboxImg(secureUrl(img)); }}
+                                  style={{ cursor: 'pointer' }}
+                                  role="button"
+                                  tabIndex={0}
+                                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); setLightboxImg(secureUrl(img)); } }}
+                                >
+                                  <img src={secureUrl(img)} alt="Medical record" />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {report.followUpDate && (
+                          <div className="history-detail-row follow-up">
+                            <strong>Follow-up Date:</strong> {new Date(report.followUpDate).toLocaleDateString()}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="empty-history" style={{ textAlign: 'center', padding: '4rem 1rem' }}>
+                <Empty />
+                {filter !== "All" && <button className="btn btn-secondary-outline btn-sm" onClick={() => setFilter("All")}>Clear Filters</button>}
+            </div>
+          )}
         </div>
-      ) : null}
-    </EditorialShell>
+      </section>
+
+      {/* Lightbox Modal for Enlarged Image */}
+      {lightboxImg && (
+        <div className="lightbox-overlay" onClick={() => setLightboxImg(null)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') setLightboxImg(null); }}>
+          <button className="lightbox-close" onClick={() => setLightboxImg(null)}>
+            <IoMdClose />
+          </button>
+          <img src={lightboxImg} alt="Enlarged medical record" className="lightbox-image" onClick={(e) => e.stopPropagation()} />
+        </div>
+      )}
+
+      <Footer />
+    </>
   );
 };
 

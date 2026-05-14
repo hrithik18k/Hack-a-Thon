@@ -1,27 +1,14 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { getApiBaseUrl } from "@/lib/apiBaseUrl";
+import toast from "react-hot-toast";
+import Loading from "./Loading";
 import fetchData from "../helper/apiCall";
 import Empty from "./Empty";
-import Loading from "./Loading";
-import toast from "react-hot-toast";
 
 axios.defaults.baseURL = getApiBaseUrl();
-
-const statusBadge = (status) => {
-  switch (status) {
-    case "Approved":
-      return "badge-success";
-    case "Pending":
-      return "badge-warning";
-    case "Rejected":
-      return "badge-danger";
-    default:
-      return "";
-  }
-};
 
 const AdminDoctors = () => {
   const [doctors, setDoctors] = useState([]);
@@ -30,15 +17,46 @@ const AdminDoctors = () => {
   const getAllDoctors = async () => {
     try {
       setLoading(true);
-      const [pendingRes, approvedRes] = await Promise.all([
-        fetchData("/api/doctor/getnotdoctors"),
-        fetchData("/api/doctor/getalldoctors"),
-      ]);
-      setDoctors([...(pendingRes || []), ...(approvedRes || [])]);
-    } catch {
+      const pendingRes = await fetchData(`/api/doctor/getnotdoctors`);
+      const approvedRes = await fetchData(`/api/doctor/getalldoctors`);
+      const allDocs = [...(pendingRes || []), ...(approvedRes || [])];
+      setDoctors(allDocs);
+    } catch (error) {
       toast.error("Unable to load doctors");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAction = async (userId, action) => {
+    try {
+      const endpoint = action === "Approve" ? "/api/doctor/acceptdoctor" : "/api/doctor/rejectdoctor";
+      const confirmStr = `Are you sure you want to ${action.toLowerCase()} this doctor?`;
+      
+      if (window.confirm(confirmStr)) {
+        const { data } = await axios.put(endpoint, { userId });
+        
+        if (data.success) {
+          toast.success(data.message || `Doctor ${action.toLowerCase()}ed`);
+          getAllDoctors();
+        }
+      }
+    } catch (error) {
+      toast.error(`Unable to ${action.toLowerCase()} doctor`);
+    }
+  };
+
+  const deleteDoctor = async (userId) => {
+    try {
+      if (window.confirm("Are you sure you want to delete this doctor?")) {
+        const { data } = await axios.put("/api/doctor/deletedoctor", { userId });
+        if (data.success) {
+          toast.success(data.message || "Doctor removed");
+          getAllDoctors();
+        }
+      }
+    } catch (error) {
+      toast.error("Unable to delete doctor");
     }
   };
 
@@ -46,105 +64,84 @@ const AdminDoctors = () => {
     getAllDoctors();
   }, []);
 
-  const handleAction = async (userId, action) => {
-    try {
-      const endpoint = action === "Approve" ? "/api/doctor/acceptdoctor" : "/api/doctor/rejectdoctor";
-      if (!window.confirm(`Confirm ${action.toLowerCase()} for this doctor?`)) {
-        return;
-      }
-
-      const { data } = await axios.put(endpoint, { userId });
-      if (data.success) {
-        toast.success(data.message || `Doctor ${action.toLowerCase()}d`);
-        getAllDoctors();
-      }
-    } catch {
-      toast.error(`Unable to ${action.toLowerCase()} doctor`);
+  const getStatusBadge = (status) => {
+    switch(status) {
+      case "Approved": return "badge-success";
+      case "Pending": return "badge-warning";
+      case "Rejected": return "badge-danger";
+      default: return "";
     }
   };
-
-  const deleteDoctor = async (userId) => {
-    try {
-      if (!window.confirm("Delete this doctor profile?")) {
-        return;
-      }
-
-      const { data } = await axios.put("/api/doctor/deletedoctor", { userId });
-      if (data.success) {
-        toast.success(data.message || "Doctor removed");
-        getAllDoctors();
-      }
-    } catch {
-      toast.error("Unable to delete doctor");
-    }
-  };
-
-  if (loading) {
-    return <Loading label="Loading doctor applications..." />;
-  }
-
-  if (!doctors.length) {
-    return <Empty title="No doctors to review" message="New doctor applications and approved profiles will appear here." />;
-  }
 
   return (
-    <section className="editorial-dashboard-stack">
-      <div className="editorial-table-card">
-        <div className="editorial-table-head">
-          <div>
-            <h2 className="editorial-card-title">Doctor review queue</h2>
-            <p>Application status, credentials, and review actions are grouped in one cleaner table.</p>
-          </div>
-        </div>
+    <>
+      <div className="admin-header">
+        <h2 className="admin-title">Manage Doctors</h2>
+      </div>
 
-        <div className="editorial-table-wrap">
-          <table className="editorial-data-table">
+      {loading ? (
+        <Loading />
+      ) : doctors.length > 0 ? (
+        <div className="admin-table-wrapper">
+          <table className="appointments-table">
             <thead>
               <tr>
-                <th>Doctor</th>
-                <th>Specialty</th>
+                <th>S.No</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Specialization</th>
                 <th>Hospital</th>
                 <th>City</th>
                 <th>Status</th>
                 <th>Certificate</th>
-                <th>Actions</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
-              {doctors.map((doctor) => (
-                <tr key={doctor._id}>
+              {doctors.map((doc, i) => (
+                <tr key={doc._id}>
+                  <td>{i + 1}</td>
+                  <td>Dr. {doc.userId?.firstname} {doc.userId?.lastname}</td>
+                  <td>{doc.userId?.email}</td>
+                  <td>{doc.specialization}</td>
+                  <td>{doc.hospitalName}</td>
+                  <td>{doc.city}</td>
                   <td>
-                    <strong>Dr. {doctor.userId?.firstname} {doctor.userId?.lastname}</strong>
-                    <small>{doctor.userId?.email}</small>
+                    <span className={`badge ${getStatusBadge(doc.status)}`}>
+                      {doc.status || "Pending"}
+                    </span>
                   </td>
-                  <td>{doctor.specialization || "Not provided"}</td>
-                  <td>{doctor.hospitalName || "Not provided"}</td>
-                  <td>{doctor.city || "Not provided"}</td>
                   <td>
-                    <span className={`badge ${statusBadge(doctor.status)}`}>{doctor.status || "Pending"}</span>
-                  </td>
-                  <td>
-                    {doctor.certificate ? (
-                      <a href={doctor.certificate} target="_blank" rel="noopener noreferrer" className="editorial-btn editorial-btn-outline editorial-btn-sm">
-                        Open file
+                    {doc.certificate ? (
+                      <a href={doc.certificate} target="_blank" rel="noopener noreferrer" className="btn btn-secondary-outline btn-sm">
+                        View Doc
                       </a>
                     ) : (
-                      <span className="editorial-table-muted">Unavailable</span>
+                      <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>No Doc</span>
                     )}
                   </td>
                   <td>
-                    <div className="editorial-action-row">
-                      {doctor.status === "Pending" ? (
+                    <div className="action-buttons">
+                      {doc.status === "Pending" && (
                         <>
-                          <button className="editorial-btn editorial-btn-primary editorial-btn-sm" onClick={() => handleAction(doctor.userId?._id, "Approve")}>
+                          <button 
+                            className="btn btn-primary-outline btn-sm"
+                            onClick={() => handleAction(doc.userId?._id, "Approve")}
+                          >
                             Approve
                           </button>
-                          <button className="editorial-btn editorial-btn-outline editorial-btn-sm" onClick={() => handleAction(doctor.userId?._id, "Reject")}>
+                          <button 
+                            className="btn btn-danger-outline btn-sm"
+                            onClick={() => handleAction(doc.userId?._id, "Reject")}
+                          >
                             Reject
                           </button>
                         </>
-                      ) : null}
-                      <button className="editorial-btn editorial-btn-danger editorial-btn-sm" onClick={() => deleteDoctor(doctor.userId?._id)}>
+                      )}
+                      <button 
+                        className="btn btn-danger-outline btn-sm"
+                        onClick={() => deleteDoctor(doc.userId?._id)}
+                      >
                         Delete
                       </button>
                     </div>
@@ -154,8 +151,10 @@ const AdminDoctors = () => {
             </tbody>
           </table>
         </div>
-      </div>
-    </section>
+      ) : (
+        <Empty />
+      )}
+    </>
   );
 };
 

@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { getApiBaseUrl } from "@/lib/apiBaseUrl";
+import toast from "react-hot-toast";
+import Loading from "./Loading";
 import fetchData from "../helper/apiCall";
 import Empty from "./Empty";
-import Loading from "./Loading";
-import toast from "react-hot-toast";
 
 axios.defaults.baseURL = getApiBaseUrl();
 
@@ -17,12 +17,31 @@ const Users = () => {
   const getAllUsers = async () => {
     try {
       setLoading(true);
-      const data = await fetchData("/api/user/getallusers");
-      setUsers((data || []).filter((user) => user.role === "Patient"));
-    } catch {
-      toast.error("Unable to load patients");
+      const temp = await fetchData(`/api/user/getallusers`);
+      // Filter out only patients
+      const patients = temp.filter(u => u.role === "Patient");
+      setUsers(patients);
+    } catch (error) {
+      toast.error("Unable to load users");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const deleteUser = async (userId) => {
+    try {
+      const confirm = window.confirm("Are you sure you want to delete this user?");
+      if (confirm) {
+        const { data } = await axios.delete("/api/user/deleteuser", {
+          data: { userId }, // axios delete payload
+        });
+        if (data.success) {
+          toast.success(data.message || "User deleted");
+          getAllUsers();
+        }
+      }
+    } catch (error) {
+      toast.error("Unable to delete user");
     }
   };
 
@@ -30,48 +49,21 @@ const Users = () => {
     getAllUsers();
   }, []);
 
-  const deleteUser = async (userId) => {
-    try {
-      if (!window.confirm("Delete this patient record?")) {
-        return;
-      }
-
-      const { data } = await axios.delete("/api/user/deleteuser", {
-        data: { userId },
-      });
-
-      if (data.success) {
-        toast.success(data.message || "Patient deleted");
-        getAllUsers();
-      }
-    } catch {
-      toast.error("Unable to delete patient");
-    }
-  };
-
-  if (loading) {
-    return <Loading label="Loading patient directory..." />;
-  }
-
-  if (!users.length) {
-    return <Empty title="No patients registered" message="Patient accounts will appear here after sign-up." />;
-  }
-
   return (
-    <section className="editorial-dashboard-stack">
-      <div className="editorial-table-card">
-        <div className="editorial-table-head">
-          <div>
-            <h2 className="editorial-card-title">Patient directory</h2>
-            <p>Patient records are easier to review, with less visual noise and clearer actions.</p>
-          </div>
-        </div>
+    <>
+      <div className="admin-header">
+        <h2 className="admin-title">Manage Patients</h2>
+      </div>
 
-        <div className="editorial-table-wrap">
-          <table className="editorial-data-table">
+      {loading ? (
+        <Loading />
+      ) : users.length > 0 ? (
+        <div className="admin-table-wrapper">
+          <table className="appointments-table">
             <thead>
               <tr>
-                <th>Patient</th>
+                <th>S.No</th>
+                <th>Name</th>
                 <th>Email</th>
                 <th>Phone</th>
                 <th>Gender</th>
@@ -80,17 +72,19 @@ const Users = () => {
               </tr>
             </thead>
             <tbody>
-              {users.map((user) => (
+              {users.map((user, i) => (
                 <tr key={user._id}>
-                  <td>
-                    <strong>{user.firstname} {user.lastname}</strong>
-                  </td>
+                  <td>{i + 1}</td>
+                  <td>{user.firstname} {user.lastname}</td>
                   <td>{user.email}</td>
-                  <td>{user.phone || "Not provided"}</td>
-                  <td>{user.gender || "Not provided"}</td>
-                  <td>{user.city || "Not provided"}</td>
+                  <td>{user.phone}</td>
+                  <td>{user.gender || "N/A"}</td>
+                  <td>{user.city}</td>
                   <td>
-                    <button className="editorial-btn editorial-btn-danger editorial-btn-sm" onClick={() => deleteUser(user._id)}>
+                    <button 
+                      className="btn btn-danger-outline btn-sm"
+                      onClick={() => deleteUser(user._id)}
+                    >
                       Delete
                     </button>
                   </td>
@@ -99,8 +93,10 @@ const Users = () => {
             </tbody>
           </table>
         </div>
-      </div>
-    </section>
+      ) : (
+        <Empty />
+      )}
+    </>
   );
 };
 

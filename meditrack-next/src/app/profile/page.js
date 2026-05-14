@@ -2,14 +2,14 @@
 
 import { Protected } from "../../middleware/route";
 import React, { useEffect, useState } from "react";
+import Footer from "../../components/Footer";
+import Navbar from "../../components/Navbar";
 import axios from "axios";
-import EditorialShell from "../../components/editorial/EditorialShell";
+import { getApiBaseUrl } from "@/lib/apiBaseUrl";
+import toast from "react-hot-toast";
 import Loading from "../../components/Loading";
 import fetchData from "../../helper/apiCall";
-import { getApiBaseUrl } from "@/lib/apiBaseUrl";
 import { useAuthSession } from "@/lib/useAuthSession";
-import toast from "react-hot-toast";
-import { FiCamera } from "react-icons/fi";
 
 axios.defaults.baseURL = getApiBaseUrl();
 axios.defaults.withCredentials = true;
@@ -18,73 +18,66 @@ function Profile() {
   const { ready, user } = useAuthSession();
   const userId = user?._id;
 
-  const [loading, setLoading] = useState(true);
-  const [file, setFile] = useState("");
-  const [picLoading, setPicLoading] = useState(false);
+  const [loading, setLoading]               = useState(true);
+  const [file, setFile]                     = useState("");
+  const [picLoading, setPicLoading]         = useState(false);
+
   const [formDetails, setFormDetails] = useState({
-    firstname: "",
-    lastname: "",
-    email: "",
-    phone: "",
-    city: "",
-    gender: "male",
-    dateOfBirth: "",
-    bloodGroup: "",
+    firstname: "", lastname: "", email: "", phone: "", city: "", gender: "male", dateOfBirth: "", bloodGroup: "",
     emergencyContact: { name: "", relation: "", phone1: "", phone2: "" },
   });
 
-  useEffect(() => {
-    async function getUser() {
-      try {
-        setLoading(true);
-        const data = await fetchData(`/api/user/getuser/${userId}`);
+  const getUser = async () => {
+    try {
+      setLoading(true);
+      const temp = await fetchData(`/api/user/getuser/${userId}`);
+      if (temp) {
         setFormDetails({
-          firstname: data.firstname || "",
-          lastname: data.lastname || "",
-          email: data.email || "",
-          phone: data.phone || "",
-          city: data.city || "",
-          gender: data.gender || "male",
-          bloodGroup: data.bloodGroup || "",
-          dateOfBirth: data.dateOfBirth ? data.dateOfBirth.split("T")[0] : "",
-          emergencyContact: data.emergencyContact || { name: "", relation: "", phone1: "", phone2: "" },
+          firstname: temp.firstname || "",
+          lastname: temp.lastname || "",
+          email: temp.email || "",
+          phone: temp.phone || "",
+          city: temp.city || "",
+          gender: temp.gender || "male",
+          bloodGroup: temp.bloodGroup || "",
+          dateOfBirth: temp.dateOfBirth ? temp.dateOfBirth.split("T")[0] : "",
+          emergencyContact: temp.emergencyContact || { name: "", relation: "", phone1: "", phone2: "" },
         });
-        setFile(data.pic || "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg");
-      } finally {
-        setLoading(false);
+        setFile(temp.pic || "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg");
       }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    if (ready && userId) {
-      getUser();
-    }
+  useEffect(() => {
+    if (ready && userId) getUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, userId]);
 
-  const inputChange = (event) => {
-    const { name, value } = event.target;
+  const inputChange = (e) => {
+    const { name, value } = e.target;
     if (name.startsWith("em_")) {
       const field = name.split("_")[1];
-      const formattedValue = field === "phone1" || field === "phone2" ? value.replace(/\D/g, "").slice(0, 10) : value;
-      setFormDetails((prev) => ({
-        ...prev,
-        emergencyContact: { ...prev.emergencyContact, [field]: formattedValue },
-      }));
-      return;
+      let formattedValue = value;
+      if (field === "phone1" || field === "phone2") {
+        formattedValue = value.replace(/\D/g, "").slice(0, 10);
+      }
+      setFormDetails({
+        ...formDetails,
+        emergencyContact: { ...formDetails.emergencyContact, [field]: formattedValue }
+      });
+    } else if (name === "phone") {
+      const numericValue = value.replace(/\D/g, "").slice(0, 10);
+      setFormDetails({ ...formDetails, [name]: numericValue });
+    } else {
+      setFormDetails({ ...formDetails, [name]: value });
     }
-
-    if (name === "phone") {
-      setFormDetails((prev) => ({ ...prev, phone: value.replace(/\D/g, "").slice(0, 10) }));
-      return;
-    }
-
-    setFormDetails((prev) => ({ ...prev, [name]: value }));
   };
 
   const onUpload = async (element) => {
-    if (!element) {
-      return;
-    }
-
     setPicLoading(true);
     if (element.type === "image/jpeg" || element.type === "image/png" || element.type === "image/jpg") {
       const data = new FormData();
@@ -93,156 +86,160 @@ function Profile() {
       data.append("cloud_name", process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME);
 
       try {
-        const response = await fetch(process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL, {
+        const res = await fetch(process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL, {
           method: "POST",
           body: data,
         });
-        const uploadData = await response.json();
+        const uploadData = await res.json();
         setFile(uploadData.url.toString());
-        toast.success("Photo uploaded. Save your profile to keep the change.");
-      } catch {
+        toast.success("Image uploaded! Don't forget to 'Update Profile'");
+      } catch (err) {
         toast.error("Failed to upload image");
       } finally {
         setPicLoading(false);
       }
     } else {
       setPicLoading(false);
-      toast.error("Please select a JPEG or PNG image");
+      toast.error("Please select an image (jpeg/png/jpg)");
     }
   };
 
-  const formSubmit = async (event) => {
-    event.preventDefault();
+  const formSubmit = async (e) => {
+    e.preventDefault();
     try {
-      if (!formDetails.email) {
-        toast.error("Email should not be empty");
-        return;
-      }
-
+      if (!formDetails.email) return toast.error("Email should not be empty");
       const { data } = await axios.put("/api/user/updateprofile", { ...formDetails, pic: file });
-      if (data.success) {
-        toast.success("Profile updated successfully");
-      }
-    } catch {
+      if (data.success) toast.success("Profile updated successfully");
+    } catch (error) {
       toast.error("Unable to update profile");
     }
   };
 
   return (
-    <EditorialShell>
-      <main className="editorial-page">
-        <section className="editorial-page-hero">
-          <div className="editorial-shell editorial-narrow-shell">
-            <span className="editorial-eyebrow">Account profile</span>
-            <h1 className="editorial-page-title">Personal details and emergency contacts in one refined form.</h1>
-            <p className="editorial-lede">
-              Update your identity, care basics, and emergency details without leaving the same healthcare layout.
-            </p>
-          </div>
-        </section>
+    <>
+      <Navbar />
+      {!ready || loading ? <Loading /> : (
+        <section className="auth-section">
+          <div className="auth-container" style={{ maxWidth: "600px" }}>
+            <div className="auth-header">
+              <h2 className="auth-title">My Profile</h2>
+              <p className="auth-subtitle">Update your personal information</p>
+            </div>
 
-        <section className="editorial-section editorial-section-tight">
-          <div className="editorial-shell editorial-narrow-shell">
-            {!ready || loading ? (
-              <Loading label="Loading your profile..." />
-            ) : (
-              <div className="editorial-form-card">
-                <div className="editorial-profile-avatar-row">
-                  <label htmlFor="profile-upload" className="editorial-avatar-upload">
-                    <img src={file} alt="Profile" className="profile-pic" style={{ opacity: picLoading ? 0.55 : 1 }} />
-                    <span><FiCamera /> {picLoading ? "Uploading..." : "Change photo"}</span>
-                  </label>
-                  <input
-                    id="profile-upload"
-                    type="file"
-                    style={{ display: "none" }}
-                    onChange={(event) => onUpload(event.target.files[0])}
-                    accept="image/jpeg, image/png, image/jpg"
-                  />
+            <div className="flex-center" style={{ marginBottom: "2rem", position: "relative" }}>
+              <label htmlFor="profile-upload" style={{ cursor: "pointer", position: "relative" }}>
+                <img src={file} alt="profile" className="profile-pic" style={{ opacity: picLoading ? 0.5 : 1 }} />
+                {picLoading && (
+                  <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", fontSize: "0.8rem", fontWeight: "bold" }}>
+                    Uploading...
+                  </span>
+                )}
+                <div style={{ textAlign: "center", marginTop: "0.5rem", fontSize: "0.8rem", color: "var(--accent-primary)", fontWeight: "500" }}>Change Picture</div>
+              </label>
+              <input 
+                id="profile-upload" 
+                type="file" 
+                style={{ display: "none" }} 
+                onChange={(e) => onUpload(e.target.files[0])} 
+                accept="image/jpeg, image/png, image/jpg"
+              />
+            </div>
+
+            <form onSubmit={formSubmit} className="auth-form">
+              <div className="form-group-row">
+                <div className="form-group">
+                  <label>First Name</label>
+                  <input type="text" name="firstname" className="form-input" value={formDetails.firstname} onChange={inputChange} required />
                 </div>
-
-                <form onSubmit={formSubmit} className="editorial-stack">
-                  <div className="editorial-form-grid">
-                    <div className="form-field">
-                      <label className="editorial-label">First name</label>
-                      <input type="text" name="firstname" className="editorial-input" value={formDetails.firstname} onChange={inputChange} required />
-                    </div>
-                    <div className="form-field">
-                      <label className="editorial-label">Last name</label>
-                      <input type="text" name="lastname" className="editorial-input" value={formDetails.lastname} onChange={inputChange} required />
-                    </div>
-                    <div className="form-field">
-                      <label className="editorial-label">Email</label>
-                      <input type="email" className="editorial-input" value={formDetails.email} disabled />
-                    </div>
-                    <div className="form-field">
-                      <label className="editorial-label">Phone</label>
-                      <input type="text" name="phone" className="editorial-input" value={formDetails.phone} onChange={inputChange} maxLength="10" inputMode="numeric" />
-                    </div>
-                    <div className="form-field">
-                      <label className="editorial-label">City</label>
-                      <input type="text" name="city" className="editorial-input" value={formDetails.city} onChange={inputChange} />
-                    </div>
-                    <div className="form-field">
-                      <label className="editorial-label">Gender</label>
-                      <select name="gender" className="editorial-input" value={formDetails.gender} onChange={inputChange}>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="other">Other</option>
-                      </select>
-                    </div>
-                    <div className="form-field">
-                      <label className="editorial-label">Date of birth</label>
-                      <input type="date" name="dateOfBirth" className="editorial-input" value={formDetails.dateOfBirth} onChange={inputChange} />
-                    </div>
-                    <div className="form-field">
-                      <label className="editorial-label">Blood group</label>
-                      <select name="bloodGroup" className="editorial-input" value={formDetails.bloodGroup} onChange={inputChange}>
-                        <option value="">Select</option>
-                        <option value="A+">A+</option>
-                        <option value="A-">A-</option>
-                        <option value="B+">B+</option>
-                        <option value="B-">B-</option>
-                        <option value="AB+">AB+</option>
-                        <option value="AB-">AB-</option>
-                        <option value="O+">O+</option>
-                        <option value="O-">O-</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="editorial-subsection">
-                    <h2 className="editorial-form-section-title">Emergency contact</h2>
-                    <div className="editorial-form-grid">
-                      <div className="form-field">
-                        <label className="editorial-label">Contact name</label>
-                        <input type="text" name="em_name" className="editorial-input" value={formDetails.emergencyContact.name} onChange={inputChange} />
-                      </div>
-                      <div className="form-field">
-                        <label className="editorial-label">Relation</label>
-                        <input type="text" name="em_relation" className="editorial-input" value={formDetails.emergencyContact.relation} onChange={inputChange} />
-                      </div>
-                      <div className="form-field">
-                        <label className="editorial-label">Primary phone</label>
-                        <input type="text" name="em_phone1" className="editorial-input" value={formDetails.emergencyContact.phone1} onChange={inputChange} maxLength="10" inputMode="numeric" />
-                      </div>
-                      <div className="form-field">
-                        <label className="editorial-label">Secondary phone</label>
-                        <input type="text" name="em_phone2" className="editorial-input" value={formDetails.emergencyContact.phone2} onChange={inputChange} maxLength="10" inputMode="numeric" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <button type="submit" className="editorial-btn editorial-btn-primary editorial-btn-block">Save profile updates</button>
-                </form>
+                <div className="form-group">
+                  <label>Last Name</label>
+                  <input type="text" name="lastname" className="form-input" value={formDetails.lastname} onChange={inputChange} required />
+                </div>
               </div>
-            )}
+              <div className="form-group-row">
+                <div className="form-group">
+                  <label>Email</label>
+                  <input type="email" className="form-input" value={formDetails.email} disabled />
+                </div>
+                <div className="form-group">
+                  <label>Phone</label>
+                  <input type="text" name="phone" className="form-input" value={formDetails.phone} onChange={inputChange} maxLength="10" inputMode="numeric" />
+                </div>
+              </div>
+              <div className="form-group-row">
+                <div className="form-group">
+                  <label>City</label>
+                  <input type="text" name="city" className="form-input" value={formDetails.city} onChange={inputChange} />
+                </div>
+                <div className="form-group">
+                  <label>Gender</label>
+                  <select name="gender" className="form-input" value={formDetails.gender} onChange={inputChange}>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+              </div>
+              <div className="form-group-row">
+                <div className="form-group">
+                  <label>Date of Birth</label>
+                  <input type="date" name="dateOfBirth" className="form-input" value={formDetails.dateOfBirth} onChange={inputChange} />
+                </div>
+                <div className="form-group">
+                  <label>Blood Group</label>
+                  <select name="bloodGroup" className="form-input" value={formDetails.bloodGroup} onChange={inputChange}>
+                    <option value="">Select</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="auth-header" style={{ marginTop: "1.5rem", marginBottom: "1rem" }}>
+                <h3 className="auth-title" style={{ fontSize: "1.2rem" }}>Emergency Contact (Optional)</h3>
+              </div>
+              
+              <div className="form-group-row">
+                <div className="form-group">
+                  <label>Contact Name</label>
+                  <input type="text" name="em_name" className="form-input" value={formDetails.emergencyContact.name} onChange={inputChange} />
+                </div>
+                <div className="form-group">
+                  <label>Relation</label>
+                  <input type="text" name="em_relation" className="form-input" value={formDetails.emergencyContact.relation} onChange={inputChange} />
+                </div>
+              </div>
+              <div className="form-group-row">
+                <div className="form-group">
+                  <label>Primary Phone</label>
+                  <input type="text" name="em_phone1" className="form-input" value={formDetails.emergencyContact.phone1} onChange={inputChange} maxLength="10" inputMode="numeric" />
+                </div>
+                <div className="form-group">
+                  <label>Secondary Phone</label>
+                  <input type="text" name="em_phone2" className="form-input" value={formDetails.emergencyContact.phone2} onChange={inputChange} maxLength="10" inputMode="numeric" />
+                </div>
+              </div>
+
+              <button type="submit" className="btn btn-primary btn-full" style={{ marginTop: "1rem" }}>Update Profile</button>
+            </form>
+
+
           </div>
         </section>
-      </main>
-    </EditorialShell>
+      )}
+      <Footer />
+
+    </>
   );
 }
+
+
 
 const ProtectedProfile = () => <Protected><Profile /></Protected>;
 

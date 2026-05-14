@@ -2,81 +2,89 @@
 
 import { Protected } from "../../middleware/route";
 import React, { useEffect, useState } from "react";
-import EditorialShell from "../../components/editorial/EditorialShell";
+import { useDispatch, useSelector } from "react-redux";
 import Empty from "../../components/Empty";
-import Loading from "../../components/Loading";
+import Footer from "../../components/Footer";
+import Navbar from "../../components/Navbar";
 import fetchData from "../../helper/apiCall";
 import { getApiBaseUrl } from "@/lib/apiBaseUrl";
+import { setLoading } from "../../redux/reducers/rootSlice";
+import Loading from "../../components/Loading";
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
+  const { loading } = useSelector((state) => state.root);
+
+  const getAllNotif = async () => {
+    try {
+      dispatch(setLoading(true));
+      const temp = await fetchData(`/api/notification/getallnotifs`);
+      dispatch(setLoading(false));
+      setNotifications(temp || []);
+      
+      // Mark all as read 
+        const baseUrl = getApiBaseUrl();
+      await fetch(`${baseUrl}/api/notification/markallread`, {
+        method: "PUT",
+        credentials: "include",
+      });
+      window.dispatchEvent(new Event("notifications_read"));
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      dispatch(setLoading(false));
+    }
+  };
 
   useEffect(() => {
-    async function getAllNotif() {
-      try {
-        setLoading(true);
-        const data = await fetchData("/api/notification/getallnotifs");
-        setNotifications(data || []);
-
-        const baseUrl = getApiBaseUrl();
-        await fetch(`${baseUrl}/api/notification/markallread`, {
-          method: "PUT",
-          credentials: "include",
-        });
-        window.dispatchEvent(new Event("notifications_read"));
-      } finally {
-        setLoading(false);
-      }
-    }
-
     getAllNotif();
-  }, []);
+  }, [dispatch]);
 
   return (
-    <EditorialShell>
-      <main className="editorial-page">
-        <section className="editorial-page-hero">
-          <div className="editorial-shell">
-            <span className="editorial-eyebrow">Inbox</span>
-            <h1 className="editorial-page-title">Notifications are grouped into a clearer care activity feed.</h1>
-            <p className="editorial-lede">
-              Booking updates, approval messages, and record alerts now read like a timeline instead of a utility table.
-            </p>
-          </div>
-        </section>
+    <>
+      <Navbar />
+      <section className="appts-section">
+        <div className="container">
+          <h2 className="page-title">My Notifications</h2>
 
-        <section className="editorial-section editorial-section-tight">
-          <div className="editorial-shell editorial-narrow-shell">
-            {loading ? (
-              <Loading label="Loading notifications..." />
-            ) : notifications.length ? (
-              <div className="editorial-notification-list">
-                {notifications.map((notification) => {
-                  const dateObj = new Date(notification?.createdAt);
-                  const isUnread = notification?.isRead === false;
-
-                  return (
-                    <article key={notification?._id} className={`editorial-notification-card ${isUnread ? "is-unread" : ""}`}>
-                      <div>
-                        <h3 className="editorial-card-title">Care update</h3>
-                        <p>{notification?.content}</p>
-                      </div>
-                      <div className="editorial-notification-meta">
-                        <span>{dateObj.toLocaleDateString()}</span>
-                        <span>{dateObj.toLocaleTimeString()}</span>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-            ) : (
-              <Empty title="No notifications yet" message="Alerts and booking messages will appear here." />
-            )}
-          </div>
-        </section>
-      </main>
-    </EditorialShell>
+          {loading ? (
+            <Loading />
+          ) : notifications.length > 0 ? (
+             <div className="table-wrapper">
+              <table className="appointments-table">
+                <thead>
+                  <tr>
+                    <th>S.No</th>
+                    <th>Message</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {notifications.map((ele, i) => {
+                    const dateObj = new Date(ele?.createdAt);
+                    const isUnread = ele?.isRead === false;
+                    return (
+                      <tr key={ele?._id} style={isUnread ? { borderLeft: '4px solid var(--accent-primary)', background: 'var(--table-header-bg)' } : {}}>
+                        <td>{i + 1}</td>
+                        <td style={{ fontWeight: isUnread ? '600' : 'normal', color: isUnread ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+                          {ele?.content}
+                        </td>
+                        <td>{dateObj.toLocaleDateString()}</td>
+                        <td>{dateObj.toLocaleTimeString()}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <Empty />
+          )}
+        </div>
+      </section>
+      <Footer />
+    </>
   );
 };
 
