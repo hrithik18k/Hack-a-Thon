@@ -4,7 +4,8 @@ import { DoctorOnly } from "../../middleware/route";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
-import EditorialShell from "../../components/editorial/EditorialShell";
+import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
 
 const DeviceSetup = () => {
   const [device, setDevice] = useState(null);
@@ -69,22 +70,17 @@ const DeviceSetup = () => {
   };
 
   return (
-    <EditorialShell>
-      <main className="editorial-page">
-        <section className="editorial-page-hero">
-          <div className="editorial-shell">
-            <span className="editorial-eyebrow">Hardware pairing</span>
-            <h1 className="editorial-page-title">Pair and manage the ESP32 fingerprint reader from the redesigned console.</h1>
-            <p className="editorial-lede">The registration flow still uses the live backend endpoints for token generation and device status.</p>
-          </div>
-        </section>
+    <>
+      <Navbar />
+      <section className="dashboard-section">
+        <div className="container" style={{ maxWidth: "800px", marginTop: "2rem" }}>
+          <h2 className="page-title">ESP32 Device Setup</h2>
+          <p className="page-subtitle">Manage your personal fingerprint scanner device.</p>
 
-        <section className="editorial-section editorial-section-tight">
-          <div className="editorial-shell editorial-narrow-shell">
-            <div className="editorial-stack">
+          <div className="report-grid-form" style={{ gridTemplateColumns: "1fr" }}>
             {/* Status Card */}
-            <div className="editorial-detail-panel">
-              <h3 className="editorial-card-title">Current Device Status</h3>
+            <div className="report-card summary-card">
+              <h3 className="card-heading">Current Device Status</h3>
               {loading ? (
                 <p>Loading...</p>
               ) : device?.isActive ? (
@@ -98,7 +94,7 @@ const DeviceSetup = () => {
                   <p><strong>Current Mode:</strong> {device.currentMode}</p>
                   <p><strong>Last Seen:</strong> {device.lastSeen ? new Date(device.lastSeen).toLocaleString() : "Never"}</p>
                   
-                  <button className="editorial-btn editorial-btn-danger" onClick={handleUnregister} style={{ marginTop: "1rem" }}>
+                  <button className="btn btn-danger btn-sm" onClick={handleUnregister} style={{ marginTop: "1rem", backgroundColor: "var(--fp-danger)" }}>
                     Unregister Device
                   </button>
                 </div>
@@ -110,23 +106,23 @@ const DeviceSetup = () => {
             </div>
 
             {/* Registration Form */}
-            <div className="editorial-detail-panel">
-              <h3 className="editorial-card-title">{device?.isActive ? "Re-register Device" : "Register New Device"}</h3>
+            <div className="report-card prescription-card">
+              <h3 className="card-heading">{device?.isActive ? "Re-register Device" : "Register New Device"}</h3>
               {device?.isActive && (
                 <p style={{ fontSize: "0.9rem", color: "gray" }}>Warning: Re-registering will generate a new token and invalidate your current hardware setup.</p>
               )}
               <form onSubmit={handleRegister} style={{ marginTop: "1rem" }}>
                 <div className="form-group">
-                  <label className="editorial-label">Device Name</label>
+                  <label>Device Name</label>
                   <input
                     type="text"
-                    className="editorial-input"
+                    className="form-input"
                     placeholder="e.g. Exam Room 1 Scanner"
                     value={deviceName}
                     onChange={(e) => setDeviceName(e.target.value)}
                   />
                 </div>
-                <button type="submit" className="editorial-btn editorial-btn-primary">
+                <button type="submit" className="btn btn-primary">
                   {device?.isActive ? "Re-register Device" : "Register Device"}
                 </button>
               </form>
@@ -141,15 +137,15 @@ const DeviceSetup = () => {
                     <code style={{ flex: 1, padding: "0.5rem", background: "#f4f4f4", borderRadius: "4px", overflowWrap: "break-word", userSelect: "all" }}>
                       {newToken}
                     </code>
-                    <button className="editorial-btn editorial-btn-outline" onClick={copyToken}>Copy</button>
+                    <button className="btn btn-secondary-outline btn-sm" onClick={copyToken}>Copy</button>
                   </div>
                 </div>
               )}
             </div>
 
             {/* Instructions */}
-            <div className="editorial-detail-panel">
-              <h3 className="editorial-card-title">ESP32 Setup Instructions</h3>
+            <div className="report-card summary-card" style={{ gridColumn: "1 / -1" }}>
+              <h3 className="card-heading">ESP32 Setup Instructions</h3>
               <ul style={{ paddingLeft: "1.5rem", lineHeight: "1.8" }}>
                 <li>Compile and flash the provided ESP32 firmware code via Arduino IDE.</li>
                 <li>In your code, set the <code>WIFI_SSID</code> and <code>WIFI_PASSWORD</code>.</li>
@@ -159,10 +155,10 @@ const DeviceSetup = () => {
               </ul>
             </div>
           </div>
-          </div>
-        </section>
-      </main>
-    </EditorialShell>
+        </div>
+      </section>
+      <Footer />
+    </>
   );
 };
 
