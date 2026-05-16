@@ -1,12 +1,14 @@
 export const dynamic = "force-dynamic";
 
 import dbConnect from "@/lib/dbConnect";
-import { requireAuth } from "@/lib/auth";
+import { verifyAuth } from "@/lib/auth";
 import User from "@/models/userModel";
 
 export async function GET(request) {
-  const { auth, error } = requireAuth(request);
-  if (error) return error;
+  const auth = verifyAuth(request);
+  if (!auth) {
+    return Response.json({ success: true, data: null });
+  }
 
   await dbConnect();
 

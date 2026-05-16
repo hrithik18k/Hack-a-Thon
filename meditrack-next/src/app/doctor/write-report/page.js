@@ -6,7 +6,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { FiArrowLeft, FiCheckCircle, FiFingerprint, FiLoader, FiPlus, FiTrash2, FiUpload, FiXCircle } from "react-icons/fi";
+import { FiArrowLeft, FiCheckCircle, FiLoader, FiPlus, FiTrash2, FiUpload, FiXCircle } from "react-icons/fi";
 import EditorialShell from "../../../components/editorial/EditorialShell";
 
 const FingerprintIcon = ({ color = "currentColor", size = 20 }) => (
@@ -302,7 +302,7 @@ const WriteReportPage = () => {
               </div>
               {!hasFingerprintOnCurrentDevice ? (
                 <button type="button" className="editorial-btn editorial-btn-primary" onClick={handleEnrollClick}>
-                  <FiFingerprint />
+                  <FingerprintIcon />
                   <span>{hasAnyFingerprint ? "Enroll on this device" : "Enroll fingerprint"}</span>
                 </button>
               ) : null}

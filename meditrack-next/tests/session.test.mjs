@@ -56,3 +56,8 @@ test("verifies auth from the session cookie", () => {
   });
   assert.deepEqual(verifyAuth(request), { userId: "user-1", role: "Patient" });
 });
+
+test("returns null auth when the session cookie is missing", () => {
+  const request = new Request("http://localhost/api/test");
+  assert.equal(verifyAuth(request), null);
+});
